@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>
+      发家之路 | 商业人生冒险
+    </title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <script defer src="assets/js/home-ui.js"></script>
+  </head>
+  <body class="home-page">
+    <header class="site-header">
+      <a class="brand" href="index.html">
+        发家之路
+        <small>
+          FORTUNE ROAD
+        </small>
+      </a>
+      <nav>
+        <a class="active" href="index.html">
+          首页
+        </a>
+        <a href="story.html">
+          游戏档案
+        </a>
+        <a href="team.html">
+          制作小组
+        </a>
+        <a class="nav-button" href="login.html">
+          进入游戏
+        </a>
+      </nav>
+    </header>
+    <main>
+      <section class="map-hero" id="game-map" tabindex="0" aria-label="发家之路城市地图。使用方向键或 WASD 移动，靠近地点后按 E 进入。">
+        <div class="map-hud player-hud">
+          <div class="pixel-avatar" aria-hidden="true">你</div>
+          <div>
+            <strong>创业档案</strong>
+            <dl>
+              <div><dt>资金</dt><dd id="stat-funds">¥ 100,000</dd></div>
+              <div><dt>声望</dt><dd id="stat-reputation">32</dd></div>
+              <div><dt>时间</dt><dd id="stat-day">第 1 天</dd></div>
+            </dl>
+          </div>
+        </div>
+        <div class="map-hud goal-hud">
+          <p>当前目标</p>
+          <strong id="goal-title">找到第一笔机会资金</strong>
+          <div class="map-progress"><span id="goal-progress"></span></div>
+          <small id="goal-detail">探索地图，选择你的下一步</small>
+        </div>
+        <p class="map-intro">方向键 / WASD 移动 · 靠近地点后按 E 进入</p>
+        <button class="map-location home" type="button" data-location="home"><b>家</b><span>回家整理账本</span></button>
+        <button class="map-location campus" type="button" data-location="campus"><b>校园</b><span>寻找新的方向</span></button>
+        <button class="map-location news" type="button" data-location="news"><b>报亭</b><span>读今日商业版</span></button>
+        <button class="map-location company" type="button" data-location="company"><b>公司</b><span>拜访潜在合作方</span></button>
+        <button class="map-location bank" type="button" data-location="bank"><b>银行</b><span>咨询融资方案</span></button>
+        <button class="map-location cafe" type="button" data-location="cafe"><b>咖啡馆</b><span>和朋友聊聊机会</span></button>
+        <button class="map-location store" type="button" data-location="store"><b>便利店</b><span>观察市场需求</span></button>
+        <div class="map-player" id="map-player" aria-label="玩家角色"><span class="player-head"></span><span class="player-body"></span></div>
+        <p class="map-prompt" id="map-prompt" aria-live="polite">使用方向键或 WASD 移动</p>
+        <div class="map-caption"><span>FORTUNE ROAD</span><strong>发家之路</strong></div>
+        <div class="home-menu">
+          <p>BUSINESS ADVENTURE · VERSION 1.0</p>
+          <h1>发家之路</h1>
+          <span>从第一次选择开始，走出你的商业人生。</span>
+          <a href="level-1.html">开始新游戏</a>
+          <button type="button" data-home-note="levels">选择关卡</button>
+          <button type="button" data-home-note="intro">游戏公告</button>
+          <button type="button" data-home-note="team">制作名单</button>
+        </div>
+        <section class="game-dialog" id="game-dialog" aria-modal="true" aria-labelledby="dialog-title" hidden>
+          <div class="paper-note">
+            <button class="dialog-close" id="dialog-close" type="button" aria-label="关闭事件窗口">×</button>
+            <p class="note-kicker" id="dialog-kicker">事件记录</p>
+            <h2 id="dialog-title">一张纸条</h2>
+            <p id="dialog-text"></p>
+            <div class="dialog-choices" id="dialog-choices"></div>
+          </div>
+        </section>
+      </section>
+      <section class="section" id="level-select">
+        <div class="section-heading">
+          <h2>
+            三次人生转折
+          </h2>
+          <p>
+            每一关都是一份需要亲手签下的商业决定。
+          </p>
+        </div>
+        <div class="grid">
+          <article class="card">
+            <span class="number">
+              01
+            </span>
+            <h3>
+              布鞋首富
+            </h3>
+            <p>
+              从承包谈判到非常可乐，再到合同保卫战：用六次关键选择走完一段创业路。
+            </p>
+            <a href="level-1.html">
+              进入宗庆后原型关卡 →
+            </a>
+          </article>
+          <article class="card">
+            <span class="number">
+              02
+            </span>
+            <h3>
+              关系与胆识
+            </h3>
+            <p>
+              一块烫手的旧城区，如何在质疑声中被看成通往未来的入口？
+            </p>
+            <a href="level-2.html">
+              进入王健林原型关卡 →
+            </a>
+          </article>
+          <article class="card">
+            <span class="number">
+              03
+            </span>
+            <h3>
+              屡败屡战
+            </h3>
+            <p>
+              当门一扇扇关闭，你是否愿意继续相信下一次敲门会有回应？
+            </p>
+            <a href="level-3.html">
+              进入马云原型关卡 →
+            </a>
+          </article>
+        </div>
+      </section>
+      <section class="section dark">
+        <div class="section-heading">
+          <h2>
+            你的资产，不止金钱
+          </h2>
+          <p>
+            不同选择会影响四项资源，带来不同的剧情支线与结局。
+          </p>
+        </div>
+        <div class="stat-grid">
+          <div class="stat">
+            <strong>
+              ¥
+            </strong>
+            资金
+          </div>
+          <div class="stat">
+            <strong>
+              ◎
+            </strong>
+            信誉
+          </div>
+          <div class="stat">
+            <strong>
+              ↗
+            </strong>
+            人脉
+          </div>
+          <div class="stat">
+            <strong>
+              !
+            </strong>
+            勇气
+          </div>
+        </div>
+      </section>
+      <section class="cta">
+        <p class="eyebrow">
+          THE FIRST STEP
+        </p>
+        <h2>
+          机会已经摆在桌上。
+        </h2>
+        <p>
+          不必等到准备万全，现在就选择你的第一条路。
+        </p>
+        <a class="button" href="register.html">
+          创建你的档案
+        </a>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <span>
+        《发家之路》交互故事站点 · Version 1.0
+      </span>
+      <a href="team.html">
+        认识制作小组
+      </a>
+    </footer>
+  </body>
+</html>

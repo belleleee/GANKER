@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>第一关：布鞋首富 | 发家之路</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <script defer src="assets/js/level-one.js"></script>
+    <script defer src="assets/js/prologue.js"></script>
+  </head>
+  <body class="stall-game-page">
+    <main class="stall-game" id="stall-game" hidden>
+      <section class="hub-scene" data-hub-scene>
+        <header class="business-hud">
+          <div><span>1987 · 杭州</span><strong>三轮车代销</strong></div>
+          <div>第 <b data-day>1</b> 天 · 现金 <b data-cash>¥0</b></div>
+        </header>
+        <div class="hub-menu">
+          <p>天刚亮，小摊还没开张。</p>
+          <h1>先想清楚，今天怎么做生意。</h1>
+          <div class="map-routes" aria-hidden="true"></div>
+          <div class="map-actions">
+            <button type="button" class="map-node config-node" data-open-config>
+              <span class="node-pin"><i>补</i></span><b>配置补货时间</b><small>安排汽水、棒冰与文具从仓库送达的速度</small>
+            </button>
+            <button type="button" class="map-node stall-node" data-enter-stall>
+              <span class="node-pin"><i>摊</i></span><b>进入宗家小摊</b><small>开始接待今天来到摊前的顾客</small>
+            </button>
+          </div>
+        </div>
+      </section>
+      <section class="prep-scene" data-prep-scene>
+        <header class="business-hud">
+          <div><span>1987 · 杭州</span><strong>三轮车代销</strong></div>
+          <div>第 <b data-day>1</b> 天 · 现金 <b data-cash>¥0</b></div>
+        </header>
+        <div class="prep-card">
+          <p>开摊前 · 补货安排</p>
+          <h1>先安排好，每一样货多久能从仓库送到</h1>
+          <span>急送更快，但每件进货成本更高。今天最多只有 6 个备货窗口。</span>
+          <div class="restock-config" data-restock-config></div>
+          <div class="prep-actions"><button type="button" data-back-hub>返回院子</button><button type="button" class="enter-stall" data-enter-stall>整理三轮车，进入小摊</button></div>
+        </div>
+      </section>
+      <section class="stall-scene" data-stall-scene hidden>
+        <header class="business-hud">
+          <div><span>宗家小摊 · 营业中</span><strong>顾客来了，别让他久等</strong></div>
+          <div>第 <b data-day>1</b> 天 · 现金 <b data-cash>¥0</b></div>
+        </header>
+        <section class="customer-counter" data-customer-counter>
+          <p data-customer-status>下一位顾客正在赶来</p>
+          <h1 data-customer-name>小摊刚开张</h1>
+          <div class="customer-needs" data-customer-needs>先去仓库调货，准备好窗口库存。</div>
+          <div class="patience"><i data-patience></i></div>
+          <small data-customer-feedback>顾客会陆续来到摊前。</small>
+        </section>
+        <div class="stall-bottom">
+          <section class="stock-area">
+            <div class="stock-heading"><h2>备货窗口 <span>6 格</span></h2><small>点击顾客需要的商品完成交付</small></div>
+            <div class="stock-windows" data-stock-windows></div>
+          </section>
+          <section class="warehouse-area">
+            <div><h2>仓库调货</h2><p>调货到达时没有空窗口，商品会废弃，进货成本无法收回。</p></div>
+            <div class="warehouse-items" data-warehouse-items></div>
+            <div class="delivery-queue" data-delivery-queue>仓库暂时没有在途商品。</div>
+          </section>
+        </div>
+        <section class="day-end" data-day-end hidden>
+          <div>
+            <p>收摊盘点</p>
+            <h1 data-day-end-title>今天先到这里</h1>
+            <p data-day-end-copy></p>
+            <button type="button" data-next-day>回到补货安排</button>
+          </div>
+        </section>
+      </section>
+      <section class="stall-result" data-result hidden>
+        <div>
+          <p>第一桶金 · 阶段结算</p>
+          <h1>小摊撑起的底气</h1>
+          <strong data-result-cash>¥0</strong>
+          <p>每一次进货、每一个窗口、每一位等候的顾客，都在教你如何把小生意做踏实。</p>
+          <button type="button" data-restart>重新经营</button>
+          <a href="index.html">返回游戏首页</a>
+        </div>
+      </section>
+    </main>
+    <section class="prologue" id="birth-prologue" aria-modal="true" aria-labelledby="prologue-speaker">
+      <div class="prologue-background" aria-hidden="true"></div>
+      <div class="prologue-vignette" aria-hidden="true"></div>
+      <div class="prologue-chapter" id="prologue-chapter">序章 · 出生篇</div>
+      <div class="prologue-portrait" id="prologue-portrait" aria-hidden="true"></div>
+      <div class="prologue-box">
+        <p class="prologue-speaker" id="prologue-speaker"></p>
+        <p class="prologue-text" id="prologue-text"></p>
+        <button class="prologue-next" id="prologue-next" type="button">点击继续</button>
+      </div>
+    </section>
+  </body>
+</html>
