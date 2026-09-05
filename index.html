@@ -7,6 +7,7 @@
       发家之路 | 商业人生冒险
     </title>
     <link rel="stylesheet" href="assets/css/style.css">
+    <script defer src="assets/js/save-system.js"></script>
     <script defer src="assets/js/home-ui.js"></script>
   </head>
   <body class="home-page">
@@ -27,8 +28,8 @@
         <a href="team.html">
           制作小组
         </a>
-        <a class="nav-button" href="login.html">
-          进入游戏
+        <a class="nav-button" href="login.html" data-auth-link>
+          登录 / 注册
         </a>
       </nav>
     </header>
@@ -65,11 +66,19 @@
         <div class="home-menu">
           <p>BUSINESS ADVENTURE · VERSION 1.0</p>
           <h1>发家之路</h1>
-          <span>从第一次选择开始，走出你的商业人生。</span>
-          <a href="level-1.html">开始新游戏</a>
+          <span>当前玩家：<b data-user-name>未登录</b></span>
+          <a href="level-1.html">继续 / 开始第一关</a>
           <button type="button" data-home-note="levels">选择关卡</button>
           <button type="button" data-home-note="intro">游戏公告</button>
           <button type="button" data-home-note="team">制作名单</button>
+          <div class="save-panel" id="save-panel" data-save-panel>
+            <p>PLAYER SAVE</p>
+            <strong data-save-player>暂无玩家</strong>
+            <span data-save-level>还没有第一关存档</span>
+            <small data-save-detail>登录后开始游戏，系统会自动保存进度。</small>
+            <button type="button" data-logout data-user-only hidden>退出当前档案</button>
+            <a href="login.html" data-guest-only>登录读取存档</a>
+          </div>
         </div>
         <section class="game-dialog" id="game-dialog" aria-modal="true" aria-labelledby="dialog-title" hidden>
           <div class="paper-note">
@@ -101,7 +110,7 @@
             <p>
               从承包谈判到非常可乐，再到合同保卫战：用六次关键选择走完一段创业路。
             </p>
-            <a href="level-1.html">
+            <a href="level-1.html" data-level-link="1">
               进入宗庆后原型关卡 →
             </a>
           </article>
@@ -115,7 +124,7 @@
             <p>
               一块烫手的旧城区，如何在质疑声中被看成通往未来的入口？
             </p>
-            <a href="level-2.html">
+            <a href="level-2.html" data-level-link="2">
               进入王健林原型关卡 →
             </a>
           </article>
@@ -129,7 +138,7 @@
             <p>
               当门一扇扇关闭，你是否愿意继续相信下一次敲门会有回应？
             </p>
-            <a href="level-3.html">
+            <a href="level-3.html" data-level-link="3">
               进入马云原型关卡 →
             </a>
           </article>

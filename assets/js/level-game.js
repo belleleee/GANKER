@@ -21,14 +21,18 @@ document.addEventListener("DOMContentLoaded", function () {
   };
 
   var config = definitions[game.dataset.level];
-  var state = Object.assign({ progress: 25 }, config.stats, { goal: config.goal, detail: config.detail });
+  var saveSystem = window.FortuneSave || null;
+  var saveLevelId = "level" + game.dataset.level;
+  var saved = saveSystem ? saveSystem.getLevelSave(saveLevelId) : null;
+  var state = Object.assign({ progress: 25, visited: {} }, config.stats, { goal: config.goal, detail: config.detail }, saved || {});
   var player = game.querySelector(".map-player");
   var prompt = game.querySelector(".map-prompt");
   var dialog = game.querySelector(".game-dialog");
   var activeLocation = null;
   var pressed = new Set();
-  var position = { x: 15, y: 73 };
+  var position = state.position || { x: 15, y: 73 };
   var lastFrame = 0;
+  var lastMoveSave = 0;
   var moveKeys = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "w", "a", "s", "d", "W", "A", "S", "D"]);
 
   function refresh() {
@@ -38,6 +42,10 @@ document.addEventListener("DOMContentLoaded", function () {
     game.querySelector("[data-goal]").textContent = state.goal;
     game.querySelector("[data-detail]").textContent = state.detail;
     game.querySelector("[data-progress]").style.width = state.progress + "%";
+  }
+  function saveProgress() {
+    state.position = position;
+    if (saveSystem) saveSystem.saveLevel(saveLevelId, state);
   }
   function closeDialog() { dialog.hidden = true; pressed.clear(); game.focus(); }
   function openEvent(name) {
@@ -55,6 +63,9 @@ document.addEventListener("DOMContentLoaded", function () {
         else state[key] = choice[2][key];
       });
       refresh(); dialog.querySelector(".event-copy").textContent = choice[1]; choices.innerHTML = "";
+      state.visited[name] = true;
+      if (saveSystem && state.progress >= 100) saveSystem.completeLevel(saveLevelId, Number(game.dataset.level) + 1, state);
+      else saveProgress();
       var done = document.createElement("button"); done.type = "button"; done.className = "dialog-choice"; done.textContent = "继续探索"; done.addEventListener("click", closeDialog); choices.appendChild(done);
     });
     choices.appendChild(button); dialog.hidden = false; dialog.querySelector(".dialog-close").focus();
@@ -71,11 +82,14 @@ document.addEventListener("DOMContentLoaded", function () {
     var elapsed = Math.min((now - lastFrame) / 1000 || 0, .05); lastFrame = now;
     var x = (pressed.has("ArrowRight") || pressed.has("d") || pressed.has("D") ? 1 : 0) - (pressed.has("ArrowLeft") || pressed.has("a") || pressed.has("A") ? 1 : 0);
     var y = (pressed.has("ArrowDown") || pressed.has("s") || pressed.has("S") ? 1 : 0) - (pressed.has("ArrowUp") || pressed.has("w") || pressed.has("W") ? 1 : 0);
-    var moving = dialog.hidden && (x || y); if (moving) { var length = Math.hypot(x, y); position.x = Math.max(2, Math.min(98, position.x + x / length * elapsed * 18)); position.y = Math.max(47, Math.min(81, position.y + y / length * elapsed * 18)); player.style.left = position.x + "%"; player.style.top = position.y + "%"; }
+    var moving = dialog.hidden && (x || y); if (moving) { var length = Math.hypot(x, y); position.x = Math.max(2, Math.min(98, position.x + x / length * elapsed * 18)); position.y = Math.max(47, Math.min(81, position.y + y / length * elapsed * 18)); player.style.left = position.x + "%"; player.style.top = position.y + "%"; if (now - lastMoveSave > 700) { lastMoveSave = now; saveProgress(); } }
     player.classList.toggle("is-moving", Boolean(moving)); findNearby(); requestAnimationFrame(frame);
   }
   document.addEventListener("keydown", function (event) { if (!dialog.hidden) { if (event.key === "Escape") closeDialog(); event.preventDefault(); return; } if (moveKeys.has(event.key)) { pressed.add(event.key); event.preventDefault(); } if ((event.key === "e" || event.key === "E" || event.key === " ") && activeLocation) { event.preventDefault(); openEvent(activeLocation.dataset.event); } });
   document.addEventListener("keyup", function (event) { pressed.delete(event.key); }); window.addEventListener("blur", function () { pressed.clear(); });
   game.querySelectorAll(".map-location").forEach(function (location) { location.addEventListener("click", function () { openEvent(location.dataset.event); }); });
-  game.querySelector(".dialog-close").addEventListener("click", closeDialog); refresh(); requestAnimationFrame(frame);
+  if (saveSystem) saveSystem.requireUser();
+  player.style.left = position.x + "%";
+  player.style.top = position.y + "%";
+  game.querySelector(".dialog-close").addEventListener("click", closeDialog); refresh(); saveProgress(); requestAnimationFrame(frame);
 });
