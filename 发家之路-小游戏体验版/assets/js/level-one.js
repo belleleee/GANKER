@@ -73,7 +73,7 @@ document.addEventListener("DOMContentLoaded", function () {
   ];
 
   function initialState() {
-    return { cash: 40, reputation: 10, resilience: 2, negotiation: 1, ahaiBond: 0, ahaiStayed: false, fatherBond: 0, sceneIndex: 0, completed: {}, pendingBonus: null, movingTimer: null, stageCleanup: null, player: { left: 7, top: 63 } };
+    return { cash: 40, reputation: 10, resilience: 2, negotiation: 1, sceneIndex: 0, completed: {}, pendingBonus: null, movingTimer: null, stageCleanup: null, player: { left: 7, top: 63 } };
   }
   function restoreState(save) {
     var next = initialState();
@@ -82,9 +82,6 @@ document.addEventListener("DOMContentLoaded", function () {
     next.reputation = typeof save.reputation === "number" ? save.reputation : next.reputation;
     next.resilience = typeof save.resilience === "number" ? save.resilience : next.resilience;
     next.negotiation = typeof save.negotiation === "number" ? save.negotiation : next.negotiation;
-    next.ahaiBond = typeof save.ahaiBond === "number" ? save.ahaiBond : next.ahaiBond;
-    next.ahaiStayed = typeof save.ahaiStayed === "boolean" ? save.ahaiStayed : next.ahaiStayed;
-    next.fatherBond = typeof save.fatherBond === "number" ? save.fatherBond : next.fatherBond;
     next.sceneIndex = typeof save.sceneIndex === "number" ? Math.min(save.sceneIndex, scenes.length) : next.sceneIndex;
     next.completed = save.completedScenes || {};
     next.pendingBonus = save.pendingBonus || null;
@@ -97,9 +94,6 @@ document.addEventListener("DOMContentLoaded", function () {
       reputation: state.reputation,
       resilience: state.resilience,
       negotiation: state.negotiation,
-      ahaiBond: state.ahaiBond,
-      ahaiStayed: state.ahaiStayed,
-      fatherBond: state.fatherBond,
       sceneIndex: state.sceneIndex,
       completedScenes: state.completed,
       pendingBonus: state.pendingBonus,
@@ -108,16 +102,6 @@ document.addEventListener("DOMContentLoaded", function () {
   }
   function saveProgress() {
     if (saveSystem) saveSystem.saveLevel(saveLevelId, serializeState());
-  }
-  function applyPrologueOutcome(detail) {
-    var outcome = detail && detail.outcome;
-    if (!outcome) return;
-    state.resilience += Math.round((outcome.resilience || 0) / 10);
-    state.negotiation += Math.round((outcome.negotiation || 0) / 10);
-    state.ahaiBond = outcome.ahaiBond || 0;
-    state.ahaiStayed = Boolean(outcome.ahaiStayed);
-    state.fatherBond = outcome.fatherBond || 0;
-    if (state.ahaiStayed && state.ahaiBond >= 15) state.reputation += 2;
   }
   function formatCash(value) { return "¥" + Math.max(0, Math.round(value)); }
   function pxX(percent) { return percent / 100 * canvasSize.width; }
@@ -521,11 +505,5 @@ document.addEventListener("DOMContentLoaded", function () {
       interactOnMap();
     }
   });
-  document.addEventListener("prologue:complete", function (event) {
-    game.hidden = false;
-    startFromSave();
-    applyPrologueOutcome(event.detail);
-    updateHud();
-    saveProgress();
-  }, { once: true });
+  document.addEventListener("prologue:complete", function () { game.hidden = false; startFromSave(); }, { once: true });
 });

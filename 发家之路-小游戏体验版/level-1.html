@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>第一关：布鞋首富 | 发家之路</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/level-one-pixel.css">
+    <script defer src="assets/js/save-system.js"></script>
+    <script defer src="assets/js/stall-minigame.js"></script>
+    <script defer src="assets/js/level-one.js"></script>
+    <script defer src="assets/js/prologue.js"></script>
+  </head>
+  <body class="zqh-level-page">
+    <main class="zqh-level" id="zqh-level" hidden>
+      <section class="zqh-map" data-map>
+        <canvas class="zqh-canvas-map" data-canvas-map width="1280" height="720" aria-hidden="true"></canvas>
+        <header class="zqh-hud">
+          <div><span>1945-2009 · 宗庆后</span><strong>布鞋首富</strong></div>
+          <div class="zqh-stats">
+            <b>现金 <i data-cash>¥0</i></b>
+            <b>声誉 <i data-reputation>0</i></b>
+            <b>进度 <i data-progress>0/7</i></b>
+          </div>
+        </header>
+        <div class="zqh-player" data-player aria-hidden="true"><span></span><i></i></div>
+        <div class="zqh-map-title">
+          <p data-map-kicker>返城之后，先从一单单小生意开始。</p>
+          <h1 data-map-title>蹬起三轮车，再走向六个关键选择。</h1>
+        </div>
+        <div class="zqh-route" aria-hidden="true"></div>
+        <div class="zqh-nodes" data-nodes></div>
+        <p class="zqh-tip" data-tip>用 WASD / 方向键探索地图，走到已解锁地点附近按 E。</p>
+      </section>
+
+      <section class="zqh-stage" data-stage hidden>
+        <div class="zqh-paper">
+          <button type="button" class="stage-close" data-close-stage>回到地图</button>
+          <p class="stage-year" data-stage-year></p>
+          <h1 data-stage-title></h1>
+          <p class="stage-copy" data-stage-copy></p>
+          <div class="stage-body" data-stage-body></div>
+          <div class="stage-feedback" data-stage-feedback></div>
+          <button type="button" class="stage-next" data-stage-next hidden>继续</button>
+        </div>
+      </section>
+
+      <section class="zqh-ending" data-ending hidden>
+        <div>
+          <p data-ending-kicker>结局判定</p>
+          <h1 data-ending-title></h1>
+          <strong data-ending-cash></strong>
+          <p data-ending-copy></p>
+          <button type="button" data-restart>重新挑战</button>
+          <a href="index.html">返回首页</a>
+        </div>
+      </section>
+    </main>
+
+    <section class="prologue" id="birth-prologue" aria-modal="true" aria-labelledby="prologue-speaker">
+      <div class="prologue-background" aria-hidden="true"></div>
+      <div class="prologue-vignette" aria-hidden="true"></div>
+      <div class="prologue-chapter" id="prologue-chapter">序章 · 出生篇</div>
+      <div class="prologue-portrait" id="prologue-portrait" aria-hidden="true"></div>
+      <div class="prologue-box">
+        <p class="prologue-speaker" id="prologue-speaker"></p>
+        <p class="prologue-text" id="prologue-text"></p>
+        <button class="prologue-next" id="prologue-next" type="button">点击继续</button>
+      </div>
+    </section>
+  </body>
+</html>
