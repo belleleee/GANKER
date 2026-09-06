@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>线稿风格魔女小屋 - 游戏</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <button id="menuDot">●</button>
+    <div id="menuPanel">
+        <div class="title">菜单</div>
+        <div class="sub">房 屋</div>
+        <div class="row"><span>完整房屋</span>
+            <div class="toggle" id="houseToggle">
+                <div class="knob"></div>
+            </div>
+        </div>
+        <div class="sep"></div>
+        <div class="sub">天 气</div>
+        <div id="wxChips"></div>
+        <div class="row"><span>随机切换天气</span>
+            <div class="toggle" id="wxRandToggle">
+                <div class="knob"></div>
+            </div>
+        </div>
+        <div class="sep"></div>
+        <div class="sub">时 间</div>
+        <div class="sliderRow"><span class="slbl">时刻</span><input type="range" id="timeSlider" min="0" max="24"
+                step="0.05" value="10"></div>
+        <div class="sliderRow"><span class="slbl">流速</span><input type="range" id="speedSlider" min="0" max="1"
+                step="0.01" value="0.5"></div>
+        <div class="sep"></div>
+        <div class="sub">音 效</div>
+        <div class="row"><span>音效</span>
+            <div class="toggle on" id="sfxToggle">
+                <div class="knob"></div>
+            </div>
+        </div>
+        <div class="sliderRow"><span class="slbl">音量</span><input type="range" id="sfxSlider" min="0" max="1"
+                step="0.01" value="0.6"></div>
+        <div class="sep"></div>
+        <div class="sub">魔 法</div>
+        <div id="spellSlots">
+            <div class="slot on" id="slot1" title="空手 · 默认状态"><span class="ico"></span><span class="kb">1 空手</span>
+            </div>
+            <div class="slot" id="slot2" title="魔杖 · 可释放魔法"><span class="ico">🪄</span><span class="kb">2 魔杖</span>
+            </div>
+            <div class="slot" id="slot3" title="锄头 · 翻地"><span class="ico">⛏️</span><span class="kb">3 锄头</span>
+            </div>
+            <div class="slot" id="slot4" title="水壶 · 浇水"><span class="ico">💧</span><span class="kb">4 水壶</span>
+            </div>
+            <div class="slot" id="slot5" title="镰刀 · 收割"><span class="ico">🌾</span><span class="kb">5 镰刀</span>
+            </div>
+        </div>
+        <div class="sep"></div>
+        <div class="viewBtn on" id="viewFixedBtn">固定视角</div>
+        <div class="viewBtn" id="viewTpBtn">第三人称视角</div>
+        <div class="viewBtn" id="viewFpBtn">第一人称视角</div>
+        <div class="sep"></div>
+        <div class="viewBtn" id="resetBtn">重置史莱姆位置</div>
+        <div class="sep"></div>
+        <div class="sub">存 档</div>
+        <div class="saveStatus" id="saveStatus">尚未存档</div>
+        <div class="viewBtn" id="saveGameBtn">保存当前进度</div>
+        <div class="viewBtn" id="loadGameBtn">读取存档</div>
+        <div class="viewBtn danger" id="clearSaveBtn">清除存档</div>
+        <div class="sep"></div>
+        <div class="sub">关 于</div>
+        <div class="viewBtn" id="membersMenuBtn">成员介绍</div>
+        <div class="viewBtn" id="showcaseMenuBtn">返回展示页</div>
+
+    </div>
+    <div id="signEditor">
+        <div class="lbl">✏️ 编辑路牌文字</div><input id="signInput" maxlength="10" value="魔女小屋"><button
+            id="signOk">确定</button>
+    </div>
+    <div id="noteEditor">
+        <div class="lbl">📝 便签</div><input id="noteInput" maxlength="10" value=""><button id="noteOk">确定</button>
+    </div>
+    <div id="picEditor">
+        <div class="lbl">🖼️ 编辑画像链接</div><input id="picInput" maxlength="500" placeholder="输入图片链接"><button
+            id="picOk">确定</button>
+    </div>
+    <div id="clock">10:00 · 晴</div>
+    <div id="coinHud">金币 0</div>
+    <div id="storageHud">仓库 萝卜 0</div>
+    <div id="hint"></div>
+    <div id="crosshair"></div>
+    <div id="lockTip">点击画面锁定鼠标 · Esc 退出</div>
+    <div id="flashOverlay"></div>
+    <div id="joyZone"></div>
+    <div id="joyBase">
+        <div id="joyKnob"></div>
+    </div>
+    <div class="touchBtn" id="btnSprint">疾跑</div>
+    <div class="touchBtn" id="btnJump">跳</div>
+    <div class="touchBtn" id="btnAct">交互</div>
+    <div class="touchBtn" id="btnCast">施法</div>
+
+    <section id="newspaperPanel" class="newspaperPanel" hidden>
+        <div class="newspaperCard" role="dialog" aria-modal="true" aria-labelledby="newspaperTitle">
+            <button id="closeNewspaperBtn" class="newspaperClose" type="button" aria-label="关闭">×</button>
+            <p class="newspaperKicker">Cabin Gazette</p>
+            <h2 id="newspaperTitle">魔女小屋报刊</h2>
+            <p id="newspaperDate" class="newspaperDate">今日特刊</p>
+            <article class="newspaperArticle">
+                <h3 id="newspaperHeadline">报刊标题</h3>
+                <p id="newspaperBody">报刊内容</p>
+            </article>
+            <div class="newspaperNav">
+                <button id="prevNewspaperBtn" type="button">上一篇</button>
+                <span id="newspaperCounter">1 / 1</span>
+                <button id="nextNewspaperBtn" type="button">下一篇</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="storyPanel" class="storyPanel" hidden>
+        <div class="storyCard" role="dialog" aria-modal="true" aria-labelledby="storyTitle">
+            <button id="closeStoryBtn" class="storyClose" type="button" aria-label="关闭">×</button>
+            <p class="storyKicker">创业笔记 · 手写体日志</p>
+            <h2 id="storyTitle">宗庆后的创业故事</h2>
+            <p id="storyChapterLabel" class="storyChapterLabel">第 1 / 7 章</p>
+
+            <div id="storyStage" class="storyStage">
+                <div class="storySpeaker" id="storySpeaker">旁白</div>
+                <p id="storyText" class="storyText">……</p>
+            </div>
+
+            <div id="storyNextRow" class="storyRow">
+                <button id="storyNextBtn" type="button">继续 ▸</button>
+            </div>
+
+            <div id="storyInvestRow" class="storyInvestBox" hidden>
+                <p id="storyInvestDesc" class="storyInvestDesc"></p>
+                <div class="storyInvestActions">
+                    <button id="storyInvestBtn" type="button">投资</button>
+                    <button id="storySkipBtn" type="button" class="storySkipBtn">先不投，继续看</button>
+                </div>
+            </div>
+
+            <div id="storyDoneRow" class="storyRow" hidden>
+                <p id="storyDoneText" class="storyDoneText"></p>
+                <button id="storyCloseDoneBtn" type="button">合上笔记</button>
+            </div>
+        </div>
+    </section>
+
+    <script src="three.min.js"></script>
+    <script>
+        /* 本地 three.min.js 优先；当本地three.js缺失时回退 CDN。 */
+        if (typeof THREE === 'undefined') {
+            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');
+        }
+    </script>
+    <!-- 以下文件按依赖顺序加载，是普通 <script>（不是 ES 模块），共用同一份全局作用域，
+         这样 game.html 仍可直接双击用浏览器打开，无需起本地服务器。
+         拆分严格保持原文件的顺序与分节，未挪动任何代码。 -->
+    <script src="js/01-core-setup.js"></script>
+    <script src="js/02-outdoor-scene.js"></script>
+    <script src="js/03-ground-floor.js"></script>
+    <script src="js/04-bed-desk.js"></script>
+    <script src="js/05-astro-wand.js"></script>
+    <script src="js/06-second-floor-decor.js"></script>
+    <script src="js/07-magic-system.js"></script>
+    <script src="js/08-player-controller.js"></script>
+    <script src="js/09-weather-sky.js"></script>
+
+    <script src="js/11-farmland.js"></script>
+    <script src="js/12.farming.js"></script>
+    <script src="js/13.tools.js"></script>
+    <script src="js/10-main-loop.js"></script>
+    <script src="js/14-store.js"></script>
+    <script src="js/16-newspaper.js"></script>
+    <script src="js/17-zong-story.js"></script>
+    <script src="js/15-app-shell.js"></script>
+</body>
+
+</html>

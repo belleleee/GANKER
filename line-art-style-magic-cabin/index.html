@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>线稿风格魔女小屋 - 展示页</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="landingPage">
+    <section id="landingScreen" class="landingScreen">
+        <div class="landingMist landingMistA"></div>
+        <div class="landingMist landingMistB"></div>
+        <div class="landingContent">
+            <p class="landingEyebrow">Line Art Magic Cabin</p>
+            <h1>线稿风格魔女小屋</h1>
+            <p class="landingLead">走进会呼吸的魔法木屋，调天气、点炉火、种萝卜，也把你的探索进度存下来。</p>
+            <div class="landingActions">
+                <button id="enterGameBtn" class="primaryAction" type="button">进入游戏</button>
+                <button id="continueGameBtn" class="secondaryAction" type="button">读取存档</button>
+                <button id="openMembersBtn" class="secondaryAction" type="button">成员介绍</button>
+            </div>
+            <div class="authPanel" id="authPanel">
+                <div class="authTabs">
+                    <button id="showLoginBtn" class="authTab on" type="button">登录</button>
+                    <button id="showRegisterBtn" class="authTab" type="button">注册</button>
+                </div>
+                <div id="loginForm" class="authForm">
+                    <input id="loginName" autocomplete="username" maxlength="18" placeholder="用户名">
+                    <input id="loginPass" autocomplete="current-password" maxlength="24" type="password" placeholder="密码">
+                    <button id="loginBtn" type="button">登录账号</button>
+                </div>
+                <div id="registerForm" class="authForm hidden">
+                    <input id="registerName" autocomplete="username" maxlength="18" placeholder="用户名">
+                    <input id="registerId" maxlength="18" placeholder="学号 / 成员编号">
+                    <input id="registerPass" autocomplete="new-password" maxlength="24" type="password" placeholder="密码">
+                    <button id="registerBtn" type="button">创建账号</button>
+                </div>
+                <p id="authMsg" class="authMsg">未登录也可以游客进入，登录后会使用独立存档。</p>
+            </div>
+        </div>
+        <aside class="landingInfo">
+            <span>天气 7 种</span>
+            <span>视角 3 档</span>
+            <span>本地存档</span>
+        </aside>
+    </section>
+
+    <section id="membersModal" class="modalLayer" hidden>
+        <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="membersTitle">
+            <button id="closeMembersBtn" class="modalClose" type="button" aria-label="关闭">×</button>
+            <p class="modalEyebrow">Team</p>
+            <h2 id="membersTitle">成员介绍</h2>
+            <div id="memberListView" class="memberListView">
+                <div class="memberOrbit" aria-label="团队成员头像入口">
+                    <div class="orbitRing">
+                        <button class="memberAvatar orbitItem orbitItem1" type="button" data-member="zhou"><img src="menber/周.jpg" alt="周维健头像"><span>周维健</span></button>
+                        <button class="memberAvatar orbitItem orbitItem2" type="button" data-member="huang"><img src="menber/黄.jpg" alt="黄梓严头像"><span>黄梓严</span></button>
+                        <button class="memberAvatar orbitItem orbitItem3" type="button" data-member="kang"><img src="menber/康.jpg" alt="康羿盟头像"><span>康羿盟</span></button>
+                        <button class="memberAvatar orbitItem orbitItem4" type="button" data-member="he"><img src="menber/何.jpg" alt="何恬头像"><span>何恬</span></button>
+                        <button class="memberAvatar orbitItem orbitItem5" type="button" data-member="jia"><img src="menber/贾.jpg" alt="贾翌宸头像"><span>贾翌宸</span></button>
+                        <button class="memberAvatar orbitItem orbitItem6" type="button" data-member="ren"><img src="menber/任.jpg" alt="任嘉佑头像"><span>任嘉佑</span></button>
+                    </div>
+                    <div class="orbitCenter">
+                        <span>点击头像</span>
+                        <b>查看个人介绍</b>
+                    </div>
+                </div>
+            </div>
+            <article id="memberDetailView" class="memberDetailView" hidden>
+                <button id="backToMembersBtn" class="backBtn" type="button">返回成员列表</button>
+                <div class="memberPortrait" id="memberPortrait"><img id="memberPortraitImg" alt=""></div>
+                <h3 id="memberDetailName">成员姓名</h3>
+                <p id="memberDetailRole" class="memberDetailRole">职位</p>
+                <p id="memberDetailText" class="memberDetailText">个人介绍</p>
+                <dl class="memberFacts">
+                    <div><dt>负责内容</dt><dd id="memberDetailWork">项目工作</dd></div>
+                    <div><dt>个人标签</dt><dd id="memberDetailTags">标签</dd></div>
+                </dl>
+            </article>
+        </div>
+    </section>
+
+    <script src="js/landing-page.js"></script>
+</body>
+
+</html>

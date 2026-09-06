@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>线稿茶馆</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div id="coinPill">🪙 0</div>
+    <div id="heartsPill">❤️❤️❤️</div>
+    <div id="heldPill">手持：空</div>
+    <div id="backPill">
+        <a href="../game.html?from=store">返回小屋</a>
+    </div>
+
+    <button id="menuDot">●</button>
+    <div id="menuPanel">
+        <div class="title">设置</div>
+        <div class="row"><span>音效</span>
+            <div class="toggle on" id="sfxToggle">
+                <div class="knob"></div>
+            </div>
+        </div>
+        <div class="sliderRow"><span class="slbl">音量</span><input type="range" id="sfxSlider" min="0" max="1"
+                step="0.01" value="0.6"></div>
+        <div class="sep"></div>
+        <div class="credit">线稿美术 / 移动端交互灵感来自<br>《魔女的魔法小木屋》by YIBI2333</div>
+    </div>
+
+    <div id="hint"></div>
+    <div id="crosshair"></div>
+    <div id="lockTip">点击画面锁定鼠标 · Esc 退出</div>
+    <div id="flashOverlay"></div>
+
+    <div id="joyZone"></div>
+    <div id="joyBase">
+        <div id="joyKnob"></div>
+    </div>
+    <div id="btnAct">交互</div>
+
+    <div class="overlay show" id="startScreen">
+        <div class="panel">
+            <h1>☕ 线稿茶馆</h1>
+            <p>随机顾客上门点单，找到对应的饮品/点心，趁 TA 耐心耗尽前送过去吧！<br><br>
+                WASD 移动 · 鼠标看方向 · <b>E</b> 拾取 / 交付<br>
+                赚够 <b>100</b> 金币即可打烊，接单 3 次超时/送错则关门大吉。</p>
+            <button id="startBtn">开始营业</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="endScreen">
+        <div class="panel">
+            <h1 id="endTitle">结算</h1>
+            <p id="endDesc"></p>
+            <button id="restartBtn">再来一局</button>
+        </div>
+    </div>
+
+    <script src="three.min.js"></script>
+    <script>
+        if (typeof THREE === 'undefined') {
+            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');
+        }
+    </script>
+    <!-- 以下几个文件按依赖顺序加载，共用同一份全局作用域（不是 ES 模块），
+         这样 index.html 仍可直接双击用浏览器打开，无需起本地服务器 -->
+    <script src="js/scene.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/customers.js"></script>
+    <script src="js/game.js"></script>
+</body>
+
+</html>
