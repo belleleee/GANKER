@@ -72,9 +72,51 @@ const toolGreenDarkMat = LITMAT(0x71877f, {
     polygonOffsetUnits: 1
 });
 
+const toolWaterMat = new THREE.MeshBasicMaterial({
+    color: 0x7fcdf0,
+    transparent: true,
+    opacity: 0.62,
+    side: THREE.DoubleSide
+});
+
 const toolEdgeMat = new THREE.LineBasicMaterial({
     color: 0x5e5143
 });
+
+let wateringCanFilled = false;
+
+function setWateringCanFilled(filled, silent) {
+    wateringCanFilled = !!filled;
+    const tool = TOOLS_BY_NAME.wateringCan;
+    if (tool && tool.userData.waterIndicator) {
+        tool.userData.waterIndicator.visible = wateringCanFilled;
+    }
+    if (!silent) {
+        showHintOverride(wateringCanFilled ? '水壶已经装满，可以去浇灌作物了' : '水壶已经空了，需要去水井打水');
+    }
+}
+
+function isWateringCanFilled() {
+    return wateringCanFilled;
+}
+
+function fillWateringCan() {
+    setWateringCanFilled(true, false);
+}
+
+function consumeWateringCanWater() {
+    if (!wateringCanFilled) {
+        showHintOverride('水壶里没有水，先去水井旁按 <b>E</b> 打水');
+        return false;
+    }
+    setWateringCanFilled(false, true);
+    return true;
+}
+
+window.setWateringCanFilled = setWateringCanFilled;
+window.isWateringCanFilled = isWateringCanFilled;
+window.fillWateringCan = fillWateringCan;
+window.consumeWateringCanWater = consumeWateringCanWater;
 
 
 /* ==========================================================
@@ -496,6 +538,28 @@ function buildWateringCan() {
         Math.PI / 2;
 
     g.add(handle);
+
+
+    const waterIndicator =
+        new THREE.Mesh(
+            new THREE.CircleGeometry(0.105, 20),
+            toolWaterMat
+        );
+
+    waterIndicator.position.set(
+        0,
+        0.151,
+        0
+    );
+
+    waterIndicator.rotation.x =
+        -Math.PI / 2;
+
+    waterIndicator.visible =
+        false;
+
+    g.add(waterIndicator);
+    g.userData.waterIndicator = waterIndicator;
 
 
     return g;
@@ -1033,3 +1097,5 @@ const wateringCan =
                 0
             )
     });
+
+setWateringCanFilled(false, true);

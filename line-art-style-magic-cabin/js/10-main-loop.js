@@ -11,6 +11,9 @@
                 updateSprings(); updatePlayer(dt, time); updateWeatherSystem(dt, time); updateInteractHint();
                 updateWand(dt, time);
                 updateBlast(dt, time);
+                if (typeof updateWells === 'function') {
+                    updateWells(dt, time);
+                }
                 
                 FILL.uniforms.uTime.value = time;
                 FILL.uniforms.uFireStrength.value = fireP;
