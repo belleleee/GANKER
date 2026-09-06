@@ -11,6 +11,9 @@
                 updateSprings(); updatePlayer(dt, time); updateWeatherSystem(dt, time); updateInteractHint();
                 updateWand(dt, time);
                 updateBlast(dt, time);
+                if (typeof updateTeaFarm === 'function') {
+                    updateTeaFarm(dt, time);
+                }
                 if (typeof updateWells === 'function') {
                     updateWells(dt, time);
                 }
