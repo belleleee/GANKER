@@ -24,6 +24,7 @@ const heartsPill = document.getElementById('heartsPill');
 const heldPill = document.getElementById('heldPill');
 const flashOverlay = document.getElementById('flashOverlay');
 let coins = 0, lives = MAX_LIVES;
+const CAFE_REVENUE_KEY = 'magicCabin.cafeRevenue.v1';
 function updateHUD() { coinPill.textContent = '🪙 ' + coins; }
 function updateHearts() { heartsPill.textContent = '❤️'.repeat(lives) + '🖤'.repeat(MAX_LIVES - lives); }
 function updateHeldHUD() {
@@ -38,6 +39,22 @@ function flashScreen(color) {
         flashOverlay.style.opacity = '0';
     });
 }
+
+function saveCafeRevenue() {
+    try {
+        localStorage.setItem(CAFE_REVENUE_KEY, JSON.stringify({
+            amount: Math.max(0, Math.trunc(Number(coins) || 0)),
+            savedAt: new Date().toISOString()
+        }));
+    } catch (err) { }
+}
+
+function clearCafeRevenue() {
+    try {
+        localStorage.removeItem(CAFE_REVENUE_KEY);
+    } catch (err) { }
+}
+
 function loseLife() {
     lives--; updateHearts();
     flashScreen('#e05a5a'); SND.play('door');
@@ -52,6 +69,7 @@ const endTitle = document.getElementById('endTitle');
 const endDesc = document.getElementById('endDesc');
 
 function beginGame() {
+    clearCafeRevenue();
     coins = 0; lives = MAX_LIVES; heldItem = null;
     player.x = 0; player.z = -3.3; yaw = Math.PI; pitch = -0.22;
     for (const c of customers.slice()) disposeCustomer(c);
@@ -66,13 +84,14 @@ function beginGame() {
 }
 function endGame(win) {
     gameState = win ? 'win' : 'lose';
+    saveCafeRevenue();
     if (document.pointerLockElement) document.exitPointerLock();
     for (const c of customers.slice()) disposeCustomer(c);
     customers.length = 0;
     endTitle.textContent = win ? '🎉 打烊大吉！' : '😢 关门大吉...';
     endDesc.textContent = win
-        ? ('恭喜！营业额达到 ' + coins + ' 金币，成功打烊！')
-        : ('还差一点，最终赚了 ' + coins + ' 金币，再试一次吧！');
+        ? ('恭喜！营业额达到 ' + coins + ' 金币，返回小屋后会存入小金库。')
+        : ('还差一点，最终赚了 ' + coins + ' 金币，返回小屋后也会存入小金库。');
     endScreen.classList.add('show');
     updateLockUI();
 }
@@ -89,6 +108,7 @@ sfxToggle.addEventListener('click', () => {
     SND.setEnabled(on);
 });
 document.getElementById('sfxSlider').addEventListener('input', e => SND.setVolume(parseFloat(e.target.value)));
+addEventListener('beforeunload', saveCafeRevenue);
 
 /* ============ 初始化场景内容 ============ */
 buildRoom();

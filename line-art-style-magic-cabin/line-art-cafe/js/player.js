@@ -201,6 +201,7 @@ function tryDeliver(cust) {
     if (heldItem === cust.drink.id) {
         coins += cust.drink.price;
         updateHUD();
+        saveCafeRevenue();
         heldItem = null; updateHeldHUD();
         SND.play('chim');
         flashScreen('#7fd18a');

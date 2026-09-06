@@ -949,6 +949,10 @@
                     camShake *= Math.exp(-3.2 * dt);
                 }
 
+                if (typeof updateSecondCabin === 'function') {
+                    updateSecondCabin(dt, time);
+                }
+
                 renderer.render(scene, camera);
             }
             animate(0);

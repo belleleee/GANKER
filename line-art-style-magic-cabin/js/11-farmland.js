@@ -31,10 +31,18 @@ function applyFarmPlotState(state, sound) {
     if (sound) SND.play(sound);
 }
 function plantFarmCrop(state) {
+    if (
+        window.useBackpackItem &&
+        !window.useBackpackItem('turnipSeed', 1)
+    ) {
+        SND.play('toggle');
+        return;
+    }
+
     state.crop = createTurnip(state.x, 0.02, state.z);
     state.watered = false;
     applyFarmPlotState(state, 'chim');
-    showHintOverride('萝卜种子已经种下，装备水壶继续浇水');
+    showHintOverride('萝卜种子已经种下，背包种子 -1，装备水壶继续浇水');
 }
 function growFarmCrop(state) {
     const cropData = state.crop.userData.crop;

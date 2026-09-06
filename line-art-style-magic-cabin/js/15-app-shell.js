@@ -7,6 +7,7 @@ const APP_CONTENT_ID = 'magic-cabin-local-2026';
 const APP_USERS_KEY = 'magicCabin.users.v1';
 const APP_SESSION_KEY = 'magicCabin.session.v1';
 const APP_STORE_RETURN_KEY = 'magicCabin.returnFromStore.v1';
+const APP_CAFE_REVENUE_KEY = 'magicCabin.cafeRevenue.v1';
 const APP_GUEST_ID = 'guest';
 
 const landingScreen = document.getElementById('landingScreen');
@@ -24,6 +25,7 @@ const authMsg = document.getElementById('authMsg');
 const saveStatusEl = document.getElementById('saveStatus');
 const coinHud = document.getElementById('coinHud');
 const storageHud = document.getElementById('storageHud');
+const backpackHud = document.getElementById('backpackHud');
 const loginForm = document.getElementById('loginForm');
 const registerForm = document.getElementById('registerForm');
 const showLoginBtn = document.getElementById('showLoginBtn');
@@ -33,6 +35,7 @@ let currentCabinUser = loadSessionUser();
 let autosaveTimer = 0;
 let cabinCoins = 0;
 let cropStorage = { turnip: 0 };
+let cabinBackpack = { turnipSeed: 0 };
 
 const MEMBER_PROFILES = {
     zhou: {
@@ -148,6 +151,21 @@ function addCabinCoins(amount, reason) {
 
 window.addCabinCoins = addCabinCoins;
 
+function spendCabinCoins(amount, reason) {
+    const cost = Math.max(0, Math.trunc(Number(amount) || 0));
+    if (!cost) return true;
+    if (cabinCoins < cost) {
+        showHintOverride('金币不足：需要 ' + cost + '，当前 ' + cabinCoins);
+        return false;
+    }
+    cabinCoins -= cost;
+    renderCoins(true);
+    if (reason) showHintOverride(reason + ' -' + cost + ' · 当前金币 ' + cabinCoins);
+    return true;
+}
+
+window.spendCabinCoins = spendCabinCoins;
+
 function renderStorage(bump) {
     if (!storageHud) return;
     storageHud.textContent = '仓库 萝卜 ' + cropStorage.turnip;
@@ -166,6 +184,48 @@ function addCropToStorage(cropName, amount) {
 }
 
 window.addCropToStorage = addCropToStorage;
+
+function renderBackpack(bump) {
+    if (!backpackHud) return;
+    backpackHud.textContent = '背包 种子 ' + cabinBackpack.turnipSeed;
+    if (!bump) return;
+    backpackHud.classList.remove('bump');
+    void backpackHud.offsetWidth;
+    backpackHud.classList.add('bump');
+    setTimeout(() => backpackHud.classList.remove('bump'), 220);
+}
+
+function addBackpackItem(itemName, amount) {
+    const gain = Math.max(0, Math.trunc(Number(amount) || 0));
+    if (!gain || itemName !== 'turnipSeed') return;
+    cabinBackpack.turnipSeed = Math.min(999999, cabinBackpack.turnipSeed + gain);
+    renderBackpack(true);
+}
+
+function useBackpackItem(itemName, amount) {
+    const cost = Math.max(0, Math.trunc(Number(amount) || 0));
+    if (!cost || itemName !== 'turnipSeed') return true;
+    if (cabinBackpack.turnipSeed < cost) {
+        showHintOverride('背包里没有萝卜种子了，去商店开箱后按 <b>B</b> 购买');
+        return false;
+    }
+    cabinBackpack.turnipSeed -= cost;
+    renderBackpack(true);
+    return true;
+}
+
+function buyTurnipSeed(amount, price) {
+    const count = Math.max(1, Math.trunc(Number(amount) || 1));
+    const cost = Math.max(1, Math.trunc(Number(price) || 15)) * count;
+    if (!spendCabinCoins(cost, null)) return false;
+    addBackpackItem('turnipSeed', count);
+    showHintOverride('购入萝卜种子 +' + count + ' · 花费 ' + cost + ' 金币 · 背包 ' + cabinBackpack.turnipSeed);
+    return true;
+}
+
+window.addBackpackItem = addBackpackItem;
+window.useBackpackItem = useBackpackItem;
+window.buyTurnipSeed = buyTurnipSeed;
 
 function loadUsers() {
     const users = readJson(APP_USERS_KEY, []);
@@ -307,6 +367,20 @@ function prepareStoreReturn() {
 
 window.prepareStoreReturn = prepareStoreReturn;
 
+function claimCafeRevenue() {
+    const revenue = readJson(APP_CAFE_REVENUE_KEY, null);
+    const amount = revenue && typeof revenue === 'object'
+        ? Math.max(0, Math.trunc(Number(revenue.amount) || 0))
+        : 0;
+    if (!amount) return 0;
+    try {
+        localStorage.removeItem(APP_CAFE_REVENUE_KEY);
+    } catch (err) { }
+    addCabinCoins(amount, '咖啡馆营业收入');
+    saveGameState(false);
+    return amount;
+}
+
 function resumeFromStoreIfNeeded() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('from') !== 'store') return false;
@@ -317,8 +391,12 @@ function resumeFromStoreIfNeeded() {
     } catch (err) { }
     if (landingScreen) landingScreen.classList.add('hidden');
     window.APP_SHELL_BLOCK_GAME = false;
+    const cafeRevenue = claimCafeRevenue();
     updateSaveStatus();
-    showHintOverride(snapshot ? '已回到进入商店前的位置' : '已返回小屋');
+    showHintOverride(
+        (snapshot ? '已回到进入商店前的位置' : '已返回小屋') +
+        (cafeRevenue ? ' · 咖啡馆收入 +' + cafeRevenue + ' 金币已入小金库' : '')
+    );
     if (window.history && window.history.replaceState) {
         window.history.replaceState(null, '', window.location.pathname);
     }
@@ -399,6 +477,9 @@ function captureSaveState() {
             coins: cabinCoins,
             storage: {
                 turnip: cropStorage.turnip
+            },
+            backpack: {
+                turnipSeed: cabinBackpack.turnipSeed
             }
         },
         ui: {
@@ -526,8 +607,13 @@ function applySaveState(save) {
     cropStorage = {
         turnip: Math.max(0, Math.min(999999, Math.trunc(Number(storage.turnip) || 0)))
     };
+    const backpack = economy.backpack || save.backpack || {};
+    cabinBackpack = {
+        turnipSeed: Math.max(0, Math.min(999999, Math.trunc(Number(backpack.turnipSeed) || 0)))
+    };
     renderCoins(false);
     renderStorage(false);
+    renderBackpack(false);
     SND.setEnabled(ui.sfxEnabled !== false);
     sfxToggle.classList.toggle('on', SND.isEnabled());
     SND.setVolume(finiteNumber(ui.sfxVolume, 0.6, 1));
@@ -656,4 +742,11 @@ setCurrentUser(currentCabinUser);
 updateSaveStatus();
 renderCoins(false);
 renderStorage(false);
-if (!resumeFromStoreIfNeeded()) loadRequestedSaveIfNeeded();
+renderBackpack(false);
+if (!resumeFromStoreIfNeeded()) {
+    loadRequestedSaveIfNeeded();
+    const cafeRevenue = claimCafeRevenue();
+    if (cafeRevenue) {
+        showHintOverride('咖啡馆收入 +' + cafeRevenue + ' 金币已入小金库');
+    }
+}
