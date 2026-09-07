@@ -14,8 +14,14 @@
                 if (typeof updateTeaFarm === 'function') {
                     updateTeaFarm(dt, time);
                 }
+                if (typeof updateTeaHireSystem === 'function') {
+                    updateTeaHireSystem(dt, time);
+                }
                 if (typeof updateWells === 'function') {
                     updateWells(dt, time);
+                }
+                if (typeof updateFarmHireSystem === 'function') {
+                    updateFarmHireSystem(dt, time);
                 }
                 
                 FILL.uniforms.uTime.value = time;

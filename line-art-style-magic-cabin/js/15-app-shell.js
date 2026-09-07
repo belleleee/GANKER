@@ -148,6 +148,7 @@ function addCabinCoins(amount, reason) {
     if (!gain) return;
     cabinCoins = Math.min(999999, cabinCoins + gain);
     renderCoins(true);
+    if (reason === false) return;
     showHintOverride((reason || '获得金币') + ' +' + gain + ' · 当前金币 ' + cabinCoins);
 }
 
@@ -216,16 +217,21 @@ function addBackpackItem(itemName, amount) {
     renderBackpack(true);
 }
 
-function useBackpackItem(itemName, amount) {
+function useBackpackItem(itemName, amount, silent) {
     const cost = Math.max(0, Math.trunc(Number(amount) || 0));
     if (!cost || itemName !== 'turnipSeed') return true;
     if (cabinBackpack.turnipSeed < cost) {
-        showHintOverride('背包里没有萝卜种子了，去商店开箱后按 <b>B</b> 购买');
+        if (!silent) showHintOverride('背包里没有萝卜种子了，去商店开箱后按 <b>B</b> 购买');
         return false;
     }
     cabinBackpack.turnipSeed -= cost;
     renderBackpack(true);
     return true;
+}
+
+function getBackpackItemCount(itemName) {
+    if (itemName !== 'turnipSeed') return 0;
+    return cabinBackpack.turnipSeed;
 }
 
 function buyTurnipSeed(amount, price) {
@@ -239,6 +245,7 @@ function buyTurnipSeed(amount, price) {
 
 window.addBackpackItem = addBackpackItem;
 window.useBackpackItem = useBackpackItem;
+window.getBackpackItemCount = getBackpackItemCount;
 window.buyTurnipSeed = buyTurnipSeed;
 
 function loadUsers() {
@@ -552,8 +559,10 @@ function captureSaveState() {
                 watered: p.watered,
                 cropStage: p.crop && p.crop.userData.crop ? p.crop.userData.crop.stage : null,
                 harvested: p.harvested || 0
-            })) : []
+            })) : [],
+            hire: typeof captureFarmHireState === 'function' ? captureFarmHireState() : null
         },
+        teaFarm: typeof captureTeaFarmState === 'function' ? captureTeaFarmState() : null,
         newspaper: typeof captureNewspaperState === 'function' ? captureNewspaperState() : null,
         zongStory: typeof captureZongStoryState === 'function' ? captureZongStoryState() : null
     };
@@ -709,6 +718,12 @@ function applySaveState(save) {
             if (!plot) return;
             applyFarmPlotSave(plot, { tilled: true, watered: false, cropStage: stage, harvested: 0 });
         });
+    }
+    if (typeof applyFarmHireState === 'function') {
+        applyFarmHireState(farming.hire);
+    }
+    if (typeof applyTeaFarmState === 'function') {
+        applyTeaFarmState(save.teaFarm);
     }
     if (typeof applyNewspaperState === 'function') {
         applyNewspaperState(save.newspaper);
