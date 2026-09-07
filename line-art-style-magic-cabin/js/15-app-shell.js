@@ -8,6 +8,8 @@ const APP_USERS_KEY = 'magicCabin.users.v1';
 const APP_SESSION_KEY = 'magicCabin.session.v1';
 const APP_STORE_RETURN_KEY = 'magicCabin.returnFromStore.v1';
 const APP_CAFE_REVENUE_KEY = 'magicCabin.cafeRevenue.v1';
+const APP_JOURNAL_RELIC_KEY = 'magicCabin.journeyRelicReward.v1';
+const APP_JOURNEY_RELIC_OBTAINED_KEY = 'journeyRelicObtained';
 const APP_GUEST_ID = 'guest';
 
 const landingScreen = document.getElementById('landingScreen');
@@ -34,7 +36,7 @@ const showRegisterBtn = document.getElementById('showRegisterBtn');
 let currentCabinUser = loadSessionUser();
 let autosaveTimer = 0;
 let cabinCoins = 0;
-let cropStorage = { turnip: 0 };
+let cropStorage = { turnip: 0, starRelic: 0 };
 let cabinBackpack = { turnipSeed: 0 };
 
 const MEMBER_PROFILES = {
@@ -168,7 +170,8 @@ window.spendCabinCoins = spendCabinCoins;
 
 function renderStorage(bump) {
     if (!storageHud) return;
-    storageHud.textContent = '仓库 萝卜 ' + cropStorage.turnip;
+    storageHud.textContent =
+        '仓库 萝卜 ' + cropStorage.turnip + ' · 信物 ' + cropStorage.starRelic;
     if (!bump) return;
     storageHud.classList.remove('bump');
     void storageHud.offsetWidth;
@@ -184,6 +187,17 @@ function addCropToStorage(cropName, amount) {
 }
 
 window.addCropToStorage = addCropToStorage;
+
+function addRelicToStorage(relicName, amount) {
+    const gain = Math.max(0, Math.trunc(Number(amount) || 0));
+    if (!gain || relicName !== 'starRelic') return false;
+    const before = cropStorage.starRelic || 0;
+    cropStorage.starRelic = Math.min(1, before + gain);
+    renderStorage(cropStorage.starRelic !== before);
+    return cropStorage.starRelic !== before;
+}
+
+window.addRelicToStorage = addRelicToStorage;
 
 function renderBackpack(bump) {
     if (!backpackHud) return;
@@ -367,6 +381,12 @@ function prepareStoreReturn() {
 
 window.prepareStoreReturn = prepareStoreReturn;
 
+function prepareJournalReturn() {
+    saveGameState(false);
+}
+
+window.prepareJournalReturn = prepareJournalReturn;
+
 function claimCafeRevenue() {
     const revenue = readJson(APP_CAFE_REVENUE_KEY, null);
     const amount = revenue && typeof revenue === 'object'
@@ -379,6 +399,22 @@ function claimCafeRevenue() {
     addCabinCoins(amount, '咖啡馆营业收入');
     saveGameState(false);
     return amount;
+}
+
+function claimJournalRelic() {
+    const reward = readJson(APP_JOURNAL_RELIC_KEY, null);
+    const hasPendingReward = reward && typeof reward === 'object' && reward.starRelic;
+    const hasLegacyReward =
+        localStorage.getItem(APP_JOURNEY_RELIC_OBTAINED_KEY) === '1' &&
+        !(cropStorage.starRelic || 0);
+    const hasReward = hasPendingReward || hasLegacyReward;
+    if (!hasReward) return false;
+    try {
+        localStorage.removeItem(APP_JOURNAL_RELIC_KEY);
+    } catch (err) { }
+    const added = addRelicToStorage('starRelic', 1);
+    saveGameState(false);
+    return added;
 }
 
 function resumeFromStoreIfNeeded() {
@@ -397,6 +433,21 @@ function resumeFromStoreIfNeeded() {
         (snapshot ? '已回到进入商店前的位置' : '已返回小屋') +
         (cafeRevenue ? ' · 咖啡馆收入 +' + cafeRevenue + ' 金币已入小金库' : '')
     );
+    if (window.history && window.history.replaceState) {
+        window.history.replaceState(null, '', window.location.pathname);
+    }
+    return true;
+}
+
+function resumeFromJournalIfNeeded() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('from') !== 'journal') return false;
+    loadGameState(false);
+    if (landingScreen) landingScreen.classList.add('hidden');
+    window.APP_SHELL_BLOCK_GAME = false;
+    const relicAdded = claimJournalRelic();
+    updateSaveStatus();
+    showHintOverride(relicAdded ? '星辉信物已收入仓库' : '已返回小屋');
     if (window.history && window.history.replaceState) {
         window.history.replaceState(null, '', window.location.pathname);
     }
@@ -464,6 +515,10 @@ function captureSaveState() {
             cartOut,
             kotatsuOn,
             storageOpen,
+            wateringCanFilled:
+                typeof window.isWateringCanFilled === 'function'
+                    ? window.isWateringCanFilled()
+                    : false,
             hinges: captureHinges()
         },
         weather: {
@@ -476,7 +531,8 @@ function captureSaveState() {
         economy: {
             coins: cabinCoins,
             storage: {
-                turnip: cropStorage.turnip
+                turnip: cropStorage.turnip,
+                starRelic: cropStorage.starRelic || 0
             },
             backpack: {
                 turnipSeed: cabinBackpack.turnipSeed
@@ -582,6 +638,9 @@ function applySaveState(save) {
     cartOut = bool(world.cartOut);
     kotatsuOn = bool(world.kotatsuOn);
     storageOpen = bool(world.storageOpen);
+    if (typeof window.setWateringCanFilled === 'function') {
+        window.setWateringCanFilled(bool(world.wateringCanFilled), true);
+    }
     const h = world.hinges || {};
     applyHingeState(doorGroup, h.door);
     applyHingeState(winFL, h.winFL);
@@ -605,7 +664,11 @@ function applySaveState(save) {
     cabinCoins = Math.max(0, Math.min(999999, Math.trunc(Number(economy.coins) || 0)));
     const storage = economy.storage || save.storage || {};
     cropStorage = {
-        turnip: Math.max(0, Math.min(999999, Math.trunc(Number(storage.turnip) || 0)))
+        turnip: Math.max(0, Math.min(999999, Math.trunc(Number(storage.turnip) || 0))),
+        starRelic: Math.max(
+            0,
+            Math.min(1, Math.trunc(Number(storage.starRelic) || 0))
+        )
     };
     const backpack = economy.backpack || save.backpack || {};
     cabinBackpack = {
@@ -743,7 +806,7 @@ updateSaveStatus();
 renderCoins(false);
 renderStorage(false);
 renderBackpack(false);
-if (!resumeFromStoreIfNeeded()) {
+if (!resumeFromStoreIfNeeded() && !resumeFromJournalIfNeeded()) {
     loadRequestedSaveIfNeeded();
     const cafeRevenue = claimCafeRevenue();
     if (cafeRevenue) {

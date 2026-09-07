@@ -106,8 +106,8 @@ function turnNewspaper(delta) {
 
 function makeNewspaperRack() {
     const rack = new THREE.Group();
-    rack.position.set(-2.85, 0, 2.70);
-    rack.rotation.y = -0.38;
+    rack.position.set(-3.18, 0, -1.95);
+    rack.rotation.y = 1.18;
     scene.add(rack);
 
     const stand = edge(new THREE.BoxGeometry(0.66, 0.08, 0.44));

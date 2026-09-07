@@ -1013,7 +1013,7 @@
                 1: '空手',
                 2: '已拿起魔杖 · 按 <b>F</b> 或<b>右键</b>释放爆裂魔法',
                 3: '已拿起锄头 · 对着地块按 <b>E</b> 翻地',
-                4: '已拿起水壶 · 对着已翻地的地块按 <b>E</b> 浇水',
+                4: '已拿起水壶 · 需要先在水井旁按 <b>E</b> 打水，才能浇灌',
                 5: '已拿起镰刀 · 对着成熟作物按 <b>E</b> 收割'
             };
             function selectSlot(n) {
@@ -1024,7 +1024,13 @@
                     const el = document.getElementById('slot' + i);
                     if (el) el.classList.toggle('on', i === n);
                 }
-                showHintOverride(SLOT_HINT[n] || '');
+                const hint =
+                    n === 4 &&
+                    window.isWateringCanFilled &&
+                    window.isWateringCanFilled()
+                        ? '已拿起水壶 · 水壶有水，对着作物按 <b>E</b> 浇灌'
+                        : SLOT_HINT[n] || '';
+                showHintOverride(hint);
             }
 
             /* ---- 魔杖：一阶惯性跟随转向（无回正摆动）+ 施法瞄准 ---- */
@@ -1226,4 +1232,3 @@
                 dustPts.visible = dustUniforms.uOpacity.value > 0.02;
                 applyCastDark();
             }
-

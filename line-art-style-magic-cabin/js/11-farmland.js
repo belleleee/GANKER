@@ -88,7 +88,22 @@ function onFarmPlotClick(state) {
             showHintOverride('需要先装备水壶 · 按 <b>4</b>');
             return;
         }
-        if (!triggerToolSwing('wateringCan', () => growFarmCrop(state))) SND.play('toggle'); // 水壶正在挥动中
+        if (window.isWateringCanFilled && !window.isWateringCanFilled()) {
+            SND.play('toggle');
+            showHintOverride('水壶里没有水，先去水井旁按 <b>E</b> 打水');
+            return;
+        }
+        if (
+            !triggerToolSwing('wateringCan', () => {
+                if (window.consumeWateringCanWater && !window.consumeWateringCanWater()) {
+                    SND.play('toggle');
+                    return;
+                }
+                growFarmCrop(state);
+            }
+        )) {
+            SND.play('toggle'); // 水壶正在挥动中
+        }
     } else {
         if (slotSel !== TOOL_SLOT.sickle) {
             SND.play('toggle');

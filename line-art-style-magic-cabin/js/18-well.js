@@ -1398,6 +1398,9 @@ function buildWell(
         filled:
             false,
 
+        autoDrawing:
+            false,
+
         axle:
             axleG,
 
@@ -1445,36 +1448,49 @@ function buildWell(
        原项目 regMagic 本身就是这样实现的。
        ====================================================== */
 
-    wellG.userData.aimLabel =
-        '放下水桶';
+    wellG.userData.aimLabel = '打水';
 
+    function drawWaterFromWell() {
 
-    regMagic(
-
-        wellG,
-
-        () => {
-
-            state.down =
-                !state.down;
-
-
-            if (
-                state.down
-            ) {
-
-                wellG.userData.aimLabel =
-                    '提起水桶';
-
-            } else {
-
-                wellG.userData.aimLabel =
-                    state.filled
-                        ? '再次打水'
-                        : '放下水桶';
-            }
+        if (state.autoDrawing) {
+            showHintOverride('正在打水中，水桶马上就上来了');
+            return;
         }
-    );
+
+        if (
+            typeof window.isWateringCanFilled === 'function' &&
+            window.isWateringCanFilled()
+        ) {
+            showHintOverride('水壶已经有水了，先去农田浇灌吧');
+            return;
+        }
+
+        state.down = true;
+        state.filled = false;
+        state.autoDrawing = true;
+        wellG.userData.aimLabel = '正在打水';
+
+        showHintOverride('水桶放下去了，等它提上来就能装满水壶');
+    }
+
+    regMagic(wellG, drawWaterFromWell);
+
+    if (
+        typeof interactables !==
+        'undefined'
+    ) {
+        const wellInteractEntry = {
+            x,
+            z,
+            r: 1.65,
+            label: wellG.userData.aimLabel,
+            act: drawWaterFromWell
+        };
+
+        state.interactEntry = wellInteractEntry;
+
+        interactables.push(wellInteractEntry);
+    }
 
 
     /* ======================================================
@@ -1707,6 +1723,10 @@ function updateWellObject(
 
         s.filled =
             true;
+
+        if (s.autoDrawing) {
+            s.down = false;
+        }
     }
 
 
@@ -1791,19 +1811,38 @@ function updateWellObject(
        35. 更新交互提示
        ====================================================== */
 
+    if (s.autoDrawing && s.filled && !s.down && s.p < 0.05) {
+
+        s.autoDrawing = false;
+
+        s.filled = false;
+
+        if (typeof window.fillWateringCan === 'function') {
+            window.fillWateringCan();
+        } else {
+            showHintOverride('水已经打上来了');
+        }
+    }
+
     if (
         s.down
     ) {
 
         well.userData.aimLabel =
-            '提起水桶';
+            s.autoDrawing
+                ? '正在打水'
+                : '提起水桶';
 
     } else {
 
         well.userData.aimLabel =
-            s.filled
-                ? '再次打水'
-                : '放下水桶';
+            s.autoDrawing
+                ? '正在打水'
+                : '打水';
+    }
+
+    if (s.interactEntry) {
+        s.interactEntry.label = well.userData.aimLabel;
     }
 }
 

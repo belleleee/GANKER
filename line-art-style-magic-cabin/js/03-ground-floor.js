@@ -1359,6 +1359,55 @@
             const tarotCards = [];
             let tarotState = 'stacked', tarotT = 0;
             const TAROT_N = 9;
+            function enterJournalLevel() {
+                if (typeof window.prepareJournalReturn === 'function') {
+                    window.prepareJournalReturn();
+                }
+                window.APP_SHELL_BLOCK_GAME = false;
+                window.APP_GAME_MODAL_OPEN = false;
+                window.location.href = 'jourmal.html';
+            }
+            function makeJournalCardFace() {
+                const canvas = document.createElement('canvas');
+                canvas.width = 256;
+                canvas.height = 384;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#fbf7df';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.strokeStyle = '#b9c7ad';
+                ctx.lineWidth = 10;
+                ctx.beginPath();
+                if (ctx.roundRect) {
+                    ctx.roundRect(26, 38, 204, 118, 56);
+                } else {
+                    ctx.rect(26, 38, 204, 118);
+                }
+                ctx.stroke();
+                ctx.fillStyle = '#526a48';
+                ctx.font = 'bold 34px "Songti SC", "STSong", serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('进入遗迹', 128, 82);
+                ctx.fillText('穿越', 128, 120);
+                ctx.strokeStyle = '#d8d4b5';
+                ctx.lineWidth = 3;
+                for (let y = 200; y < 360; y += 32) {
+                    ctx.beginPath();
+                    ctx.moveTo(28, y);
+                    ctx.lineTo(228, y);
+                    ctx.stroke();
+                }
+                const texture = new THREE.CanvasTexture(canvas);
+                const material = new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    side: THREE.DoubleSide
+                });
+                const face = new THREE.Mesh(new THREE.PlaneGeometry(0.138, 0.204), material);
+                face.position.y = 0.008;
+                face.rotation.x = -Math.PI / 2;
+                return face;
+            }
             for (let i = 0; i < TAROT_N; i++) {
                 const c = new THREE.Group();
                 put(box(0.15, 0.005, 0.23), 0, 0, 0, 0, 0, 0, c);
@@ -1382,6 +1431,9 @@
                 tarotG.add(c);
                 tarotCards.push(c);
             }
+            const journalCard = tarotCards[tarotCards.length - 1];
+            journalCard.add(makeJournalCardFace());
+            journalCard.userData.aimLabel = '进入遗迹穿越';
             function tarotPose(u, i, t) {
                 return {
                     x: Math.cos(u.fa) * u.fr,
@@ -1403,6 +1455,7 @@
                     tarotState = 'returning'; tarotT = 0;
                 }
             });
+            regMagic(journalCard, enterJournalLevel);
 
             /* ---- 12.13 暖桌（八角桌板 + 等腰梯形垂帘 + 四角倒三角填补）+ 收音机 + 果盆橘子 + 方坐垫 ---- */
             let kotatsuOn = true;
@@ -1797,4 +1850,3 @@
                 });
             }
             regMagic(storageChest, () => { storageOpen = !storageOpen; });
-

@@ -1,0 +1,5630 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<title>遗迹穿越 · Journey Level</title>
+
+<style>
+    :root {
+        --ink: #1f2925;
+        --paper: #f7f2e8;
+        --glass: rgba(255,255,255,.78);
+        --line: rgba(31,41,37,.18);
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    html,
+    body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: var(--paper);
+        color: var(--ink);
+        font-family:
+            "Songti SC",
+            "STSong",
+            "PingFang SC",
+            serif;
+    }
+
+    canvas {
+        display: block;
+    }
+
+    #hud {
+        position: fixed;
+        left: 22px;
+        top: 20px;
+        z-index: 20;
+
+        width: 270px;
+
+        padding: 15px 17px;
+
+        background: var(--glass);
+
+        border:
+            1px solid
+            var(--line);
+
+        backdrop-filter:
+            blur(8px);
+
+        border-radius:
+            12px;
+
+        pointer-events:
+            none;
+    }
+
+    #hud-title {
+        font-size:
+            17px;
+
+        font-weight:
+            700;
+
+        margin-bottom:
+            10px;
+    }
+
+    .hud-row {
+        display: flex;
+
+        align-items:
+            center;
+
+        gap:
+            9px;
+
+        margin:
+            7px 0;
+
+        font-size:
+            13px;
+    }
+
+    .hud-label {
+        width:
+            52px;
+
+        flex:
+            none;
+    }
+
+    .bar {
+        position:
+            relative;
+
+        flex:
+            1;
+
+        height:
+            8px;
+
+        background:
+            rgba(
+                31,
+                41,
+                37,
+                .10
+            );
+
+        border-radius:
+            999px;
+
+        overflow:
+            hidden;
+    }
+
+    .bar-fill {
+        position:
+            absolute;
+
+        inset:
+            0 auto 0 0;
+
+        width:
+            100%;
+
+        border-radius:
+            inherit;
+
+        background:
+            rgba(
+                50,
+                90,
+                75,
+                .72
+            );
+
+        transition:
+            width .12s linear;
+    }
+
+    #oxygenFill {
+        background:
+            rgba(
+                76,
+                133,
+                166,
+                .74
+            );
+    }
+
+    #checkpointLabel,
+    #relicLabel {
+        margin-top:
+            7px;
+
+        font-size:
+            12px;
+
+        opacity:
+            .72;
+    }
+
+    #hint {
+        position:
+            fixed;
+
+        left:
+            50%;
+
+        bottom:
+            42px;
+
+        transform:
+            translateX(-50%)
+            translateY(8px);
+
+        z-index:
+            30;
+
+        padding:
+            10px 17px;
+
+        background:
+            rgba(
+                255,
+                255,
+                255,
+                .90
+            );
+
+        border:
+            1px solid
+            rgba(
+                31,
+                41,
+                37,
+                .18
+            );
+
+        border-radius:
+            10px;
+
+        font-size:
+            14px;
+
+        opacity:
+            0;
+
+        transition:
+            opacity .16s ease,
+            transform .16s ease;
+
+        pointer-events:
+            none;
+
+        white-space:
+            nowrap;
+    }
+
+    #hint.show {
+        opacity:
+            1;
+
+        transform:
+            translateX(-50%)
+            translateY(0);
+    }
+
+    #message {
+        position:
+            fixed;
+
+        left:
+            50%;
+
+        top:
+            18%;
+
+        transform:
+            translateX(-50%);
+
+        z-index:
+            40;
+
+        padding:
+            12px 20px;
+
+        background:
+            rgba(
+                255,
+                255,
+                255,
+                .92
+            );
+
+        border:
+            1px solid
+            rgba(
+                31,
+                41,
+                37,
+                .18
+            );
+
+        border-radius:
+            12px;
+
+        font-size:
+            15px;
+
+        opacity:
+            0;
+
+        transition:
+            opacity .2s ease;
+
+        pointer-events:
+            none;
+    }
+
+    #message.show {
+        opacity:
+            1;
+    }
+
+    #crosshair {
+        position:
+            fixed;
+
+        left:
+            50%;
+
+        top:
+            50%;
+
+        width:
+            18px;
+
+        height:
+            18px;
+
+        transform:
+            translate(
+                -50%,
+                -50%
+            );
+
+        z-index:
+            25;
+
+        display:
+            none;
+
+        pointer-events:
+            none;
+    }
+
+    #crosshair::before,
+    #crosshair::after {
+        content:
+            "";
+
+        position:
+            absolute;
+
+        background:
+            rgba(
+                31,
+                41,
+                37,
+                .78
+            );
+    }
+
+    #crosshair::before {
+        left:
+            8px;
+
+        top:
+            2px;
+
+        width:
+            1px;
+
+        height:
+            14px;
+    }
+
+    #crosshair::after {
+        left:
+            2px;
+
+        top:
+            8px;
+
+        width:
+            14px;
+
+        height:
+            1px;
+    }
+
+    #help {
+        position:
+            fixed;
+
+        right:
+            20px;
+
+        top:
+            20px;
+
+        z-index:
+            20;
+
+        padding:
+            13px 15px;
+
+        background:
+            rgba(
+                255,
+                255,
+                255,
+                .72
+            );
+
+        border:
+            1px solid
+            rgba(
+                31,
+                41,
+                37,
+                .15
+            );
+
+        border-radius:
+            10px;
+
+        font-size:
+            12px;
+
+        line-height:
+            1.7;
+
+        pointer-events:
+            none;
+    }
+
+    #homeBtn {
+        position:
+            fixed;
+
+        right:
+            20px;
+
+        bottom:
+            20px;
+
+        z-index:
+            35;
+
+        display:
+            inline-flex;
+
+        align-items:
+            center;
+
+        justify-content:
+            center;
+
+        padding:
+            10px 15px;
+
+        background:
+            rgba(
+                255,
+                255,
+                255,
+                .84
+            );
+
+        border:
+            1px solid
+            rgba(
+                31,
+                41,
+                37,
+                .18
+            );
+
+        border-radius:
+            999px;
+
+        color:
+            var(--ink);
+
+        font-size:
+            13px;
+
+        text-decoration:
+            none;
+
+        box-shadow:
+            0 8px 24px
+            rgba(
+                31,
+                41,
+                37,
+                .08
+            );
+    }
+
+    #deathMask {
+        position:
+            fixed;
+
+        inset:
+            0;
+
+        z-index:
+            50;
+
+        background:
+            rgba(
+                235,
+                238,
+                236,
+                0
+            );
+
+        pointer-events:
+            none;
+
+        transition:
+            background
+            .25s ease;
+    }
+
+    #deathMask.on {
+        background:
+            rgba(
+                235,
+                238,
+                236,
+                .88
+            );
+    }
+
+    #finishPanel {
+        position:
+            fixed;
+
+        left:
+            50%;
+
+        top:
+            50%;
+
+        transform:
+            translate(
+                -50%,
+                -50%
+            )
+            scale(.96);
+
+        z-index:
+            60;
+
+        width:
+            min(
+                430px,
+                calc(
+                    100vw -
+                    40px
+                )
+            );
+
+        padding:
+            28px;
+
+        background:
+            rgba(
+                255,
+                255,
+                255,
+                .95
+            );
+
+        border:
+            1px solid
+            rgba(
+                31,
+                41,
+                37,
+                .18
+            );
+
+        border-radius:
+            16px;
+
+        text-align:
+            center;
+
+        opacity:
+            0;
+
+        pointer-events:
+            none;
+
+        transition:
+            opacity .25s ease,
+            transform .25s ease;
+    }
+
+    #finishPanel.show {
+        opacity:
+            1;
+
+        transform:
+            translate(
+                -50%,
+                -50%
+            )
+            scale(1);
+
+        pointer-events:
+            auto;
+    }
+
+    #finishPanel h2 {
+        margin:
+            0 0 9px;
+
+        font-size:
+            23px;
+    }
+
+    #finishPanel p {
+        margin:
+            0 0 18px;
+
+        line-height:
+            1.7;
+
+        opacity:
+            .75;
+    }
+
+    #finishPanel button {
+        appearance:
+            none;
+
+        border:
+            1px solid
+            rgba(
+                31,
+                41,
+                37,
+                .25
+            );
+
+        background:
+            #fff;
+
+        color:
+            var(--ink);
+
+        border-radius:
+            8px;
+
+        padding:
+            9px 15px;
+
+        cursor:
+            pointer;
+    }
+
+    .finish-actions {
+        display:
+            flex;
+
+        justify-content:
+            center;
+
+        gap:
+            10px;
+
+        flex-wrap:
+            wrap;
+    }
+
+    .finish-actions a {
+        display:
+            inline-flex;
+
+        align-items:
+            center;
+
+        justify-content:
+            center;
+
+        border:
+            1px solid
+            rgba(
+                31,
+                41,
+                37,
+                .25
+            );
+
+        background:
+            #fff;
+
+        color:
+            var(--ink);
+
+        border-radius:
+            8px;
+
+        padding:
+            9px 15px;
+
+        text-decoration:
+            none;
+    }
+</style>
+</head>
+
+<body>
+
+<div id="hud">
+
+    <div id="hud-title">
+        遗迹穿越
+    </div>
+
+    <div class="hud-row">
+
+        <span class="hud-label">
+            守护
+        </span>
+
+        <div class="bar">
+
+            <div
+                id="shieldFill"
+                class="bar-fill">
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="hud-row">
+
+        <span class="hud-label">
+            氧气
+        </span>
+
+        <div class="bar">
+
+            <div
+                id="oxygenFill"
+                class="bar-fill">
+            </div>
+
+        </div>
+
+    </div>
+
+    <div id="checkpointLabel">
+        检查点：起点
+    </div>
+
+    <div id="relicLabel">
+        信物：尚未取得
+    </div>
+
+</div>
+
+
+<div id="help">
+
+    WASD / 方向键：移动<br>
+
+    Shift：疾跑<br>
+
+    Space：跳跃<br>
+
+    E：交互<br>
+
+    V：第一 / 第三人称<br>
+
+    鼠标拖动：调整视角
+
+</div>
+
+
+<a id="homeBtn" href="game.html?from=journal">
+    返回小屋
+</a>
+
+
+<div id="hint"></div>
+
+<div id="message"></div>
+
+<div id="crosshair"></div>
+
+<div id="deathMask"></div>
+
+
+<div id="finishPanel">
+
+    <h2>
+        取得信物
+    </h2>
+
+    <p>
+        你穿过了断桥、深水与魔法遗迹，
+        找到了遗失的星辉信物。
+    </p>
+
+    <div class="finish-actions">
+
+        <button id="restartBtn">
+            再走一次
+        </button>
+
+        <a href="game.html?from=journal">
+            返回小屋
+        </a>
+
+    </div>
+
+</div>
+
+
+<script
+src="three.min.js">
+</script>
+
+
+<script>
+
+'use strict';
+
+
+const JOURNEY_RELIC_OBTAINED_KEY =
+    'journeyRelicObtained';
+
+
+const JOURNEY_RELIC_REWARD_KEY =
+    'magicCabin.journeyRelicReward.v1';
+
+
+/* ==========================================================
+   01. CORE
+   ========================================================== */
+
+const scene =
+    new THREE.Scene();
+
+
+scene.background =
+    new THREE.Color(
+        0xf7f3e9
+    );
+
+
+scene.fog =
+    new THREE.Fog(
+        0xf7f3e9,
+        28,
+        76
+    );
+
+
+const camera =
+    new THREE.PerspectiveCamera(
+
+        50,
+
+        innerWidth /
+        innerHeight,
+
+        0.1,
+
+        160
+    );
+
+
+const renderer =
+    new THREE.WebGLRenderer({
+
+        antialias:
+            true
+    });
+
+
+renderer.setPixelRatio(
+
+    Math.min(
+
+        devicePixelRatio,
+
+        2
+    )
+);
+
+
+renderer.setSize(
+
+    innerWidth,
+
+    innerHeight
+);
+
+
+document.body.appendChild(
+
+    renderer.domElement
+);
+
+
+/* ==========================================================
+   02. MATERIALS
+   ========================================================== */
+
+const MAT =
+    new THREE.LineBasicMaterial({
+
+        color:
+            0x1b2420
+    });
+
+
+function fillMat(
+    hex,
+    opacity = 1
+) {
+
+    const material =
+        new THREE.MeshBasicMaterial({
+
+            color:
+                hex,
+
+            transparent:
+                opacity < 1,
+
+            opacity:
+                opacity,
+
+            side:
+                opacity < 1
+                    ? THREE.DoubleSide
+                    : THREE.FrontSide,
+
+            polygonOffset:
+                true,
+
+            polygonOffsetFactor:
+                2,
+
+            polygonOffsetUnits:
+                2
+        });
+
+
+    return material;
+}
+
+
+const MAT_STONE =
+    fillMat(
+        0xe3dfd5
+    );
+
+
+const MAT_STONE_DARK =
+    fillMat(
+        0xbfc2bd
+    );
+
+
+const MAT_WOOD =
+    fillMat(
+        0xb79a72
+    );
+
+
+const MAT_WOOD_DARK =
+    fillMat(
+        0x8f7558
+    );
+
+
+const MAT_WATER =
+    fillMat(
+        0xaecbd2,
+        0.55
+    );
+
+
+const MAT_MAGIC =
+    fillMat(
+        0xc7b6d6,
+        0.58
+    );
+
+
+const MAT_MAGIC_WARN =
+    fillMat(
+        0xdfc8df,
+        0.22
+    );
+
+
+const MAT_RELIC =
+    fillMat(
+        0xe7d4a4,
+        0.92
+    );
+
+
+const MAT_CHECK =
+    fillMat(
+        0xc3d2c4
+    );
+
+
+/* ==========================================================
+   03. ORIGINAL-STYLE HELPERS
+   ========================================================== */
+
+function edge(
+    geo,
+    mat = MAT_STONE,
+    threshold = 1
+) {
+
+    const g =
+        new THREE.Group();
+
+
+    const mesh =
+        new THREE.Mesh(
+            geo,
+            mat
+        );
+
+
+    g.add(
+        mesh
+    );
+
+
+    const lines =
+        new THREE.LineSegments(
+
+            new THREE.EdgesGeometry(
+                geo,
+                threshold
+            ),
+
+            MAT
+        );
+
+
+    g.add(
+        lines
+    );
+
+
+    return g;
+}
+
+
+function box(
+    w,
+    h,
+    d,
+    mat = MAT_STONE
+) {
+
+    return edge(
+
+        new THREE.BoxGeometry(
+            w,
+            h,
+            d
+        ),
+
+        mat
+    );
+}
+
+
+function log(
+    len,
+    r = 0.08,
+    mat = MAT_WOOD
+) {
+
+    return edge(
+
+        new THREE.CylinderGeometry(
+            r,
+            r,
+            len,
+            8
+        ),
+
+        mat
+    );
+}
+
+
+function put(
+    o,
+    x,
+    y,
+    z,
+    rx = 0,
+    ry = 0,
+    rz = 0,
+    parent = scene
+) {
+
+    o.position.set(
+        x,
+        y,
+        z
+    );
+
+
+    o.rotation.set(
+        rx,
+        ry,
+        rz
+    );
+
+
+    parent.add(
+        o
+    );
+
+
+    return o;
+}
+
+
+function V(
+    x,
+    y,
+    z
+) {
+
+    return new THREE.Vector3(
+        x,
+        y,
+        z
+    );
+}
+
+
+function line(
+    pts,
+    material = MAT
+) {
+
+    const geo =
+        new THREE.BufferGeometry()
+            .setFromPoints(
+
+                pts.map(
+                    p =>
+                        V(
+                            p[0],
+                            p[1],
+                            p[2]
+                        )
+                )
+            );
+
+
+    return new THREE.Line(
+        geo,
+        material
+    );
+}
+
+
+/* ==========================================================
+   04. INTERACTION
+   ========================================================== */
+
+const magicMeshes =
+    [];
+
+
+const interactables =
+    [];
+
+
+function regMagic(
+    root,
+    onClick
+) {
+
+    root.userData.onClick =
+        onClick;
+
+
+    root.traverse(
+        m => {
+
+            if (
+                m.isMesh &&
+                !m.userData.noHit
+            ) {
+
+                m.userData.magicRoot =
+                    root;
+
+
+                magicMeshes.push(
+                    m
+                );
+            }
+        }
+    );
+
+
+    return root;
+}
+
+
+/* ==========================================================
+   05. PLAYER
+   ========================================================== */
+
+const player = {
+
+    pos:
+        new THREE.Vector3(
+            0,
+            0.18,
+            10
+        ),
+
+    vy:
+        0,
+
+    yaw:
+        Math.PI,
+
+    moveSpeed:
+        0,
+
+    onGround:
+        true,
+
+    groundT:
+        0,
+
+    shield:
+        100,
+
+    oxygen:
+        100
+};
+
+
+const PLAYER_R =
+    0.26;
+
+
+const keys =
+    {};
+
+
+let camYaw =
+    Math.PI;
+
+
+let camPitch =
+    0.30;
+
+
+let camDist =
+    6.2;
+
+
+let viewMode =
+    'tp';
+
+
+/* ==========================================================
+   06. SLIME
+   ========================================================== */
+
+const slimeRoot =
+    new THREE.Group();
+
+
+scene.add(
+    slimeRoot
+);
+
+
+const slimeBody =
+    new THREE.Group();
+
+
+slimeRoot.add(
+    slimeBody
+);
+
+
+const slimeOuterMat =
+    fillMat(
+        0x86c5ae,
+        0.40
+    );
+
+
+const slimeMidMat =
+    fillMat(
+        0xb6dacb,
+        0.28
+    );
+
+
+const slimeCoreMat =
+    fillMat(
+        0x639c88,
+        0.55
+    );
+
+
+const slimeGeo =
+    new THREE.SphereGeometry(
+
+        0.30,
+
+        22,
+
+        16
+    );
+
+
+const slimeOuter =
+    new THREE.Mesh(
+
+        slimeGeo,
+
+        slimeOuterMat
+    );
+
+
+slimeBody.add(
+    slimeOuter
+);
+
+
+const slimeEdges =
+    new THREE.LineSegments(
+
+        new THREE.EdgesGeometry(
+            slimeGeo,
+            18
+        ),
+
+        MAT
+    );
+
+
+slimeBody.add(
+    slimeEdges
+);
+
+
+const slimeMid =
+    new THREE.Mesh(
+
+        slimeGeo.clone(),
+
+        slimeMidMat
+    );
+
+
+slimeMid.scale.setScalar(
+    0.88
+);
+
+
+slimeBody.add(
+    slimeMid
+);
+
+
+const slimeCore =
+    new THREE.Mesh(
+
+        new THREE.SphereGeometry(
+            0.13,
+            14,
+            10
+        ),
+
+        slimeCoreMat
+    );
+
+
+slimeBody.add(
+    slimeCore
+);
+
+
+const eyeMat =
+    fillMat(
+        0x25312b
+    );
+
+
+for (
+    const x of [
+
+        -0.085,
+
+        0.085
+    ]
+) {
+
+    const eye =
+        new THREE.Mesh(
+
+            new THREE.SphereGeometry(
+                0.025,
+                8,
+                6
+            ),
+
+            eyeMat
+        );
+
+
+    eye.position.set(
+
+        x,
+
+        0.055,
+
+        0.275
+    );
+
+
+    eye.scale.set(
+
+        0.7,
+
+        1.1,
+
+        0.45
+    );
+
+
+    slimeBody.add(
+        eye
+    );
+}
+
+
+/* ==========================================================
+   07. COLLISION
+   ========================================================== */
+
+const solidBoxes =
+    [];
+
+
+const platformBoxes =
+    [];
+
+
+function addPlatform(
+    x,
+    top,
+    z,
+    w,
+    d,
+    thickness = 0.22,
+    material = MAT_STONE
+) {
+
+    const g =
+        put(
+
+            box(
+                w,
+                thickness,
+                d,
+                material
+            ),
+
+            x,
+
+            top -
+            thickness / 2,
+
+            z
+        );
+
+
+    platformBoxes.push({
+
+        x1:
+            x -
+            w / 2,
+
+        z1:
+            z -
+            d / 2,
+
+        x2:
+            x +
+            w / 2,
+
+        z2:
+            z +
+            d / 2,
+
+        top:
+            top
+    });
+
+
+    return g;
+}
+
+
+function addSolid(
+    x,
+    z,
+    w,
+    d
+) {
+
+    solidBoxes.push({
+
+        x1:
+            x -
+            w / 2,
+
+        z1:
+            z -
+            d / 2,
+
+        x2:
+            x +
+            w / 2,
+
+        z2:
+            z +
+            d / 2
+    });
+}
+
+
+function groundAt(
+    x,
+    z,
+    currentY
+) {
+
+    let best =
+        -100;
+
+
+    for (
+        const b
+        of platformBoxes
+    ) {
+
+        if (
+            x >= b.x1 &&
+            x <= b.x2 &&
+            z >= b.z1 &&
+            z <= b.z2
+        ) {
+
+            if (
+                b.top <=
+                currentY +
+                0.55
+            ) {
+
+                best =
+                    Math.max(
+                        best,
+                        b.top
+                    );
+            }
+        }
+    }
+
+
+    return best;
+}
+
+
+function circleHitsBox(
+    x,
+    z,
+    b
+) {
+
+    const qx =
+        Math.max(
+
+            b.x1,
+
+            Math.min(
+                x,
+                b.x2
+            )
+        );
+
+
+    const qz =
+        Math.max(
+
+            b.z1,
+
+            Math.min(
+                z,
+                b.z2
+            )
+        );
+
+
+    const dx =
+        x -
+        qx;
+
+
+    const dz =
+        z -
+        qz;
+
+
+    return (
+
+        dx *
+        dx
+
+        +
+
+        dz *
+        dz
+
+    ) <
+
+        PLAYER_R *
+        PLAYER_R;
+}
+
+
+function collideXZ(
+    nx,
+    nz,
+    y
+) {
+
+    let x =
+        nx;
+
+
+    let z =
+        nz;
+
+
+    for (
+        const b
+        of solidBoxes
+    ) {
+
+        if (
+            !circleHitsBox(
+                x,
+                z,
+                b
+            )
+        ) {
+
+            continue;
+        }
+
+
+        const left =
+            Math.abs(
+
+                x -
+
+                (
+                    b.x1 -
+                    PLAYER_R
+                )
+            );
+
+
+        const right =
+            Math.abs(
+
+                x -
+
+                (
+                    b.x2 +
+                    PLAYER_R
+                )
+            );
+
+
+        const front =
+            Math.abs(
+
+                z -
+
+                (
+                    b.z1 -
+                    PLAYER_R
+                )
+            );
+
+
+        const back =
+            Math.abs(
+
+                z -
+
+                (
+                    b.z2 +
+                    PLAYER_R
+                )
+            );
+
+
+        const m =
+            Math.min(
+
+                left,
+
+                right,
+
+                front,
+
+                back
+            );
+
+
+        if (
+            m ===
+            left
+        ) {
+
+            x =
+                b.x1 -
+                PLAYER_R;
+
+        } else if (
+            m ===
+            right
+        ) {
+
+            x =
+                b.x2 +
+                PLAYER_R;
+
+        } else if (
+            m ===
+            front
+        ) {
+
+            z =
+                b.z1 -
+                PLAYER_R;
+
+        } else {
+
+            z =
+                b.z2 +
+                PLAYER_R;
+        }
+    }
+
+
+    return [
+        x,
+        z
+    ];
+}
+
+
+/* ==========================================================
+   08. NATURAL CLIFF
+
+   岩台 + 下方实体岩壁。
+   ========================================================== */
+
+function addCliffLedge(
+    x,
+    z,
+    top,
+    w,
+    d,
+    rotY = 0
+) {
+
+    const g =
+        new THREE.Group();
+
+
+    g.position.set(
+        x,
+        0,
+        z
+    );
+
+
+    g.rotation.y =
+        rotY;
+
+
+    scene.add(
+        g
+    );
+
+
+    /* ---------- 顶部 ---------- */
+
+    const topPart =
+        edge(
+
+            new THREE.BoxGeometry(
+                w,
+                0.20,
+                d
+            ),
+
+            MAT_STONE
+        );
+
+
+    topPart.position.y =
+        top -
+        0.10;
+
+
+    g.add(
+        topPart
+    );
+
+
+    /* ---------- 下方岩体 ---------- */
+
+    const abyssY =
+        -4.5;
+
+
+    const supportTop =
+        top -
+        0.24;
+
+
+    const supportH =
+        supportTop -
+        abyssY;
+
+
+    const support =
+        edge(
+
+            new THREE.CylinderGeometry(
+
+                Math.min(
+                    w,
+                    d
+                ) *
+                0.34,
+
+                Math.min(
+                    w,
+                    d
+                ) *
+                0.52,
+
+                supportH,
+
+                7
+            ),
+
+            MAT_STONE_DARK
+        );
+
+
+    support.position.y =
+        abyssY +
+        supportH /
+        2;
+
+
+    g.add(
+        support
+    );
+
+
+    /* ---------- 平台碰撞 ---------- */
+
+    platformBoxes.push({
+
+        x1:
+            x -
+            w /
+            2,
+
+        z1:
+            z -
+            d /
+            2,
+
+        x2:
+            x +
+            w /
+            2,
+
+        z2:
+            z +
+            d /
+            2,
+
+        top:
+            top
+    });
+
+
+    return g;
+}
+
+
+/* ==========================================================
+   09. START AREA
+   ========================================================== */
+
+addCliffLedge(
+
+    0,
+
+    10,
+
+    0,
+
+    6.5,
+
+    5.0
+);
+
+
+for (
+    const p
+    of [
+
+        [
+            -2.4,
+            0.18,
+            8.5,
+            0.8
+        ],
+
+        [
+            2.2,
+            0.13,
+            9.0,
+            0.6
+        ],
+
+        [
+            -2.0,
+            0.10,
+            11.4,
+            0.5
+        ],
+
+        [
+            2.5,
+            0.16,
+            11.5,
+            0.7
+        ]
+    ]
+) {
+
+    const rock =
+        edge(
+
+            new THREE.IcosahedronGeometry(
+                0.55,
+                0
+            ),
+
+            MAT_STONE_DARK
+        );
+
+
+    rock.scale.set(
+
+        p[3],
+
+        p[3] *
+        0.6,
+
+        p[3]
+    );
+
+
+    put(
+
+        rock,
+
+        p[0],
+
+        p[1],
+
+        p[2]
+    );
+}
+
+
+/* ==========================================================
+   10. BROKEN BRIDGE
+   ========================================================== */
+
+function bridgeBoard(
+    x,
+    z
+) {
+
+    return addPlatform(
+
+        x,
+
+        0,
+
+        z,
+
+        1.55,
+
+        0.72,
+
+        0.11,
+
+        MAT_WOOD
+    );
+}
+
+
+bridgeBoard(
+    0,
+    7.2
+);
+
+
+bridgeBoard(
+    -0.12,
+    6.15
+);
+
+
+bridgeBoard(
+    0.18,
+    4.86
+);
+
+
+bridgeBoard(
+    -0.16,
+    3.56
+);
+
+
+/* ---------- 两侧断绳 ---------- */
+
+put(
+
+    line([
+
+        [
+            -0.70,
+            0.32,
+            7.7
+        ],
+
+        [
+            -0.72,
+            0.30,
+            6.5
+        ],
+
+        [
+            -0.66,
+            0.17,
+            5.3
+        ],
+
+        [
+            -0.72,
+            0.30,
+            4.1
+        ],
+
+        [
+            -0.65,
+            0.18,
+            3.1
+        ]
+    ])
+);
+
+
+put(
+
+    line([
+
+        [
+            0.70,
+            0.32,
+            7.7
+        ],
+
+        [
+            0.72,
+            0.29,
+            6.5
+        ],
+
+        [
+            0.66,
+            0.18,
+            5.3
+        ],
+
+        [
+            0.72,
+            0.28,
+            4.1
+        ],
+
+        [
+            0.65,
+            0.18,
+            3.1
+        ]
+    ])
+);
+
+
+/* ==========================================================
+   11. CHECKPOINT A CLIFF
+   ========================================================== */
+
+addCliffLedge(
+
+    0,
+
+    1.7,
+
+    0,
+
+    5.2,
+
+    3.5
+);
+
+
+/* ==========================================================
+   12. CLIFF PATH
+   ========================================================== */
+
+addCliffLedge(
+
+    -1.25,
+
+    -0.70,
+
+    0.15,
+
+    2.50,
+
+    1.05
+);
+
+
+addCliffLedge(
+
+    -2.15,
+
+    -2.15,
+
+    0.35,
+
+    1.15,
+
+    2.35
+);
+
+
+addCliffLedge(
+
+    -1.35,
+
+    -3.75,
+
+    0.55,
+
+    2.65,
+
+    0.90
+);
+
+
+addCliffLedge(
+
+    0.25,
+
+    -4.65,
+
+    0.72,
+
+    1.00,
+
+    2.25
+);
+
+
+addCliffLedge(
+
+    1.55,
+
+    -5.70,
+
+    0.85,
+
+    3.00,
+
+    0.92
+);
+
+
+/* ==========================================================
+   13. DEEP WATER RAVINE
+
+   水底降到 -2.35。
+   ========================================================== */
+
+const WATER_ZONE = {
+
+    x1:
+        -4.2,
+
+    x2:
+        4.2,
+
+    z1:
+        -11.5,
+
+    z2:
+        -6.15,
+
+    surface:
+        -0.18
+};
+
+
+const WATER_BOTTOM_Y =
+    -2.35;
+
+
+/* ---------- 水面 ---------- */
+
+const water =
+    new THREE.Mesh(
+
+        new THREE.PlaneGeometry(
+            8.4,
+            5.35
+        ),
+
+        MAT_WATER
+    );
+
+
+water.rotation.x =
+    -Math.PI /
+    2;
+
+
+water.position.set(
+
+    0,
+
+    WATER_ZONE.surface,
+
+    -8.825
+);
+
+
+scene.add(
+    water
+);
+
+
+/* ---------- 深谷底 ---------- */
+
+addPlatform(
+
+    0,
+
+    WATER_BOTTOM_Y,
+
+    -8.825,
+
+    8.4,
+
+    5.35,
+
+    0.18,
+
+    MAT_STONE_DARK
+);
+
+
+/* ==========================================================
+   14. RAVINE WALLS
+   ========================================================== */
+
+function buildRavineWall(
+    x,
+    z,
+    w,
+    d,
+    h
+) {
+
+    put(
+
+        edge(
+
+            new THREE.BoxGeometry(
+                w,
+                h,
+                d
+            ),
+
+            MAT_STONE_DARK
+        ),
+
+        x,
+
+        WATER_BOTTOM_Y +
+        h /
+        2,
+
+        z
+    );
+}
+
+
+buildRavineWall(
+
+    -4.55,
+
+    -8.825,
+
+    0.70,
+
+    5.55,
+
+    4.8
+);
+
+
+buildRavineWall(
+
+    4.55,
+
+    -8.825,
+
+    0.70,
+
+    5.55,
+
+    4.8
+);
+
+
+/* ==========================================================
+   15. WATER ESCAPE STEPS
+
+   玩家掉下去之后：
+
+   -2.35
+       ↓
+   -1.55
+       ↓
+   -0.72
+       ↓
+    0.08
+       ↓
+    0.72
+
+   必须连续跳上来。
+   ========================================================== */
+
+function addRavineStep(
+    x,
+    z,
+    top,
+    w = 0.82,
+    d = 0.82
+) {
+
+    /* ---------- 顶部岩石 ---------- */
+
+    const topRock =
+        edge(
+
+            new THREE.IcosahedronGeometry(
+                0.58,
+                0
+            ),
+
+            MAT_STONE
+        );
+
+
+    topRock.scale.set(
+
+        w /
+        1.15,
+
+        0.30,
+
+        d /
+        1.15
+    );
+
+
+    put(
+
+        topRock,
+
+        x,
+
+        top -
+        0.12,
+
+        z,
+
+        0,
+
+        Math.random() *
+        Math.PI,
+
+        0
+    );
+
+
+    /* ---------- 向谷底延伸的支撑岩柱 ---------- */
+
+    const supportTop =
+        top -
+        0.36;
+
+
+    const supportH =
+        supportTop -
+        WATER_BOTTOM_Y;
+
+
+    const support =
+        edge(
+
+            new THREE.CylinderGeometry(
+
+                w *
+                0.34,
+
+                w *
+                0.48,
+
+                supportH,
+
+                7
+            ),
+
+            MAT_STONE_DARK
+        );
+
+
+    put(
+
+        support,
+
+        x,
+
+        WATER_BOTTOM_Y +
+        supportH /
+        2,
+
+        z,
+
+        0,
+
+        Math.random() *
+        Math.PI,
+
+        0
+    );
+
+
+    /* ---------- 真正站立平台 ---------- */
+
+    platformBoxes.push({
+
+        x1:
+            x -
+            w /
+            2,
+
+        z1:
+            z -
+            d /
+            2,
+
+        x2:
+            x +
+            w /
+            2,
+
+        z2:
+            z +
+            d /
+            2,
+
+        top:
+            top
+    });
+}
+
+
+/* ---------- 水下第一阶 ---------- */
+
+addRavineStep(
+
+    -1.35,
+
+    -8.65,
+
+    -1.55,
+
+    0.90,
+
+    0.88
+);
+
+
+/* ---------- 水下第二阶 ---------- */
+
+addRavineStep(
+
+    -0.35,
+
+    -9.20,
+
+    -0.72,
+
+    0.82,
+
+    0.82
+);
+
+
+/* ---------- 接近水面 ---------- */
+
+addRavineStep(
+
+    0.70,
+
+    -9.72,
+
+    0.08,
+
+    0.82,
+
+    0.82
+);
+
+
+/* ---------- 最后一阶 ---------- */
+
+addRavineStep(
+
+    1.60,
+
+    -10.25,
+
+    0.72,
+
+    0.94,
+
+    0.90
+);
+
+
+/* ==========================================================
+   16. WATER EXIT CLIFF
+   ========================================================== */
+
+addCliffLedge(
+
+    1.75,
+
+    -11.25,
+
+    0.72,
+
+    3.20,
+
+    1.70
+);
+
+
+/* ==========================================================
+   17. MAGIC CORRIDOR
+
+   全部改为实体悬崖。
+   ========================================================== */
+
+addCliffLedge(
+
+    1.15,
+
+    -13.25,
+
+    0.80,
+
+    3.20,
+
+    2.20
+);
+
+
+addCliffLedge(
+
+    -0.20,
+
+    -15.55,
+
+    0.92,
+
+    2.75,
+
+    1.70
+);
+
+
+addCliffLedge(
+
+    0.75,
+
+    -17.85,
+
+    1.05,
+
+    2.55,
+
+    1.60
+);
+
+
+addCliffLedge(
+
+    0,
+
+    -20.3,
+
+    1.15,
+
+    4.60,
+
+    3.20
+);
+
+
+/* ==========================================================
+   18. MAGIC TOWERS
+   ========================================================== */
+
+function buildMagicTower(
+    x,
+    z,
+    height = 3.4
+) {
+
+    const towerG =
+        new THREE.Group();
+
+
+    towerG.position.set(
+        x,
+        0,
+        z
+    );
+
+
+    scene.add(
+        towerG
+    );
+
+
+    /* ---------- 塔身 ---------- */
+
+    put(
+
+        edge(
+
+            new THREE.CylinderGeometry(
+
+                0.58,
+
+                0.78,
+
+                height,
+
+                7
+            ),
+
+            MAT_STONE_DARK
+        ),
+
+        0,
+
+        height /
+        2,
+
+        0,
+
+        0,
+        0,
+        0,
+
+        towerG
+    );
+
+
+    /* ---------- 魔法核心 ---------- */
+
+    const crown =
+        put(
+
+            edge(
+
+                new THREE.ConeGeometry(
+
+                    0.92,
+
+                    0.65,
+
+                    7
+                ),
+
+                MAT_MAGIC
+            ),
+
+            0,
+
+            height +
+            0.32,
+
+            0,
+
+            0,
+            0,
+            0,
+
+            towerG
+        );
+
+
+    addSolid(
+
+        x,
+
+        z,
+
+        1.45,
+
+        1.45
+    );
+
+
+    return {
+
+        group:
+            towerG,
+
+        crown:
+            crown,
+
+        x:
+            x,
+
+        z:
+            z,
+
+        shootY:
+            height +
+            0.25
+    };
+}
+
+
+/* ---------- 塔 A ---------- */
+
+const towerA =
+    buildMagicTower(
+
+        3.15,
+
+        -14.25,
+
+        3.6
+    );
+
+
+/* ---------- 塔 B ---------- */
+
+const towerB =
+    buildMagicTower(
+
+        -3.0,
+
+        -17.0,
+
+        3.2
+    );
+
+
+/* ==========================================================
+   19. CHECKPOINTS
+   ========================================================== */
+
+let respawnPos =
+    new THREE.Vector3(
+
+        0,
+
+        0.18,
+
+        10
+    );
+
+
+let checkpointName =
+    '起点';
+
+
+function buildCheckpoint(
+    x,
+    y,
+    z,
+    name
+) {
+
+    const g =
+        new THREE.Group();
+
+
+    g.position.set(
+        x,
+        y,
+        z
+    );
+
+
+    scene.add(
+        g
+    );
+
+
+    /* ---------- 石碑 ---------- */
+
+    const stone =
+        edge(
+
+            new THREE.CylinderGeometry(
+
+                0.24,
+
+                0.34,
+
+                1.25,
+
+                7
+            ),
+
+            MAT_CHECK
+        );
+
+
+    stone.position.y =
+        0.62;
+
+
+    g.add(
+        stone
+    );
+
+
+    /* ---------- 发光环 ---------- */
+
+    const ring =
+        edge(
+
+            new THREE.TorusGeometry(
+
+                0.30,
+
+                0.025,
+
+                6,
+
+                18
+            ),
+
+            MAT_RELIC
+        );
+
+
+    ring.rotation.x =
+        Math.PI /
+        2;
+
+
+    ring.position.y =
+        1.15;
+
+
+    g.add(
+        ring
+    );
+
+
+    g.userData.aimLabel =
+        '点亮检查点';
+
+
+    const activate =
+        () => {
+
+            respawnPos.set(
+
+                x,
+
+                y +
+                0.18,
+
+                z
+            );
+
+
+            checkpointName =
+                name;
+
+
+            checkpointLabel.textContent =
+                '检查点：' +
+                name;
+
+
+            message(
+
+                '检查点已点亮 · ' +
+                name
+            );
+
+
+            ring.scale.setScalar(
+                1.25
+            );
+        };
+
+
+    regMagic(
+
+        g,
+
+        activate
+    );
+
+
+    interactables.push({
+
+        x:
+            x,
+
+        z:
+            z,
+
+        r:
+            1.6,
+
+        label:
+            '点亮检查点',
+
+        act:
+            activate
+    });
+
+
+    return g;
+}
+
+
+/* ---------- 断桥后 ---------- */
+
+buildCheckpoint(
+
+    0,
+
+    0,
+
+    1.5,
+
+    '断桥之后'
+);
+
+
+/* ---------- 深水后 ---------- */
+
+buildCheckpoint(
+
+    1.75,
+
+    0.72,
+
+    -11.25,
+
+    '深水之后'
+);
+
+
+/* ==========================================================
+   20. RELIC
+   ========================================================== */
+
+const relicG =
+    new THREE.Group();
+
+
+relicG.position.set(
+
+    0,
+
+    2.15,
+
+    -20.5
+);
+
+
+scene.add(
+    relicG
+);
+
+
+/* ---------- 核心 ---------- */
+
+const relicCore =
+    edge(
+
+        new THREE.OctahedronGeometry(
+
+            0.28,
+
+            0
+        ),
+
+        MAT_RELIC
+    );
+
+
+relicG.add(
+    relicCore
+);
+
+
+/* ---------- 环 A ---------- */
+
+const relicRingA =
+    edge(
+
+        new THREE.TorusGeometry(
+
+            0.46,
+
+            0.025,
+
+            6,
+
+            24
+        ),
+
+        MAT_RELIC
+    );
+
+
+relicG.add(
+    relicRingA
+);
+
+
+/* ---------- 环 B ---------- */
+
+const relicRingB =
+    relicRingA.clone();
+
+
+relicRingB.rotation.x =
+    Math.PI /
+    2;
+
+
+relicG.add(
+    relicRingB
+);
+
+
+let relicCollected =
+    false;
+
+
+function collectRelic() {
+
+    if (
+        relicCollected
+    ) {
+
+        return;
+    }
+
+
+    relicCollected =
+        true;
+
+
+    relicLabel.textContent =
+        '信物：星辉信物';
+
+
+    localStorage.setItem(
+
+        JOURNEY_RELIC_OBTAINED_KEY,
+
+        '1'
+    );
+
+
+    localStorage.setItem(
+
+        JOURNEY_RELIC_REWARD_KEY,
+
+        JSON.stringify({
+            starRelic:
+                1,
+
+            name:
+                '星辉信物',
+
+            claimedAt:
+                new Date()
+                    .toISOString()
+        })
+    );
+
+
+    message(
+        '你取得了星辉信物'
+    );
+
+
+    setTimeout(
+
+        () => {
+
+            finishPanel
+                .classList
+                .add(
+                    'show'
+                );
+
+        },
+
+        900
+    );
+}
+
+
+relicG.userData.aimLabel =
+    '取得星辉信物';
+
+
+regMagic(
+
+    relicG,
+
+    collectRelic
+);
+
+
+interactables.push({
+
+    x:
+        0,
+
+    z:
+        -20.5,
+
+    r:
+        1.8,
+
+    label:
+        '取得星辉信物',
+
+    act:
+        collectRelic
+});
+
+
+/* ==========================================================
+   21. MAGIC SYSTEM
+
+   idle
+   ↓
+   warning 0.34s
+   ↓
+   4-shot burst
+   ↓
+   cooldown 0.42s
+   ========================================================== */
+
+const magicState = {
+
+    phase:
+        'idle',
+
+    t:
+        0,
+
+    cooldown:
+        0.34,
+
+    burstIndex:
+        0,
+
+    burstTimer:
+        0
+};
+
+
+const projectiles =
+    [];
+
+
+/* ==========================================================
+   22. WARNING DISK
+   ========================================================== */
+
+const warningDisk =
+    new THREE.Mesh(
+
+        new THREE.CircleGeometry(
+
+            0.62,
+
+            24
+        ),
+
+        MAT_MAGIC_WARN
+    );
+
+
+warningDisk.rotation.x =
+    -Math.PI /
+    2;
+
+
+warningDisk.visible =
+    false;
+
+
+scene.add(
+    warningDisk
+);
+
+
+/* ==========================================================
+   23. MAGIC PROJECTILE
+   ========================================================== */
+
+function spawnProjectile(
+    tower,
+    angleOffset = 0,
+    speedBoost = 0
+) {
+
+    const g =
+        new THREE.Group();
+
+
+    /* ---------- 魔法核心 ---------- */
+
+    const core =
+        edge(
+
+            new THREE.OctahedronGeometry(
+
+                0.13,
+
+                0
+            ),
+
+            MAT_MAGIC
+        );
+
+
+    g.add(
+        core
+    );
+
+
+    /* ---------- 魔法环 ---------- */
+
+    const ring =
+        edge(
+
+            new THREE.TorusGeometry(
+
+                0.20,
+
+                0.018,
+
+                6,
+
+                18
+            ),
+
+            MAT_MAGIC
+        );
+
+
+    ring.rotation.x =
+        Math.PI /
+        2;
+
+
+    g.add(
+        ring
+    );
+
+
+    /* ---------- 出生位置 ---------- */
+
+    g.position.set(
+
+        tower.x,
+
+        tower.shootY,
+
+        tower.z
+    );
+
+
+    scene.add(
+        g
+    );
+
+
+    /* ---------- 瞄准玩家 ---------- */
+
+    const target =
+        player.pos.clone();
+
+
+    target.y +=
+        0.32;
+
+
+    let dir =
+        target
+            .sub(
+                g.position
+            )
+            .normalize();
+
+
+    /* ---------- 左右散射 ---------- */
+
+    if (
+        Math.abs(
+            angleOffset
+        ) >
+        0.001
+    ) {
+
+        dir.applyAxisAngle(
+
+            new THREE.Vector3(
+                0,
+                1,
+                0
+            ),
+
+            angleOffset
+        );
+    }
+
+
+    projectiles.push({
+
+        g:
+            g,
+
+        dir:
+            dir,
+
+        speed:
+            7.3 +
+            speedBoost,
+
+        life:
+            4.0
+    });
+}
+
+
+/* ==========================================================
+   24. WATER CHECK
+   ========================================================== */
+
+function insideWater() {
+
+    return (
+
+        player.pos.x >
+            WATER_ZONE.x1
+
+        &&
+
+        player.pos.x <
+            WATER_ZONE.x2
+
+        &&
+
+        player.pos.z >
+            WATER_ZONE.z1
+
+        &&
+
+        player.pos.z <
+            WATER_ZONE.z2
+
+        &&
+
+        player.pos.y <
+            WATER_ZONE.surface +
+            0.20
+    );
+}
+
+
+/* ==========================================================
+   25. DAMAGE
+   ========================================================== */
+
+let respawning =
+    false;
+
+
+function damagePlayer(
+    amount,
+    sourceDir = null
+) {
+
+    if (
+        respawning
+    ) {
+
+        return;
+    }
+
+
+    player.shield -=
+        amount;
+
+
+    player.shield =
+        Math.max(
+
+            0,
+
+            player.shield
+        );
+
+
+    /* ---------- 击退 ---------- */
+
+    if (
+        sourceDir
+    ) {
+
+        player.pos.x +=
+
+            sourceDir.x *
+            0.48;
+
+
+        player.pos.z +=
+
+            sourceDir.z *
+            0.48;
+
+
+        player.vy =
+            3.4;
+    }
+
+
+    if (
+        player.shield <=
+        0
+    ) {
+
+        respawn(
+            '魔法击碎了守护'
+        );
+    }
+}
+
+
+/* ==========================================================
+   26. RESPAWN
+   ========================================================== */
+
+function respawn(
+    reason
+) {
+
+    if (
+        respawning
+    ) {
+
+        return;
+    }
+
+
+    respawning =
+        true;
+
+
+    message(
+
+        reason +
+        ' · 返回最近检查点'
+    );
+
+
+    deathMask
+        .classList
+        .add(
+            'on'
+        );
+
+
+    setTimeout(
+
+        () => {
+
+            player.pos.copy(
+                respawnPos
+            );
+
+
+            player.vy =
+                0;
+
+
+            player.moveSpeed =
+                0;
+
+
+            player.shield =
+                100;
+
+
+            player.oxygen =
+                100;
+
+
+            player.onGround =
+                false;
+
+
+            deathMask
+                .classList
+                .remove(
+                    'on'
+                );
+
+
+            respawning =
+                false;
+
+        },
+
+        500
+    );
+}
+
+
+/* ==========================================================
+   27. JUMP
+   ========================================================== */
+
+function tryJump() {
+
+    const now =
+        performance.now() *
+        0.001;
+
+
+    if (
+        player.onGround
+
+        ||
+
+        now -
+        player.groundT <
+        0.15
+    ) {
+
+        player.vy =
+            7.0;
+
+
+        player.onGround =
+            false;
+
+
+        player.groundT =
+            -10;
+    }
+}
+
+
+/* ==========================================================
+   28. PLAYER UPDATE
+   ========================================================== */
+
+function updatePlayer(
+    dt,
+    time
+) {
+
+    let ix =
+        0;
+
+
+    let iz =
+        0;
+
+
+    if (
+        keys['KeyW']
+        ||
+        keys['ArrowUp']
+    ) {
+
+        iz +=
+            1;
+    }
+
+
+    if (
+        keys['KeyS']
+        ||
+        keys['ArrowDown']
+    ) {
+
+        iz -=
+            1;
+    }
+
+
+    if (
+        keys['KeyA']
+        ||
+        keys['ArrowLeft']
+    ) {
+
+        ix -=
+            1;
+    }
+
+
+    if (
+        keys['KeyD']
+        ||
+        keys['ArrowRight']
+    ) {
+
+        ix +=
+            1;
+    }
+
+
+    const m =
+        Math.hypot(
+            ix,
+            iz
+        );
+
+
+    if (
+        m >
+        1
+    ) {
+
+        ix /=
+            m;
+
+
+        iz /=
+            m;
+    }
+
+
+    const running =
+        !!(
+            keys['ShiftLeft']
+            ||
+            keys['ShiftRight']
+        );
+
+
+    const maxSpeed =
+        running
+            ? 3.2
+            : 1.6;
+
+
+    let tx =
+        0;
+
+
+    let tz =
+        0;
+
+
+    if (
+        ix !==
+        0
+
+        ||
+
+        iz !==
+        0
+    ) {
+
+        const fx =
+            Math.sin(
+                camYaw
+            );
+
+
+        const fz =
+            Math.cos(
+                camYaw
+            );
+
+
+        const rx =
+            -Math.cos(
+                camYaw
+            );
+
+
+        const rz =
+            Math.sin(
+                camYaw
+            );
+
+
+        tx =
+
+            (
+                fx *
+                iz
+
+                +
+
+                rx *
+                ix
+            )
+
+            *
+
+            maxSpeed;
+
+
+        tz =
+
+            (
+                fz *
+                iz
+
+                +
+
+                rz *
+                ix
+            )
+
+            *
+
+            maxSpeed;
+    }
+
+
+    player.moveSpeed +=
+
+        (
+            Math.hypot(
+                tx,
+                tz
+            )
+
+            -
+
+            player.moveSpeed
+        )
+
+        *
+
+        Math.min(
+            1,
+            dt *
+            10
+        );
+
+
+    let nx =
+
+        player.pos.x +
+        tx *
+        dt;
+
+
+    let nz =
+
+        player.pos.z +
+        tz *
+        dt;
+
+
+    [
+        nx,
+        nz
+    ] =
+        collideXZ(
+
+            nx,
+
+            nz,
+
+            player.pos.y
+        );
+
+
+    player.pos.x =
+        nx;
+
+
+    player.pos.z =
+        nz;
+
+
+    /* ======================================================
+       重力 / 地面
+       ====================================================== */
+
+    const ground =
+        groundAt(
+
+            player.pos.x,
+
+            player.pos.z,
+
+            player.pos.y
+        );
+
+
+    if (
+        player.pos.y <=
+            ground +
+            0.001
+
+        &&
+
+        player.vy <=
+            0
+    ) {
+
+        player.pos.y =
+            ground;
+
+
+        player.vy =
+            0;
+
+
+        player.onGround =
+            true;
+
+
+        player.groundT =
+            time;
+
+    } else {
+
+        player.vy -=
+
+            22 *
+            dt;
+
+
+        player.pos.y +=
+
+            player.vy *
+            dt;
+
+
+        const g2 =
+            groundAt(
+
+                player.pos.x,
+
+                player.pos.z,
+
+                player.pos.y
+            );
+
+
+        if (
+            player.pos.y <=
+                g2
+
+            &&
+
+            player.vy <=
+                0
+        ) {
+
+            player.pos.y =
+                g2;
+
+
+            player.vy =
+                0;
+
+
+            player.onGround =
+                true;
+
+
+            player.groundT =
+                time;
+
+        } else {
+
+            player.onGround =
+                false;
+        }
+    }
+
+
+    /* ======================================================
+       朝向
+       ====================================================== */
+
+    if (
+        player.moveSpeed >
+        0.15
+    ) {
+
+        const targetYaw =
+            Math.atan2(
+                tx,
+                tz
+            );
+
+
+        let d =
+
+            (
+                targetYaw
+
+                -
+
+                player.yaw
+
+                +
+
+                Math.PI *
+                3
+            )
+
+            %
+
+            (
+                Math.PI *
+                2
+            )
+
+            -
+
+            Math.PI;
+
+
+        player.yaw +=
+
+            d *
+
+            Math.min(
+
+                1,
+
+                dt *
+                9
+            );
+    }
+
+
+    /* ======================================================
+       史莱姆动画
+       ====================================================== */
+
+    const moving =
+        player.moveSpeed >
+        0.12;
+
+
+    const breathe =
+
+        1
+
+        +
+
+        Math.sin(
+            time *
+            1.7
+        )
+
+        *
+
+        0.025;
+
+
+    const squash =
+
+        moving
+
+            ?
+
+            0.94
+
+            +
+
+            Math.sin(
+                time *
+                7.0
+            )
+
+            *
+
+            0.045
+
+            :
+
+            breathe;
+
+
+    slimeBody.scale.set(
+
+        1 /
+        Math.sqrt(
+            squash
+        ),
+
+        squash,
+
+        1 /
+        Math.sqrt(
+            squash
+        )
+    );
+
+
+    slimeRoot.position.set(
+
+        player.pos.x,
+
+        player.pos.y +
+        0.30,
+
+        player.pos.z
+    );
+
+
+    slimeRoot.rotation.y =
+        player.yaw;
+
+
+    /* ======================================================
+       掉入深渊
+       ====================================================== */
+
+    if (
+        player.pos.y <
+        -4.2
+    ) {
+
+        respawn(
+            '你跌下了悬崖'
+        );
+    }
+}
+
+
+/* ==========================================================
+   29. CAMERA
+   ========================================================== */
+
+function updateCamera(
+    dt
+) {
+
+    if (
+        viewMode ===
+        'fp'
+    ) {
+
+        const eye =
+            new THREE.Vector3(
+
+                player.pos.x,
+
+                player.pos.y +
+                0.55,
+
+                player.pos.z
+            );
+
+
+        camera.position.copy(
+            eye
+        );
+
+
+        const forward =
+            new THREE.Vector3(
+
+                Math.sin(
+                    camYaw
+                )
+
+                *
+
+                Math.cos(
+                    camPitch
+                ),
+
+                Math.sin(
+                    camPitch
+                ),
+
+                Math.cos(
+                    camYaw
+                )
+
+                *
+
+                Math.cos(
+                    camPitch
+                )
+            );
+
+
+        camera.lookAt(
+
+            eye
+                .clone()
+                .add(
+                    forward
+                )
+        );
+
+
+        slimeRoot.visible =
+            false;
+
+    } else {
+
+        slimeRoot.visible =
+            true;
+
+
+        const target =
+            new THREE.Vector3(
+
+                player.pos.x,
+
+                player.pos.y +
+                0.60,
+
+                player.pos.z
+            );
+
+
+        const dist =
+            camDist;
+
+
+        const wanted =
+            new THREE.Vector3(
+
+                target.x
+
+                -
+
+                Math.sin(
+                    camYaw
+                )
+
+                *
+
+                Math.cos(
+                    camPitch
+                )
+
+                *
+
+                dist,
+
+                target.y
+
+                +
+
+                Math.sin(
+                    camPitch
+                )
+
+                *
+
+                dist,
+
+                target.z
+
+                -
+
+                Math.cos(
+                    camYaw
+                )
+
+                *
+
+                Math.cos(
+                    camPitch
+                )
+
+                *
+
+                dist
+            );
+
+
+        camera.position.lerp(
+
+            wanted,
+
+            Math.min(
+
+                1,
+
+                dt *
+                7
+            )
+        );
+
+
+        camera.lookAt(
+            target
+        );
+    }
+}
+
+
+/* ==========================================================
+   30. INTERACTION
+   ========================================================== */
+
+const hintEl =
+    document.getElementById(
+        'hint'
+    );
+
+
+const raycaster =
+    new THREE.Raycaster();
+
+
+const CENTER =
+    new THREE.Vector2(
+        0,
+        0
+    );
+
+
+let nearestInteract =
+    null;
+
+
+let aimHit =
+    null;
+
+
+function ancestorVisible(
+    o
+) {
+
+    let p =
+        o;
+
+
+    while (
+        p
+    ) {
+
+        if (
+            p.visible ===
+            false
+        ) {
+
+            return false;
+        }
+
+
+        p =
+            p.parent;
+    }
+
+
+    return true;
+}
+
+
+function aimRay() {
+
+    raycaster.setFromCamera(
+
+        CENTER,
+
+        camera
+    );
+
+
+    const hits =
+        raycaster
+            .intersectObjects(
+
+                magicMeshes,
+
+                false
+            )
+            .filter(
+
+                h =>
+                    ancestorVisible(
+                        h.object
+                    )
+            );
+
+
+    if (
+        !hits.length
+    ) {
+
+        return null;
+    }
+
+
+    const root =
+        hits[0]
+            .object
+            .userData
+            .magicRoot;
+
+
+    if (
+        !root
+    ) {
+
+        return null;
+    }
+
+
+    return {
+
+        label:
+            root.userData
+                .aimLabel
+            ||
+            '交互',
+
+        act:
+            () =>
+                root.userData
+                    .onClick()
+    };
+}
+
+
+/* ==========================================================
+   31. INTERACTION HINT
+   ========================================================== */
+
+function updateInteractHint() {
+
+    nearestInteract =
+        null;
+
+
+    aimHit =
+        null;
+
+
+    if (
+        viewMode ===
+        'fp'
+    ) {
+
+        aimHit =
+            aimRay();
+
+
+        if (
+            aimHit
+        ) {
+
+            hintEl.innerHTML =
+
+                '按 <b>E</b> '
+
+                +
+
+                aimHit.label;
+
+
+            hintEl
+                .classList
+                .add(
+                    'show'
+                );
+
+
+            return;
+        }
+    }
+
+
+    let best =
+        1e9;
+
+
+    for (
+        const it
+        of interactables
+    ) {
+
+        const d =
+            Math.hypot(
+
+                player.pos.x -
+                it.x,
+
+                player.pos.z -
+                it.z
+            );
+
+
+        if (
+            d <
+                it.r
+
+            &&
+
+            d <
+                best
+        ) {
+
+            best =
+                d;
+
+
+            nearestInteract =
+                it;
+        }
+    }
+
+
+    if (
+        nearestInteract
+    ) {
+
+        hintEl.innerHTML =
+
+            '按 <b>E</b> '
+
+            +
+
+            nearestInteract.label;
+
+
+        hintEl
+            .classList
+            .add(
+                'show'
+            );
+
+    } else {
+
+        hintEl
+            .classList
+            .remove(
+                'show'
+            );
+    }
+}
+
+
+function doInteract() {
+
+    if (
+        viewMode ===
+            'fp'
+
+        &&
+
+        aimHit
+    ) {
+
+        aimHit.act();
+
+
+        return;
+    }
+
+
+    if (
+        nearestInteract
+    ) {
+
+        nearestInteract.act();
+    }
+}
+
+
+/* ==========================================================
+   32. MAGIC UPDATE
+
+   现在：
+   - 两座塔
+   - 预警 0.34 秒
+   - 4 连发
+   - 每发约 0.14 秒
+   - 冷却只有 0.42 秒
+   ========================================================== */
+
+function updateMagic(
+    dt,
+    time
+) {
+
+    const inDanger =
+
+        (
+            player.pos.z <
+                -12.2
+
+            &&
+
+            player.pos.z >
+                -19.7
+        );
+
+
+    if (
+        inDanger
+
+        &&
+
+        !respawning
+
+        &&
+
+        !relicCollected
+    ) {
+
+        magicState.t +=
+            dt;
+
+
+        /* ---------- IDLE ---------- */
+
+        if (
+            magicState.phase ===
+                'idle'
+
+            &&
+
+            magicState.t >
+                magicState.cooldown
+        ) {
+
+            magicState.phase =
+                'warning';
+
+
+            magicState.t =
+                0;
+
+
+            warningDisk.visible =
+                true;
+
+
+            warningDisk.position.set(
+
+                player.pos.x,
+
+                Math.max(
+
+                    player.pos.y +
+                    0.02,
+
+                    0.30
+                ),
+
+                player.pos.z
+            );
+        }
+
+
+        /* ---------- WARNING ---------- */
+
+        else if (
+            magicState.phase ===
+                'warning'
+
+            &&
+
+            magicState.t >
+                0.34
+        ) {
+
+            warningDisk.visible =
+                false;
+
+
+            magicState.phase =
+                'burst';
+
+
+            magicState.t =
+                0;
+
+
+            magicState.burstTimer =
+                0;
+
+
+            magicState.burstIndex =
+                0;
+        }
+
+
+        /* ---------- BURST ---------- */
+
+        else if (
+            magicState.phase ===
+            'burst'
+        ) {
+
+            magicState.burstTimer +=
+                dt;
+
+
+            if (
+                magicState.burstTimer >
+                    0.14
+
+                &&
+
+                magicState.burstIndex <
+                    4
+            ) {
+
+                magicState.burstTimer =
+                    0;
+
+
+                const offsets = [
+
+                    0,
+
+                    -0.085,
+
+                    0.085,
+
+                    0
+                ];
+
+
+                const towers = [
+
+                    towerA,
+
+                    towerB,
+
+                    towerA,
+
+                    towerB
+                ];
+
+
+                spawnProjectile(
+
+                    towers[
+                        magicState.burstIndex
+                    ],
+
+                    offsets[
+                        magicState.burstIndex
+                    ],
+
+                    magicState.burstIndex *
+                    0.22
+                );
+
+
+                magicState.burstIndex++;
+            }
+
+
+            if (
+                magicState.burstIndex >=
+                4
+            ) {
+
+                magicState.phase =
+                    'cooldown';
+
+
+                magicState.t =
+                    0;
+            }
+        }
+
+
+        /* ---------- COOLDOWN ---------- */
+
+        else if (
+            magicState.phase ===
+                'cooldown'
+
+            &&
+
+            magicState.t >
+                0.42
+        ) {
+
+            magicState.phase =
+                'idle';
+
+
+            magicState.t =
+                0;
+        }
+
+    } else {
+
+        warningDisk.visible =
+            false;
+
+
+        magicState.phase =
+            'idle';
+
+
+        magicState.t =
+            0;
+
+
+        magicState.burstIndex =
+            0;
+
+
+        magicState.burstTimer =
+            0;
+    }
+
+
+    /* ======================================================
+       更新所有魔法弹
+       ====================================================== */
+
+    for (
+        let i =
+            projectiles.length -
+            1;
+
+        i >=
+        0;
+
+        i--
+    ) {
+
+        const p =
+            projectiles[i];
+
+
+        p.life -=
+            dt;
+
+
+        p.g.position
+            .addScaledVector(
+
+                p.dir,
+
+                p.speed *
+                dt
+            );
+
+
+        p.g.rotation.x +=
+
+            dt *
+            5;
+
+
+        p.g.rotation.y +=
+
+            dt *
+            8;
+
+
+        const dx =
+
+            p.g.position.x -
+            player.pos.x;
+
+
+        const dy =
+
+            p.g.position.y
+
+            -
+
+            (
+                player.pos.y +
+                0.30
+            );
+
+
+        const dz =
+
+            p.g.position.z -
+            player.pos.z;
+
+
+        const d =
+            Math.hypot(
+
+                dx,
+
+                dy,
+
+                dz
+            );
+
+
+        if (
+            d <
+            0.43
+        ) {
+
+            damagePlayer(
+
+                34,
+
+                p.dir
+            );
+
+
+            scene.remove(
+                p.g
+            );
+
+
+            projectiles.splice(
+                i,
+                1
+            );
+
+
+            message(
+                '魔法击中了你'
+            );
+
+
+            continue;
+        }
+
+
+        if (
+            p.life <=
+            0
+        ) {
+
+            scene.remove(
+                p.g
+            );
+
+
+            projectiles.splice(
+                i,
+                1
+            );
+        }
+    }
+}
+
+
+/* ==========================================================
+   33. WATER UPDATE
+
+   深水耗氧明显加快。
+   ========================================================== */
+
+function updateWater(
+    dt
+) {
+
+    if (
+        insideWater()
+    ) {
+
+        player.oxygen -=
+
+            dt *
+            0.31;
+
+
+        player.oxygen =
+            Math.max(
+
+                0,
+
+                player.oxygen
+            );
+
+
+        /* 水下阻力 */
+
+        player.moveSpeed *=
+            0.96;
+
+
+        if (
+            player.oxygen <=
+            0
+        ) {
+
+            respawn(
+                '你在深水中失去了力气'
+            );
+        }
+
+    } else {
+
+        player.oxygen +=
+
+            dt *
+            40;
+
+
+        player.oxygen =
+            Math.min(
+
+                100,
+
+                player.oxygen
+            );
+    }
+}
+
+
+/* ==========================================================
+   34. RELIC ANIMATION
+   ========================================================== */
+
+function updateRelic(
+    dt,
+    time
+) {
+
+    if (
+        relicCollected
+    ) {
+
+        relicG.position.y +=
+
+            dt *
+            0.38;
+
+
+        relicG.rotation.y +=
+
+            dt *
+            1.8;
+
+
+        relicG.scale.multiplyScalar(
+
+            Math.max(
+
+                0.985,
+
+                1 -
+                dt *
+                0.38
+            )
+        );
+
+
+        if (
+            relicG.scale.x <
+            0.04
+        ) {
+
+            relicG.visible =
+                false;
+        }
+
+
+        return;
+    }
+
+
+    relicG.position.y =
+
+        2.15
+
+        +
+
+        Math.sin(
+            time *
+            1.6
+        )
+
+        *
+
+        0.10;
+
+
+    relicRingA.rotation.y +=
+
+        dt *
+        0.7;
+
+
+    relicRingB.rotation.z +=
+
+        dt *
+        0.9;
+}
+
+
+/* ==========================================================
+   35. UI
+   ========================================================== */
+
+const shieldFill =
+    document.getElementById(
+        'shieldFill'
+    );
+
+
+const oxygenFill =
+    document.getElementById(
+        'oxygenFill'
+    );
+
+
+const checkpointLabel =
+    document.getElementById(
+        'checkpointLabel'
+    );
+
+
+const relicLabel =
+    document.getElementById(
+        'relicLabel'
+    );
+
+
+const messageEl =
+    document.getElementById(
+        'message'
+    );
+
+
+const crosshair =
+    document.getElementById(
+        'crosshair'
+    );
+
+
+const deathMask =
+    document.getElementById(
+        'deathMask'
+    );
+
+
+const finishPanel =
+    document.getElementById(
+        'finishPanel'
+    );
+
+
+let messageUntil =
+    0;
+
+
+function message(
+    text
+) {
+
+    messageEl.textContent =
+        text;
+
+
+    messageEl
+        .classList
+        .add(
+            'show'
+        );
+
+
+    messageUntil =
+        performance.now()
+        +
+        1800;
+}
+
+
+function updateUI() {
+
+    shieldFill.style.width =
+
+        player.shield +
+        '%';
+
+
+    oxygenFill.style.width =
+
+        player.oxygen +
+        '%';
+
+
+    if (
+        performance.now() >
+        messageUntil
+    ) {
+
+        messageEl
+            .classList
+            .remove(
+                'show'
+            );
+    }
+}
+
+
+/* ==========================================================
+   36. INPUT
+   ========================================================== */
+
+addEventListener(
+
+    'keydown',
+
+    e => {
+
+        keys[
+            e.code
+        ] =
+            true;
+
+
+        if (
+            e.code ===
+            'Space'
+        ) {
+
+            e.preventDefault();
+
+
+            tryJump();
+        }
+
+
+        if (
+            e.code ===
+            'KeyE'
+        ) {
+
+            doInteract();
+        }
+
+
+        if (
+            e.code ===
+            'KeyV'
+        ) {
+
+            viewMode =
+
+                viewMode ===
+                'fp'
+
+                    ?
+
+                    'tp'
+
+                    :
+
+                    'fp';
+
+
+            crosshair.style.display =
+
+                viewMode ===
+                'fp'
+
+                    ?
+
+                    'block'
+
+                    :
+
+                    'none';
+        }
+    }
+);
+
+
+addEventListener(
+
+    'keyup',
+
+    e => {
+
+        keys[
+            e.code
+        ] =
+            false;
+
+
+        if (
+            e.code ===
+                'Space'
+
+            &&
+
+            player.vy >
+                2.6
+        ) {
+
+            player.vy =
+                2.6;
+        }
+    }
+);
+
+
+/* ==========================================================
+   37. CAMERA DRAG
+   ========================================================== */
+
+let dragging =
+    false;
+
+
+let lastMX =
+    0;
+
+
+let lastMY =
+    0;
+
+
+renderer.domElement
+    .addEventListener(
+
+        'pointerdown',
+
+        e => {
+
+            dragging =
+                true;
+
+
+            lastMX =
+                e.clientX;
+
+
+            lastMY =
+                e.clientY;
+        }
+    );
+
+
+addEventListener(
+
+    'pointerup',
+
+    () => {
+
+        dragging =
+            false;
+    }
+);
+
+
+addEventListener(
+
+    'pointermove',
+
+    e => {
+
+        if (
+            !dragging
+        ) {
+
+            return;
+        }
+
+
+        const dx =
+
+            e.clientX -
+            lastMX;
+
+
+        const dy =
+
+            e.clientY -
+            lastMY;
+
+
+        lastMX =
+            e.clientX;
+
+
+        lastMY =
+            e.clientY;
+
+
+        camYaw -=
+
+            dx *
+            0.006;
+
+
+        camPitch -=
+
+            dy *
+            0.004;
+
+
+        if (
+            viewMode ===
+            'fp'
+        ) {
+
+            camPitch =
+                Math.max(
+
+                    -1.15,
+
+                    Math.min(
+
+                        1.15,
+
+                        camPitch
+                    )
+                );
+
+        } else {
+
+            camPitch =
+                Math.max(
+
+                    -0.10,
+
+                    Math.min(
+
+                        1.05,
+
+                        camPitch
+                    )
+                );
+        }
+    }
+);
+
+
+renderer.domElement
+    .addEventListener(
+
+        'wheel',
+
+        e => {
+
+            camDist =
+                Math.max(
+
+                    2.8,
+
+                    Math.min(
+
+                        10,
+
+                        camDist +
+                        e.deltaY *
+                        0.004
+                    )
+                );
+        },
+
+        {
+            passive:
+                true
+        }
+    );
+
+
+/* ==========================================================
+   38. RESTART
+   ========================================================== */
+
+document
+    .getElementById(
+        'restartBtn'
+    )
+    .addEventListener(
+
+        'click',
+
+        () => {
+            location.reload();
+        }
+    );
+
+
+/* ==========================================================
+   39. RESIZE
+   ========================================================== */
+
+addEventListener(
+
+    'resize',
+
+    () => {
+
+        camera.aspect =
+
+            innerWidth /
+            innerHeight;
+
+
+        camera.updateProjectionMatrix();
+
+
+        renderer.setSize(
+
+            innerWidth,
+
+            innerHeight
+        );
+    }
+);
+
+
+/* ==========================================================
+   40. CAMERA INITIAL
+   ========================================================== */
+
+camera.position.set(
+
+    5.5,
+
+    4.2,
+
+    15
+);
+
+
+camera.lookAt(
+
+    0,
+
+    0.6,
+
+    10
+);
+
+
+/* ==========================================================
+   41. MAIN LOOP
+   ========================================================== */
+
+let lastT =
+    0;
+
+
+function animate(
+    ms
+) {
+
+    requestAnimationFrame(
+        animate
+    );
+
+
+    const time =
+
+        ms *
+        0.001;
+
+
+    const dt =
+        Math.min(
+
+            time -
+            lastT,
+
+            0.05
+        );
+
+
+    lastT =
+        time;
+
+
+    if (
+        !respawning
+
+        &&
+
+        !finishPanel
+            .classList
+            .contains(
+                'show'
+            )
+    ) {
+
+        updatePlayer(
+            dt,
+            time
+        );
+
+
+        updateWater(
+            dt
+        );
+
+
+        updateMagic(
+            dt,
+            time
+        );
+
+
+        updateInteractHint();
+    }
+
+
+    updateRelic(
+        dt,
+        time
+    );
+
+
+    updateCamera(
+        dt
+    );
+
+
+    updateUI();
+
+
+    renderer.render(
+
+        scene,
+
+        camera
+    );
+}
+
+
+requestAnimationFrame(
+    animate
+);
+
+</script>
+
+</body>
+</html>
