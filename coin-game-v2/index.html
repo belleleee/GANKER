@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>钱滚钱 · Coin Table V2</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="hud">
+ <div class="title">钱滚钱 · V2</div>
+ <div class="row"><span>总金币</span><b id="wallet">40</b></div>
+ <div class="row"><span>本轮资产</span><b id="roundValue">0</b></div>
+ <div class="row"><span>硬币</span><b id="coinCount">1 / 6</b></div>
+ <div class="row"><span>史莱姆</span><b id="helperCount">0 / 4</b></div>
+ <div class="row"><span>本轮次数</span><b id="rolls">0</b></div>
+</div>
+<div id="help">E：开始 / 手动收手<br>Space：抛全部硬币<br>U：靠近升级桌的替代快捷键<br>鼠标拖动：旋转视角</div>
+<div id="hint"></div><div id="result"></div>
+<div id="strategy">
+ <b>自动收手策略</b>
+ <select id="strategySelect">
+  <option value="off">关闭</option>
+  <option value="2">资产 ≥ 2× 本金</option>
+  <option value="4">资产 ≥ 4× 本金</option>
+  <option value="8">资产 ≥ 8× 本金</option>
+  <option value="streak3">连续 3 轮正收益</option>
+ </select>
+</div>
+<div id="upgrade-panel">
+ <div class="upgrade-title">实体升级桌</div>
+ <button id="buyCoin"></button>
+ <button id="upgradeCoin"></button>
+ <button id="buyHelper"></button>
+ <button id="upgradeTable"></button>
+ <button id="toggleAuto"></button>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="js/01-core.js"></script><script src="js/02-table.js"></script>
+<script src="js/03-coin.js"></script><script src="js/04-game.js"></script>
+<script src="js/05-main.js"></script>
+</body></html>

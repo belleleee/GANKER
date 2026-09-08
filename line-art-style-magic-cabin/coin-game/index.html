@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>钱滚钱 · 魔法小屋</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="hud" class="paper">
+  <div class="brand">发家之路</div>
+  <div class="money-line">金币 <span id="wallet">100</span></div>
+  <div class="tiny">今天也要更富一点。</div>
+</div>
+
+<button id="panelToggle" type="button" aria-expanded="false">设置</button>
+
+<div id="sidePanel" class="collapsed" aria-hidden="true">
+  <div id="upgrade" class="paper panel-card">
+    <div class="panel-title">经营升级</div>
+    <button id="buyCoinSlot">扩建员工工位</button>
+    <button id="upgradeCoin">提升倍率</button>
+    <button id="upgradeChance">幸运卡片</button>
+    <button id="buyHelper">史莱姆助手</button>
+    <button id="toggleAuto">自动策略：关闭</button>
+  </div>
+
+  <div id="strategy" class="paper panel-card">
+    <div class="panel-title">助手策略</div>
+    <div id="strategyList"></div>
+  </div>
+
+  <div id="employees" class="paper panel-card">
+    <div class="panel-title">员工档案</div>
+    <div id="employeeList"></div>
+    <div id="employeeDetail"></div>
+  </div>
+</div>
+
+<div id="stats" class="paper">
+  <div class="panel-title">盈亏统计</div>
+  <div class="pair"><span>累计赚到</span><b id="earned">0</b></div>
+  <div class="pair"><span>累计赔掉</span><b id="lost">0</b></div>
+  <div class="pair"><span>净收益</span><b id="net">0</b></div>
+  <div class="pair"><span>正面概率</span><b id="chance">50%</b></div>
+</div>
+
+<div id="round" class="paper">
+  <div class="pair"><span>本轮下注</span><b id="stake">1</b></div>
+  <div class="pair"><span>当前倍率</span><b id="multiplier">×1.00</b></div>
+  <div class="pair"><span>预计收益</span><b id="potential">1</b></div>
+</div>
+
+<button id="mainAction">开始抛出</button>
+<button id="returnGame">返回主游戏</button>
+<div id="hint"></div>
+<div id="result"></div>
+
+<div id="bookOverlay" class="book-overlay">
+  <div id="employeeBook" class="book">
+    <button id="closeBook" class="book-close" type="button">✕</button>
+    <div class="book-spread">
+      <div class="book-page book-left">
+        <div class="book-photo" id="bookPhoto"></div>
+        <div class="book-title" id="bookName"></div>
+        <div class="book-sub" id="bookStatus"></div>
+        <div class="book-heading">技能</div>
+        <div class="book-skills" id="bookSkills"></div>
+      </div>
+      <div class="book-spine"></div>
+      <div class="book-page book-right">
+        <div class="book-heading">经营记录</div>
+        <div class="book-stats" id="bookStats"></div>
+        <div class="book-heading">培训记录</div>
+        <div class="book-log" id="bookLog"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="js/01-core.js"></script>
+<script src="js/02-house.js"></script>
+<script src="js/03-slime.js"></script>
+<script src="js/04-coin.js"></script>
+<script src="js/05-game.js"></script>
+<script src="js/06-main.js"></script>
+</body>
+</html>

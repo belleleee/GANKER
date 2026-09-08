@@ -208,6 +208,10 @@ function updateFarmHireLabel() {
     if (farmHireState.worker) farmHireState.worker.userData.aimLabel = farmHireLabel();
 }
 
+function saveFarmHireStateNow() {
+    if (typeof saveGameState === 'function') saveGameState(false);
+}
+
 function chooseFarmWorkerPlot() {
     const hasSeed =
         !window.getBackpackItemCount ||
@@ -261,6 +265,7 @@ function payFarmWorker(reason) {
     farmHireState.lastPaidDay = currentFarmDay();
     farmHireState.striking = false;
     if (reason) showHintOverride(reason + ' · 日薪 -' + FARM_WORKER_DAILY_WAGE);
+    saveFarmHireStateNow();
     return true;
 }
 
@@ -272,6 +277,7 @@ function hireFarmWorker() {
         updateFarmHireLabel();
         SND.play('chim');
         showHintOverride('已雇佣农工 · 日结工资 ' + FARM_WORKER_DAILY_WAGE);
+        saveFarmHireStateNow();
         return;
     }
 
@@ -468,12 +474,14 @@ function settleFarmWorkerWage() {
     const day = currentFarmDay();
     if (day < farmHireState.lastPaidDay) {
         farmHireState.lastPaidDay = day;
+        saveFarmHireStateNow();
         return;
     }
     if (day <= farmHireState.lastPaidDay) return;
 
     if (window.spendCabinCoins && window.spendCabinCoins(FARM_WORKER_DAILY_WAGE, null)) {
         farmHireState.lastPaidDay = day;
+        saveFarmHireStateNow();
         return;
     }
 
@@ -483,6 +491,7 @@ function settleFarmWorkerWage() {
     farmHireState.targetPlot = null;
     setWorkerTool(null);
     showHintOverride('金币不足，农工罢工了 · 需要补发 ' + FARM_WORKER_DAILY_WAGE + ' 金币');
+    saveFarmHireStateNow();
 }
 
 function updateFarmHireSystem(dt, time) {

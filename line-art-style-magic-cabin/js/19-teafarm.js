@@ -341,6 +341,19 @@ function updateTeaHireLabel() {
     }
 }
 
+function saveTeaHireStateNow() {
+
+    if (
+        typeof saveGameState ===
+        'function'
+    ) {
+
+        saveGameState(
+            false
+        );
+    }
+}
+
 
 /* ==========================================================
    4. 构建茶场地面
@@ -2158,6 +2171,9 @@ function payTeaWorker(
         false;
 
 
+    saveTeaHireStateNow();
+
+
     if (
         reason
     ) {
@@ -2203,6 +2219,9 @@ function hireTeaWorker() {
             '已雇佣茶工 · 日结工资 ' +
             TEA_WORKER_DAILY_WAGE
         );
+
+
+        saveTeaHireStateNow();
 
 
         return;
@@ -2861,6 +2880,9 @@ function settleTeaWorkerWage() {
             day;
 
 
+        saveTeaHireStateNow();
+
+
         return;
     }
 
@@ -2884,6 +2906,9 @@ function settleTeaWorkerWage() {
 
         teaHireState.lastPaidDay =
             day;
+
+
+        saveTeaHireStateNow();
 
 
         return;
@@ -2912,6 +2937,9 @@ function settleTeaWorkerWage() {
         TEA_WORKER_DAILY_WAGE +
         ' 金币'
     );
+
+
+    saveTeaHireStateNow();
 }
 
 function updateTeaHireSystem(
@@ -3397,7 +3425,8 @@ window.captureTeaFarmState =
 
 window.applyTeaFarmState =
     function (
-        raw
+        raw,
+        elapsedRealSeconds = 0
     ) {
 
         if (
@@ -3431,6 +3460,53 @@ window.applyTeaFarmState =
                     )
                 )
             );
+
+
+        if (
+            raw.hire
+        ) {
+
+            teaHireState.hired =
+                !!(
+                    raw.hire.hired ||
+                    raw.hire.active
+                );
+
+
+            teaHireState.striking =
+                !!raw.hire.striking;
+
+
+            teaHireState.lastPaidDay =
+                Math.max(
+                    0,
+                    Math.trunc(
+                        Number(
+                            raw.hire.lastPaidDay
+                        ) ||
+                        currentTeaDay()
+                    )
+                );
+
+
+            teaHireState.targetPlant =
+                null;
+
+
+            teaHireState.phase =
+                teaHireState.hired &&
+                !teaHireState.striking
+                    ? 'seek'
+                    : 'idle';
+
+
+            setTeaWorkerToolVisible(
+                false
+            );
+
+
+            updateTeaHireLabel();
+        }
 
 
         /* ==================================================
@@ -3488,7 +3564,8 @@ window.applyTeaFarmState =
                                 saved.remaining
                             ) ||
                             0
-                        )
+                        ) -
+                        elapsedRealSeconds
                     );
 
 

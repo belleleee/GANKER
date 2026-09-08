@@ -35,7 +35,8 @@ const showRegisterBtn = document.getElementById('showRegisterBtn');
 
 let currentCabinUser = loadSessionUser();
 let autosaveTimer = 0;
-let cabinCoins = 0;
+const STARTING_CABIN_COINS = 100;
+let cabinCoins = STARTING_CABIN_COINS;
 let cropStorage = { turnip: 0, starRelic: 0 };
 let cabinBackpack = { turnipSeed: 0 };
 
@@ -148,6 +149,7 @@ function addCabinCoins(amount, reason) {
     if (!gain) return;
     cabinCoins = Math.min(999999, cabinCoins + gain);
     renderCoins(true);
+    if (typeof saveGameState === 'function') saveGameState(false);
     if (reason === false) return;
     showHintOverride((reason || '获得金币') + ' +' + gain + ' · 当前金币 ' + cabinCoins);
 }
@@ -163,6 +165,7 @@ function spendCabinCoins(amount, reason) {
     }
     cabinCoins -= cost;
     renderCoins(true);
+    if (typeof saveGameState === 'function') saveGameState(false);
     if (reason) showHintOverride(reason + ' -' + cost + ' · 当前金币 ' + cabinCoins);
     return true;
 }
@@ -263,11 +266,12 @@ function loadSessionUser() {
     return loadUsers().find(u => u.id === session.id) || null;
 }
 
-function setCurrentUser(user) {
+function setCurrentUser(user, loadAfterSwitch) {
     currentCabinUser = user;
     if (user) writeJson(APP_SESSION_KEY, { id: user.id });
     updateAuthMessage(user ? '已登录：' + user.name + '，存档会绑定到这个账号。' : '未登录也可以游客进入，登录后会使用独立存档。');
     updateSaveStatus();
+    if (loadAfterSwitch) autoLoadGameState(false);
 }
 
 function updateAuthMessage(text) {
@@ -313,7 +317,7 @@ function registerUser() {
         updateAuthMessage('浏览器拒绝写入本地数据，注册失败。');
         return;
     }
-    setCurrentUser(user);
+    setCurrentUser(user, false);
     switchAuth('login');
     updateAuthMessage('注册成功：' + user.name + '，可以进入游戏了。');
 }
@@ -329,7 +333,7 @@ function loginUser() {
         updateAuthMessage('用户名或密码不对。');
         return;
     }
-    setCurrentUser(user);
+    setCurrentUser(user, true);
 }
 
 function openMembers() {
@@ -424,20 +428,48 @@ function claimJournalRelic() {
     return added;
 }
 
+function readCoinGameReturnState() {
+    const save = validateSave(readJson(cabinSaveKey(), null));
+    if (!save || typeof save !== 'object') return null;
+    const economy = save.economy || {};
+    const coins = Number(economy.coins);
+    const coinGame = economy.coinGame || save.coinGame || null;
+    if (!Number.isFinite(coins) && (!coinGame || typeof coinGame !== 'object')) return null;
+    return {
+        coins: Number.isFinite(coins)
+            ? Math.max(0, Math.min(999999, Math.trunc(coins)))
+            : null,
+        coinGame: coinGame && typeof coinGame === 'object' ? coinGame : null
+    };
+}
+
+function applyCoinGameReturnState(returnState) {
+    if (!returnState) return false;
+    if (Number.isFinite(returnState.coins)) {
+        cabinCoins = returnState.coins;
+        renderCoins(true);
+    }
+    return true;
+}
+
 function resumeFromStoreIfNeeded() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('from') !== 'store') return false;
+    const coinGameReturn = readCoinGameReturnState();
     const snapshot = validateSave(readJson(APP_STORE_RETURN_KEY, null));
     if (snapshot) applySaveState(snapshot);
+    const restoredCoinGame = applyCoinGameReturnState(coinGameReturn);
     try {
         localStorage.removeItem(APP_STORE_RETURN_KEY);
     } catch (err) { }
     if (landingScreen) landingScreen.classList.add('hidden');
     window.APP_SHELL_BLOCK_GAME = false;
     const cafeRevenue = claimCafeRevenue();
+    if (restoredCoinGame && !cafeRevenue) saveGameState(false);
     updateSaveStatus();
     showHintOverride(
         (snapshot ? '已回到进入商店前的位置' : '已返回小屋') +
+        (restoredCoinGame ? ' · 金币已同步' : '') +
         (cafeRevenue ? ' · 咖啡馆收入 +' + cafeRevenue + ' 金币已入小金库' : '')
     );
     if (window.history && window.history.replaceState) {
@@ -493,7 +525,20 @@ function applyHingeState(group, open) {
     group.rotation.y = group.userData.base + group.userData.delta * s.cur;
 }
 
+function readSavedCoinGameState() {
+    const save = validateSave(readJson(cabinSaveKey(), null));
+    if (!save || typeof save !== 'object') return null;
+    const economy = save.economy || {};
+    const coinGame = economy.coinGame || save.coinGame || null;
+    return coinGame && typeof coinGame === 'object' ? coinGame : null;
+}
+
 function captureSaveState() {
+    const savedCoinGame = readSavedCoinGameState();
+    const syncedCoinGame = savedCoinGame
+        ? Object.assign({}, savedCoinGame, { wallet: cabinCoins })
+        : null;
+
     return {
         schema: APP_SAVE_SCHEMA,
         content: APP_CONTENT_ID,
@@ -543,7 +588,8 @@ function captureSaveState() {
             },
             backpack: {
                 turnipSeed: cabinBackpack.turnipSeed
-            }
+            },
+            coinGame: syncedCoinGame
         },
         ui: {
             sfxEnabled: SND.isEnabled(),
@@ -723,7 +769,9 @@ function applySaveState(save) {
         applyFarmHireState(farming.hire);
     }
     if (typeof applyTeaFarmState === 'function') {
-        applyTeaFarmState(save.teaFarm);
+        const savedAtMs = Date.parse(save.savedAt);
+        const elapsedRealSeconds = Number.isFinite(savedAtMs) ? Math.max(0, (Date.now() - savedAtMs) / 1000) : 0;
+        applyTeaFarmState(save.teaFarm, elapsedRealSeconds);
     }
     if (typeof applyNewspaperState === 'function') {
         applyNewspaperState(save.newspaper);
@@ -747,6 +795,24 @@ function loadGameState(manual) {
     return true;
 }
 
+function autoLoadGameState(showLoadedHint) {
+    const save = validateSave(readJson(cabinSaveKey(), null));
+    if (!save) {
+        updateAuthMessage(currentCabinUser
+            ? '已登录：' + currentCabinUser.name + '，没有找到旧存档，将从新游戏开始。'
+            : '未登录也可以游客进入，将从新游戏开始。');
+        updateSaveStatus();
+        return false;
+    }
+    applySaveState(save);
+    updateSaveStatus();
+    updateAuthMessage(currentCabinUser
+        ? '已登录：' + currentCabinUser.name + '，已自动读取存档。'
+        : '游客存档已自动读取。');
+    if (showLoadedHint) showHintOverride('存档已自动读取');
+    return true;
+}
+
 function clearGameSave() {
     try {
         localStorage.removeItem(cabinSaveKey());
@@ -755,6 +821,53 @@ function clearGameSave() {
     } catch (err) {
         showHintOverride('清除失败，浏览器可能禁用了本地存储');
     }
+}
+
+function exportGameSaveJson() {
+    const save = captureSaveState();
+    writeJson(cabinSaveKey(), save);
+    updateSaveStatus();
+    const userPart = currentCabinUser ? currentCabinUser.name : 'guest';
+    const datePart = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
+    const blob = new Blob([JSON.stringify(save, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'magic-cabin-save-' + userPart + '-' + datePart + '.json';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showHintOverride('JSON 存档已导出');
+}
+
+function importGameSaveJson(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+        try {
+            const save = validateSave(JSON.parse(String(reader.result || '')));
+            if (!save) {
+                showHintOverride('导入失败：这不是当前游戏的存档 JSON');
+                return;
+            }
+            writeJson(cabinSaveKey(), save);
+            applySaveState(save);
+            updateSaveStatus();
+            showHintOverride('JSON 存档已导入');
+        } catch (err) {
+            showHintOverride('导入失败：JSON 文件格式不正确');
+        }
+    };
+    reader.onerror = () => showHintOverride('导入失败：无法读取文件');
+    reader.readAsText(file);
+}
+
+function openImportSavePicker() {
+    const input = document.getElementById('importSaveInput');
+    if (!input) return;
+    input.value = '';
+    input.click();
 }
 
 function bindClick(id, handler) {
@@ -774,6 +887,8 @@ document.querySelectorAll('.memberAvatar[data-member]').forEach(card => {
 });
 bindClick('saveGameBtn', () => saveGameState(true));
 bindClick('loadGameBtn', () => loadGameState(true));
+bindClick('exportSaveBtn', exportGameSaveJson);
+bindClick('importSaveBtn', openImportSavePicker);
 bindClick('clearSaveBtn', clearGameSave);
 bindClick('showLoginBtn', () => switchAuth('login'));
 bindClick('showRegisterBtn', () => switchAuth('register'));
@@ -781,6 +896,11 @@ bindClick('registerBtn', registerUser);
 bindClick('loginBtn', loginUser);
 if (membersModal) {
     membersModal.addEventListener('click', e => { if (e.target === membersModal) closeMembers(); });
+}
+
+const importSaveInput = document.getElementById('importSaveInput');
+if (importSaveInput) {
+    importSaveInput.addEventListener('change', () => importGameSaveJson(importSaveInput.files && importSaveInput.files[0]));
 }
 
 for (const id of ['loginName', 'loginPass']) {
@@ -806,6 +926,14 @@ addEventListener('beforeunload', () => {
     if (!window.APP_SHELL_BLOCK_GAME) saveGameState(false);
 });
 
+addEventListener('pagehide', () => {
+    if (!window.APP_SHELL_BLOCK_GAME) saveGameState(false);
+});
+
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden' && !window.APP_SHELL_BLOCK_GAME) saveGameState(false);
+});
+
 (function autosaveLoop() {
     requestAnimationFrame(autosaveLoop);
     if (window.APP_SHELL_BLOCK_GAME) return;
@@ -816,13 +944,12 @@ addEventListener('beforeunload', () => {
     }
 })();
 
-setCurrentUser(currentCabinUser);
-updateSaveStatus();
+setCurrentUser(currentCabinUser, false);
 renderCoins(false);
 renderStorage(false);
 renderBackpack(false);
 if (!resumeFromStoreIfNeeded() && !resumeFromJournalIfNeeded()) {
-    loadRequestedSaveIfNeeded();
+    if (!loadRequestedSaveIfNeeded()) autoLoadGameState(false);
     const cafeRevenue = claimCafeRevenue();
     if (cafeRevenue) {
         showHintOverride('咖啡馆收入 +' + cafeRevenue + ' 金币已入小金库');
