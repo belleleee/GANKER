@@ -23,6 +23,15 @@
                 if (typeof updateFarmHireSystem === 'function') {
                     updateFarmHireSystem(dt, time);
                 }
+                if (typeof updateFarmPlotFocus === 'function') {
+                    updateFarmPlotFocus(dt, time);
+                }
+                if (typeof updateQuestGuide === 'function') {
+                    updateQuestGuide(dt, time);
+                }
+                if (typeof updateAchievements === 'function') {
+                    updateAchievements(dt);
+                }
                 
                 FILL.uniforms.uTime.value = time;
                 FILL.uniforms.uFireStrength.value = fireP;

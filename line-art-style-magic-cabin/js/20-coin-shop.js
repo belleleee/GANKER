@@ -142,9 +142,13 @@
     }
 
     function enterCoinShop() {
-        if (typeof window.prepareStoreReturn === 'function') window.prepareStoreReturn();
-        else if (typeof saveGameState === 'function') saveGameState(false);
-        window.location.href = 'coin-game/index.html';
+        const go = () => {
+            if (typeof window.prepareStoreReturn === 'function') window.prepareStoreReturn();
+            else if (typeof saveGameState === 'function') saveGameState(false);
+            window.location.href = 'coin-game/index.html';
+        };
+        if (typeof window.requestMainStoryAccess === 'function') window.requestMainStoryAccess('coin', go);
+        else go();
     }
 
     const shop = new THREE.Group();

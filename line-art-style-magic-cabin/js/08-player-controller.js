@@ -134,6 +134,22 @@
             document.getElementById('slot4').addEventListener('click', () => selectSlot(4));
             document.getElementById('slot5').addEventListener('click', () => selectSlot(5));
             let dragInfo = null; const ptrs = new Map(); let pinchMode = false, pinchD = 0, didPinch = false;
+            function clearPlayerInputState() {
+                for (const code of Object.keys(keys)) keys[code] = false;
+                joyX = 0;
+                joyY = 0;
+                joyId = null;
+                sprintBtnDown = false;
+                dragInfo = null;
+                pinchMode = false;
+                didPinch = false;
+                ptrs.clear();
+                joyBase.style.display = 'none';
+                setKnob(0, 0);
+                for (const btn of [btnSprint, btnJump, btnAct, btnCast]) btn.classList.remove('pressed');
+                if (player.vy > 2.6) player.vy = 2.6;
+            }
+            window.clearPlayerInputState = clearPlayerInputState;
             renderer.domElement.addEventListener('pointerdown', e => {
                 if (window.APP_SHELL_BLOCK_GAME) return;
                 if (e.button === 2) { tryCast(); return; }
@@ -143,7 +159,11 @@
             renderer.domElement.addEventListener('pointerup', e => { ptrs.delete(e.pointerId); if (ptrs.size < 2) pinchMode = false; if (!dragInfo) return; const wasClick = dragInfo.moved < 6 && !didPinch; dragInfo = null; if (!wasClick) return; if (viewMode === 'fp' && (isLocked() || IS_TOUCH)) { if (aimHit) aimHit.act(); return; } if (viewMode === 'fp' && !IS_TOUCH && !isLocked()) { renderer.domElement.requestPointerLock(); return; } mouse.x = (e.clientX / innerWidth) * 2 - 1; mouse.y = -(e.clientY / innerHeight) * 2 + 1; raycaster.setFromCamera(mouse, camera); const hits = raycaster.intersectObjects(hingeMeshes, false).filter(h => ancestorVisible(h.object)); if (hits.length) { toggleSpring(hits[0].object.userData.hingeGroup); return; } const mh = raycaster.intersectObjects(magicMeshes, false).filter(h => ancestorVisible(h.object)); if (mh.length) { fireMagic(mh[0].object.userData.magicRoot); return; } const fh = raycaster.intersectObjects(fireMeshes, false).filter(h => ancestorVisible(h.object)); if (fh.length) toggleFire(); });
             renderer.domElement.addEventListener('pointercancel', e => { ptrs.delete(e.pointerId); if (ptrs.size < 2) pinchMode = false; dragInfo = null; });
             document.addEventListener('mousemove', e => { if (isLocked() && viewMode === 'fp') { camYaw -= e.movementX * 0.0026; camPitch -= e.movementY * 0.0022; camPitch = Math.max(-1.2, Math.min(1.2, camPitch)); } });
-            document.addEventListener('pointerlockchange', () => { const locked = isLocked(); crosshairEl.classList.toggle('show', viewMode === 'fp' && (locked || IS_TOUCH)); lockTipEl.classList.toggle('show', viewMode === 'fp' && !locked && !IS_TOUCH); });
+            document.addEventListener('pointerlockchange', () => { const locked = isLocked(); if (!locked) clearPlayerInputState(); crosshairEl.classList.toggle('show', viewMode === 'fp' && (locked || IS_TOUCH)); lockTipEl.classList.toggle('show', viewMode === 'fp' && !locked && !IS_TOUCH); });
+            addEventListener('blur', clearPlayerInputState);
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'hidden') clearPlayerInputState();
+            });
             renderer.domElement.addEventListener('wheel', e => { if (viewMode === 'fixed') fixDist = Math.max(4, Math.min(40, fixDist + e.deltaY * 0.012)); else viewDist = Math.max(1.4, Math.min(7.0, viewDist + e.deltaY * 0.0025)); }, { passive: true });
             addEventListener('contextmenu', e => { if (e.target === renderer.domElement || e.target.closest('#joyZone, .touchBtn')) e.preventDefault(); });
 

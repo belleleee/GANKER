@@ -83,6 +83,10 @@ const toolEdgeMat = new THREE.LineBasicMaterial({
     color: 0x5e5143
 });
 
+const toolHoleMat = new THREE.MeshBasicMaterial({
+    color: 0x3a3532
+});
+
 let wateringCanFilled = false;
 
 function setWateringCanFilled(filled, silent) {
@@ -144,6 +148,189 @@ function toolPart(geo, mat) {
     );
 
     g.add(lines);
+
+    return g;
+}
+
+function buildHoeModel(scale) {
+
+    const s =
+        scale || 1;
+
+    const g =
+        new THREE.Group();
+
+    const handleLen =
+        0.78 * s;
+
+    const handle =
+        toolPart(
+            new THREE.CylinderGeometry(
+                0.020 * s,
+                0.027 * s,
+                handleLen,
+                8
+            ),
+            toolWoodMat
+        );
+
+    handle.rotation.x =
+        Math.PI / 2;
+
+    handle.position.z =
+        -0.10 * s;
+
+    g.add(handle);
+
+    const grip =
+        toolPart(
+            new THREE.CylinderGeometry(
+                0.027 * s,
+                0.030 * s,
+                0.16 * s,
+                8
+            ),
+            toolWoodDarkMat
+        );
+
+    grip.rotation.x =
+        Math.PI / 2;
+
+    grip.position.z =
+        -0.40 * s;
+
+    g.add(grip);
+
+    for (const z of [-0.43, -0.36]) {
+        const wrap =
+            toolPart(
+                new THREE.TorusGeometry(
+                    0.032 * s,
+                    0.0045 * s,
+                    6,
+                    14
+                ),
+                toolMetalDarkMat
+            );
+
+        wrap.rotation.x =
+            Math.PI / 2;
+
+        wrap.position.z =
+            z * s;
+
+        g.add(wrap);
+    }
+
+    const socket =
+        toolPart(
+            new THREE.BoxGeometry(
+                0.145 * s,
+                0.105 * s,
+                0.110 * s
+            ),
+            toolMetalDarkMat
+        );
+
+    socket.position.set(
+        0,
+        0,
+        0.305 * s
+    );
+
+    g.add(socket);
+
+    const cap =
+        toolPart(
+            new THREE.BoxGeometry(
+                0.105 * s,
+                0.078 * s,
+                0.050 * s
+            ),
+            toolWoodDarkMat
+        );
+
+    cap.position.set(
+        0,
+        0.065 * s,
+        0.310 * s
+    );
+
+    g.add(cap);
+
+    const bladeShape =
+        new THREE.Shape();
+
+    bladeShape.moveTo(
+        -0.165 * s,
+        0.045 * s
+    );
+    bladeShape.lineTo(
+        0.165 * s,
+        0.045 * s
+    );
+    bladeShape.lineTo(
+        0.115 * s,
+        -0.245 * s
+    );
+    bladeShape.lineTo(
+        -0.115 * s,
+        -0.245 * s
+    );
+    bladeShape.closePath();
+
+    const bladeGeo =
+        new THREE.ExtrudeGeometry(
+            bladeShape,
+            {
+                depth: 0.020 * s,
+                bevelEnabled: false
+            }
+        );
+
+    bladeGeo.translate(
+        0,
+        0,
+        -0.010 * s
+    );
+
+    const blade =
+        toolPart(
+            bladeGeo,
+            toolMetalMat
+        );
+
+    blade.position.set(
+        0,
+        -0.060 * s,
+        0.365 * s
+    );
+
+    blade.rotation.x =
+        -0.46;
+
+    g.add(blade);
+
+    const bladeEdge =
+        toolPart(
+            new THREE.BoxGeometry(
+                0.245 * s,
+                0.012 * s,
+                0.018 * s
+            ),
+            toolMetalDarkMat
+        );
+
+    bladeEdge.position.set(
+        0,
+        -0.235 * s,
+        0.480 * s
+    );
+
+    bladeEdge.rotation.x =
+        -0.46;
+
+    g.add(bladeEdge);
 
     return g;
 }
@@ -227,6 +414,29 @@ function buildSickle() {
     g.add(knob);
 
 
+    /* ---------- 手柄防滑缠绳 ---------- */
+
+    for (let i = 0; i < 3; i++) {
+
+        const wrap = toolPart(
+
+            new THREE.TorusGeometry(
+                0.034,
+                0.009,
+                6,
+                12
+            ),
+
+            toolWoodDarkMat
+        );
+
+        wrap.position.z =
+            -0.06 - i * 0.07;
+
+        g.add(wrap);
+    }
+
+
     /* ---------- 金属连接处 ---------- */
 
     const joint = toolPart(
@@ -250,15 +460,37 @@ function buildSickle() {
     g.add(joint);
 
 
+    /* ---------- 铆钉 ---------- */
+
+    const rivet = toolPart(
+
+        new THREE.SphereGeometry(
+            0.028,
+            8,
+            6
+        ),
+
+        toolMetalDarkMat
+    );
+
+    rivet.position.set(
+        -0.02,
+        0,
+        0.40
+    );
+
+    g.add(rivet);
+
+
     /* ---------- 镰刀弯刃 ---------- */
 
     const blade = toolPart(
 
         new THREE.TorusGeometry(
             0.20,
-            0.024,
-            6,
-            28,
+            0.030,
+            8,
+            32,
             Math.PI * 0.90
         ),
 
@@ -305,6 +537,8 @@ function buildSickle() {
     g.add(tip);
 
 
+    g.scale.setScalar(0.82);
+
     return g;
 }
 
@@ -315,97 +549,7 @@ function buildSickle() {
 
 function buildHoe() {
 
-    const g = new THREE.Group();
-
-
-    /* ---------- 长柄 ---------- */
-
-    const handle = toolPart(
-
-        new THREE.CylinderGeometry(
-            0.026,
-            0.034,
-            0.90,
-            8
-        ),
-
-        toolWoodMat
-    );
-
-    handle.rotation.x =
-        Math.PI / 2;
-
-    g.add(handle);
-
-
-    /* ---------- 柄尾 ---------- */
-
-    const knob = toolPart(
-
-        new THREE.SphereGeometry(
-            0.038,
-            8,
-            6
-        ),
-
-        toolWoodDarkMat
-    );
-
-    knob.position.z =
-        -0.46;
-
-    g.add(knob);
-
-
-    /* ---------- 金属连接件 ---------- */
-
-    const joint = toolPart(
-
-        new THREE.CylinderGeometry(
-            0.035,
-            0.035,
-            0.14,
-            8
-        ),
-
-        toolMetalDarkMat
-    );
-
-    joint.rotation.x =
-        Math.PI / 2;
-
-    joint.position.z =
-        0.46;
-
-    g.add(joint);
-
-
-    /* ---------- 锄刃 ---------- */
-
-    const blade = toolPart(
-
-        new THREE.BoxGeometry(
-            0.34,
-            0.055,
-            0.16
-        ),
-
-        toolMetalMat
-    );
-
-    blade.position.set(
-        0,
-        -0.09,
-        0.50
-    );
-
-    blade.rotation.x =
-        -0.38;
-
-    g.add(blade);
-
-
-    return g;
+    return buildHoeModel(0.76);
 }
 
 
@@ -436,6 +580,26 @@ function buildWateringCan() {
         Math.PI ;
 
     g.add(body);
+
+
+    /* ---------- 肩部装饰环 ---------- */
+
+    const shoulder = toolPart(
+
+        new THREE.TorusGeometry(
+            0.105,
+            0.012,
+            6,
+            18
+        ),
+
+        toolGreenDarkMat
+    );
+
+    shoulder.position.z =
+        0.14;
+
+    g.add(shoulder);
 
 
     /* ---------- 顶盖 ---------- */
@@ -513,6 +677,55 @@ function buildWateringCan() {
     g.add(head);
 
 
+    /* ---------- 喷水孔 ---------- */
+
+    const sprinkleGroup = new THREE.Group();
+
+    sprinkleGroup.position.copy(
+        head.position
+    );
+
+    sprinkleGroup.rotation.copy(
+        head.rotation
+    );
+
+    g.add(sprinkleGroup);
+
+    const holeSpots = [
+        [0, 0],
+        [0.032, 0.022],
+        [-0.032, 0.022],
+        [0.032, -0.022],
+        [-0.032, -0.022],
+        [0.05, 0],
+        [-0.05, 0],
+        [0, 0.05],
+        [0, -0.05]
+    ];
+
+    holeSpots.forEach(spot => {
+
+        const hole = new THREE.Mesh(
+            new THREE.CircleGeometry(
+                0.007,
+                8
+            ),
+            toolHoleMat
+        );
+
+        hole.position.set(
+            spot[0],
+            0.0376,
+            spot[1]
+        );
+
+        hole.rotation.x =
+            -Math.PI / 2;
+
+        sprinkleGroup.add(hole);
+    });
+
+
     /* ---------- 上方把手 ---------- */
 
     const handle = toolPart(
@@ -561,6 +774,8 @@ function buildWateringCan() {
     g.add(waterIndicator);
     g.userData.waterIndicator = waterIndicator;
 
+
+    g.scale.setScalar(0.78);
 
     return g;
 }
@@ -758,26 +973,37 @@ function updateFarmTool(
                 e / FLY
             );
 
+        if (s.name === 'hoe') {
+            tool.position.set(
+                TOOL_HAND_LOCAL.x - 0.010 * k,
+                TOOL_HAND_LOCAL.y + 0.052 * k,
+                TOOL_HAND_LOCAL.z - 0.018 * k
+            );
+            tool.rotation.set(
+                s.restRot.x + 0.38 * k,
+                s.restRot.y - 0.16 * k,
+                s.restRot.z + 0.26 * k
+            );
+        } else {
+            tool.position.set(
+                TOOL_HAND_LOCAL.x,
+                TOOL_HAND_LOCAL.y +
+                Math.sin(k * Math.PI) * 0.05,
+                TOOL_HAND_LOCAL.z
+            );
 
-        tool.position.set(
-            TOOL_HAND_LOCAL.x,
-            TOOL_HAND_LOCAL.y +
-            Math.sin(k * Math.PI) * 0.05,
-            TOOL_HAND_LOCAL.z
-        );
+            /*
+               飞行时稍微旋转
+            */
 
-
-        /*
-           飞行时稍微旋转
-        */
-
-        tool.rotation.y =
-            s.restRot.y +
-            Math.sin(
-                k *
-                Math.PI
-            ) *
-            0.45;
+            tool.rotation.y =
+                s.restRot.y +
+                Math.sin(
+                    k *
+                    Math.PI
+                ) *
+                0.45;
+        }
 
 
         if (
@@ -831,22 +1057,33 @@ function updateFarmTool(
             s.name === 'hoe'
         ) {
 
+            const lift =
+                raw < 0.25
+                    ? toolSmooth(raw / 0.25)
+                    : 1;
+
+            const strike =
+                raw < 0.25
+                    ? 0
+                    : raw < 0.62
+                        ? toolSmooth((raw - 0.25) / 0.37)
+                        : 1;
+
+            const recoil =
+                raw < 0.62
+                    ? 0
+                    : Math.sin(Math.min(1, (raw - 0.62) / 0.38) * Math.PI);
+
+            tool.position.set(
+                TOOL_HAND_LOCAL.x - 0.012 + 0.030 * strike,
+                TOOL_HAND_LOCAL.y + 0.055 * lift + 0.020 * strike + 0.012 * recoil,
+                TOOL_HAND_LOCAL.z - 0.020 + 0.080 * strike - 0.010 * recoil
+            );
+
             tool.rotation.set(
-                s.restRot.x -
-                Math.sin(
-                    raw *
-                    Math.PI
-                ) *
-                1.25,
-
-                s.restRot.y,
-
-                s.restRot.z +
-                0.18 *
-                Math.sin(
-                    raw *
-                    Math.PI
-                )
+                s.restRot.x + 0.42 * lift + 0.78 * strike - 0.12 * recoil,
+                s.restRot.y - 0.10 * lift + 0.06 * strike,
+                s.restRot.z + 0.22 * lift - 0.12 * strike + 0.05 * recoil
             );
         }
 
@@ -912,7 +1149,7 @@ function updateFarmTool(
         */
 
         if (
-            raw >= 0.55 &&
+            raw >= (s.name === 'hoe' ? 0.62 : 0.55) &&
             !s.actionDone
         ) {
 

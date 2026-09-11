@@ -1,0 +1,72 @@
+        .farmResumePanel {
+            position: fixed;
+            inset: 0;
+            z-index: 27;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            background: rgba(22, 19, 12, .5);
+            backdrop-filter: blur(4px);
+        }
+
+        .farmResumePanel[hidden] {
+            display: none;
+        }
+
+        .farmResumeShell {
+            position: relative;
+            width: min(1120px, 96vw);
+            height: min(760px, 92vh);
+            display: grid;
+            grid-template-rows: auto 1fr;
+            overflow: hidden;
+            background: #10100f;
+            border: 2px solid rgba(201, 167, 106, .56);
+            border-radius: 8px;
+            box-shadow: 0 24px 80px rgba(17, 13, 7, .46);
+        }
+
+        .farmResumeTopbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 14px 18px;
+            color: #f2efe8;
+            background: linear-gradient(180deg, #191815, #0d0d0c);
+            border-bottom: 1px solid rgba(201, 167, 106, .36);
+            font-family: Georgia, "Songti SC", "STSong", serif;
+        }
+
+        .farmResumeTopbar p {
+            margin: 0 0 4px;
+            color: #c9a76a;
+            font: 700 12px/1 monospace;
+            letter-spacing: .28em;
+        }
+
+        .farmResumeTopbar h2 {
+            margin: 0;
+            font-size: 22px;
+            line-height: 1.1;
+            letter-spacing: .06em;
+        }
+
+        #closeFarmResumeBtn {
+            width: 38px;
+            height: 38px;
+            border: 1px solid rgba(201, 167, 106, .46);
+            border-radius: 50%;
+            background: rgba(242, 239, 232, .08);
+            color: #f2efe8;
+            font: 28px/1 Georgia, serif;
+            cursor: pointer;
+        }
+
+        #farmResumeFrame {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            background: #000;
+        }
+

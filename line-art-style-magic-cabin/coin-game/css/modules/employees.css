@@ -1,0 +1,33 @@
+.employee-empty{font-size:13px;opacity:.68;line-height:1.7}
+.employee-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.employee-card{
+ border:1px solid #c7b89a;background:#fff8e9;
+ padding:8px;border-radius:6px;cursor:pointer
+}
+.employee-card.on{border-color:#8b6420;box-shadow:0 0 0 1px rgba(139,100,32,.24)}
+.employee-photo{
+ width:42px;height:42px;border-radius:50%;border:1px solid #9d8c70;
+ background:#9fdcc5;margin-bottom:6px
+}
+.employee-name{font-weight:700;font-size:13px}
+.employee-meta{font-size:11px;opacity:.72;line-height:1.5}
+.employee-detail{
+ margin-top:10px;border-top:1px solid #c7b89a;padding-top:9px
+}
+.employee-detail input{
+ width:100%;padding:7px;border:1px solid #b5a789;background:#fffdf5;
+ color:var(--ink);font-family:inherit;margin:5px 0 8px
+}
+.employee-skill{
+ display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;
+ border:1px solid #d2c4a9;padding:7px;margin:6px 0;background:#fffdf5
+}
+.employee-skill button,.employee-pay{
+ border:1px solid #b5a789;background:#fff8e9;color:var(--ink);
+ font-family:inherit;padding:6px 8px;cursor:pointer
+}
+.employee-pay{width:100%;margin-top:7px}
+.employee-archive{
+ width:100%;margin-top:6px;border:1px solid #b5a789;background:#fff8e9;
+ color:var(--ink);font-family:inherit;padding:5px 6px;font-size:11px;cursor:pointer
+}

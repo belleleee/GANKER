@@ -1,0 +1,424 @@
+        #menuDot {
+            position: fixed;
+            top: 14px;
+            right: 14px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 1px solid #bbb;
+            background: #fff;
+            cursor: pointer;
+            font-size: 13px;
+            line-height: 30px;
+            color: #888;
+            text-align: center;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, .18);
+            z-index: 10;
+            user-select: none;
+            transition: transform .3s cubic-bezier(.34, 1.56, .64, 1), box-shadow .3s, color .2s
+        }
+
+        #menuDot:hover {
+            color: #8fae6e;
+            transform: rotate(180deg) scale(1.12);
+            box-shadow: 0 2px 10px rgba(143, 174, 110, .4)
+        }
+
+        #menuDot:active {
+            transform: rotate(180deg) scale(.92)
+        }
+
+        #menuPanel {
+            position: fixed;
+            top: 52px;
+            right: 14px;
+            background: rgba(255, 255, 255, .97);
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 12px 16px;
+            font: 12px/1.6 monospace;
+            color: #444;
+            z-index: 10;
+            width: 208px;
+            box-sizing: border-box;
+            max-height: calc(100vh - 70px);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, .15);
+            user-select: none;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-12px) scale(.92);
+            transition: opacity .28s ease, transform .28s cubic-bezier(.34, 1.4, .64, 1), visibility .28s
+        }
+
+        .menuTabs {
+            display: flex;
+            gap: 4px;
+            margin: 0 0 10px
+        }
+
+        .menuTabBtn {
+            flex: 1;
+            padding: 6px 4px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: #f5f5f5;
+            color: #666;
+            font: 700 11px monospace;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: border-color .2s, color .2s, background .2s
+        }
+
+        .menuTabBtn:hover {
+            border-color: #8fae6e;
+            color: #7c9b5e
+        }
+
+        .menuTabBtn.on {
+            background: #8fae6e;
+            border-color: #8fae6e;
+            color: #fff;
+            box-shadow: 0 0 8px rgba(143, 174, 110, .4)
+        }
+
+        .menuTabPanel[hidden] {
+            display: none
+        }
+
+        #menuPanel.open {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1)
+        }
+
+        #menuPanel .title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+            letter-spacing: 1px
+        }
+
+        #menuPanel .sub {
+            font-weight: bold;
+            font-size: 11px;
+            color: #7c9b5e;
+            letter-spacing: 3px;
+            margin: 2px 0 6px
+        }
+
+        #menuPanel .row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            cursor: pointer
+        }
+
+        #menuPanel .sep {
+            height: 1px;
+            background: #ddd;
+            margin: 10px 0
+        }
+
+        .toggle {
+            width: 38px;
+            height: 20px;
+            border-radius: 10px;
+            background: #ccc;
+            position: relative;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: background .3s ease, box-shadow .3s
+        }
+
+        .toggle:hover {
+            box-shadow: 0 0 0 3px rgba(143, 174, 110, .2)
+        }
+
+        .toggle.on {
+            background: #8fae6e;
+            box-shadow: 0 0 8px rgba(143, 174, 110, .5)
+        }
+
+        .toggle .knob {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
+            transition: left .3s cubic-bezier(.34, 1.56, .64, 1), transform .3s cubic-bezier(.34, 1.56, .64, 1)
+        }
+
+        .toggle.on .knob {
+            left: 21px
+        }
+
+        .toggle:active .knob {
+            transform: scale(1.25)
+        }
+
+        #wxChips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-bottom: 8px
+        }
+
+        .wxChip {
+            padding: 4px 9px;
+            border: 1px solid #bbb;
+            border-radius: 12px;
+            background: #f5f5f5;
+            color: #555;
+            font: 11px monospace;
+            cursor: pointer;
+            transition: border-color .2s, color .2s, background .2s, box-shadow .2s
+        }
+
+        .wxChip:hover {
+            border-color: #8fae6e;
+            color: #7c9b5e;
+            background: #f2f7ee
+        }
+
+        .wxChip.on {
+            background: #8fae6e;
+            border-color: #8fae6e;
+            color: #fff;
+            box-shadow: 0 0 6px rgba(143, 174, 110, .4)
+        }
+
+        .sliderRow {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 7px 0
+        }
+
+        .sliderRow .slbl {
+            width: 32px;
+            font-size: 11px;
+            color: #666;
+            flex-shrink: 0
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            appearance: none;
+            flex: 1;
+            height: 4px;
+            background: #d8d8d8;
+            border-radius: 2px;
+            outline: none;
+            margin: 0;
+            cursor: pointer
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #8fae6e;
+            border: 2px solid #fff;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, .3);
+            cursor: pointer
+        }
+
+        input[type=range]::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #8fae6e;
+            border: 2px solid #fff;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, .3);
+            cursor: pointer
+        }
+
+        .viewBtn {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: center;
+            padding: 7px 10px;
+            margin: 6px 0;
+            border: 1px solid #bbb;
+            border-radius: 6px;
+            background: #f5f5f5;
+            color: #555;
+            cursor: pointer;
+            font: 12px monospace;
+            transition: border-color .2s, color .2s, background .2s, box-shadow .2s
+        }
+
+        .viewBtn:hover {
+            border-color: #8fae6e;
+            color: #7c9b5e;
+            background: #f2f7ee
+        }
+
+        .viewBtn.on {
+            background: #8fae6e;
+            border-color: #8fae6e;
+            color: #fff;
+            box-shadow: 0 0 8px rgba(143, 174, 110, .4)
+        }
+
+        #resetBtn {
+            margin-top: 2px;
+            background: #fdf3f3;
+            border-color: #d8b0b0;
+            color: #a05a5a
+        }
+
+        #resetBtn:hover {
+            border-color: #c07070;
+            color: #b05050;
+            background: #fbeaea
+        }
+
+        #resetBtn:active {
+            transform: scale(.96)
+        }
+
+        .viewBtn.danger {
+            background: #fff6ec;
+            border-color: #d0a56f;
+            color: #9a6736
+        }
+
+        .viewBtn.danger:hover {
+            background: #ffefdb;
+            border-color: #bd8748;
+            color: #875426
+        }
+
+        .saveStatus {
+            border: 1px dashed #c9c9c9;
+            border-radius: 6px;
+            padding: 6px 8px;
+            margin: 2px 0 8px;
+            color: #777;
+            background: #fafafa;
+            line-height: 1.45
+        }
+
+        .aboutBox {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-top: 2px
+        }
+
+        .authorName {
+            text-align: center;
+            font-weight: bold;
+            font-size: 12px;
+            color: #666;
+            letter-spacing: 1px
+        }
+
+        .aboutLink {
+            display: block;
+            text-align: center;
+            padding: 6px 10px;
+            border: 1px solid #bbb;
+            border-radius: 6px;
+            background: #f5f5f5;
+            color: #555;
+            text-decoration: none;
+            transition: border-color .2s, color .2s, background .2s, box-shadow .2s, transform .15s
+        }
+
+        .aboutLink:hover {
+            border-color: #8fae6e;
+            color: #7c9b5e;
+            background: #f2f7ee;
+            box-shadow: 0 0 8px rgba(143, 174, 110, .3)
+        }
+
+        .aboutLink:active {
+            transform: scale(.96)
+        }
+
+        #spellSlots {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 5px;
+            margin: 2px 0 6px
+        }
+
+        .slot {
+            min-width: 0;
+            height: 52px;
+            border: 1.5px solid #c5c5c5;
+            border-radius: 8px;
+            background: #f7f7f7;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            padding: 2px;
+            user-select: none;
+            transition: border-color .2s, background .2s, box-shadow .2s, transform .15s
+        }
+
+        .slot:hover {
+            border-color: #8fae6e
+        }
+
+        .slot:active {
+            transform: scale(.93)
+        }
+
+        .slot .ico {
+            font-size: 17px;
+            line-height: 1;
+            min-height: 18px;
+            font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif
+        }
+
+        .slot .kb {
+            font-size: 8.5px;
+            color: #999;
+            letter-spacing: .3px;
+            white-space: normal;
+            word-break: keep-all;
+            text-align: center;
+            line-height: 1.15;
+            max-width: 100%;
+        }
+
+        .slot.on {
+            border-color: #8fae6e;
+            background: #e9f2e0;
+            box-shadow: 0 0 8px rgba(143, 174, 110, .45)
+        }
+
+        .slot.on .kb {
+            color: #7c9b5e
+        }
+
+        .slot.empty {
+            border-style: dashed;
+            background: transparent;
+            cursor: default;
+            opacity: .45
+        }
+
+        .slot.empty:hover {
+            border-color: #c5c5c5
+        }
+
+        .slot.empty:active {
+            transform: none
+        }
+

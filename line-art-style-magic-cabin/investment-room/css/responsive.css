@@ -1,0 +1,24 @@
+  display:grid;grid-template-columns:1.3fr .6fr .8fr .8fr .8fr;gap:6px;
+  font-size:12px;padding:6px 0;border-bottom:1px dashed rgba(96,244,255,.12);
+}
+.dashHoldingRow--short span:first-child{color:#e4cfff}
+.dashEmpty{color:#c9f7ff;font-size:12px;text-shadow:0 0 6px rgba(96,244,255,.35)}
+.dashNewsRow{padding:6px 0;border-bottom:1px dashed rgba(96,244,255,.12);font-size:12px}
+.dashNewsRow b{color:#eafcff;font-size:13px;display:block;margin-bottom:2px;font-weight:700}
+.dashNewsRow--event{background:rgba(255,214,102,.06);border-radius:6px;padding:8px 8px;margin:2px 0}
+.dashNewsRow--event b{color:#ffd666;text-shadow:0 0 8px rgba(255,214,102,.5)}
+.dashNewsRow--rumor{background:rgba(197,139,255,.06);border-radius:6px;padding:8px 8px;margin:2px 0}
+.dashNewsRow--rumor b{color:#e4cfff;text-shadow:0 0 8px rgba(197,139,255,.5)}
+
+@media(max-width:960px){
+  #topHud{left:14px;right:14px}
+  #topHud h1{font-size:25px}
+  #hint{display:none}
+  .screenMonitor--dashboard{width:96vw;height:94vh;padding:14px}
+  .dashBody{
+    grid-template-columns:1fr;grid-template-rows:auto auto auto auto;
+    grid-template-areas:"main" "trade" "sidebar" "holdings" "news";
+    overflow:auto;
+  }
+  .dashSidebar{flex-direction:row;flex-wrap:wrap}
+}

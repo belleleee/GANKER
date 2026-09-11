@@ -10,7 +10,10 @@ const FARMLAND_CENTER = { x: 9.0, z: 0.0 }; // 小屋东侧空地，避开木屋
 const FARMLAND_N = 6, FARMLAND_SPACING = 1.2, FARMLAND_TILE_SIZE = 0.85, FARMLAND_TILE_H = 0.01;
 
 const farmPlots = [];
+const hoeSoilBursts = [];
 const TURNIP_HARVEST_COINS = 25;
+const FARM_RESUME_HARVEST_TARGET = 3;
+const FARM_WORKER_HIRE_COST = 80;
 const FARM_WORKER_DAILY_WAGE = 60;
 const FARM_WORKER_SPEED = 1.65;
 const FARM_WORKER_PLANT_BATCH = 8;
@@ -18,12 +21,18 @@ const farmHireState = {
     hired: false,
     striking: false,
     lastPaidDay: 0,
+    playerHarvests: 0,
+    resumePrompted: false,
+    resumeViewed: false,
+    candidateUnlocked: false,
     worker: null,
     body: null,
     toolRoot: null,
     tools: {},
+    signMesh: null,
     labelEntry: null,
     targetPlot: null,
+    workCursor: 0,
     phase: 'idle',
     action: null,
     actionTimer: 0,
@@ -44,6 +53,8 @@ function farmPlotLabel(state) {
 }
 function applyFarmPlotState(state, sound) {
     state.material.uniforms.uTint.value.setHex(farmPlotColor(state));
+    if (state.furrowGroup) state.furrowGroup.visible = state.tilled;
+    if (state.gloss) state.gloss.visible = state.watered;
     const label = farmPlotLabel(state);
     state.group.userData.aimLabel = label;
     if (state.interactEntry) state.interactEntry.label = label;
@@ -86,8 +97,55 @@ function harvestFarmCrop(state, silent) {
     } else if (!silent) {
         showHintOverride('收获萝卜 +1，可以继续播种');
     }
+    if (!silent) noteFarmPlayerHarvest();
     return true;
 }
+
+function spawnHoeSoilBurst(x, z) {
+    const soilMat = LITMAT(0x9b7145);
+    for (let i = 0; i < 7; i++) {
+        const clod = solid(new THREE.IcosahedronGeometry(0.035 + Math.random() * 0.025, 0), soilMat);
+        const a = Math.random() * Math.PI * 2;
+        const speed = 0.45 + Math.random() * 0.45;
+        clod.position.set(
+            x + Math.cos(a) * 0.08,
+            0.08,
+            z + Math.sin(a) * 0.08
+        );
+        clod.rotation.set(
+            Math.random() * Math.PI,
+            Math.random() * Math.PI,
+            Math.random() * Math.PI
+        );
+        scene.add(clod);
+        hoeSoilBursts.push({
+            mesh: clod,
+            vx: Math.cos(a) * speed,
+            vy: 0.55 + Math.random() * 0.35,
+            vz: Math.sin(a) * speed,
+            life: 0.42
+        });
+    }
+}
+
+function updateHoeSoilBursts(dt) {
+    for (let i = hoeSoilBursts.length - 1; i >= 0; i--) {
+        const p = hoeSoilBursts[i];
+        p.life -= dt;
+        p.vy -= 2.6 * dt;
+        p.mesh.position.x += p.vx * dt;
+        p.mesh.position.y = Math.max(0.025, p.mesh.position.y + p.vy * dt);
+        p.mesh.position.z += p.vz * dt;
+        p.mesh.rotation.x += dt * 7.0;
+        p.mesh.rotation.z += dt * 5.5;
+        p.mesh.scale.setScalar(Math.max(0.05, p.life / 0.42));
+        if (p.life <= 0) {
+            scene.remove(p.mesh);
+            hoeSoilBursts.splice(i, 1);
+        }
+    }
+}
+
 function onFarmPlotClick(state) {
     if (!state.tilled) {
         if (slotSel !== TOOL_SLOT.hoe) {
@@ -96,6 +154,7 @@ function onFarmPlotClick(state) {
             return;
         }
         if (!triggerToolSwing('hoe', () => {
+            spawnHoeSoilBurst(state.x, state.z);
             state.tilled = true;
             state.watered = false;
             applyFarmPlotState(state, 'ui');
@@ -146,7 +205,74 @@ function buildFarmPlot(x, z) {
     const tile = solid(new THREE.BoxGeometry(FARMLAND_TILE_SIZE, FARMLAND_TILE_H, FARMLAND_TILE_SIZE), mat);
     tile.position.y = FARMLAND_TILE_H / 2;
     g.add(tile);
-    const state = { tilled: false, watered: false, crop: null, harvested: 0, group: g, material: mat, x, z, interactEntry: null };
+
+    /* ---------- 犁沟：翻地后浮现的田垄纹理 ---------- */
+    const furrowGroup = new THREE.Group();
+    const furrowMat = LITMAT(0xa9824f);
+    const FURROW_ROWS = 4;
+    for (let i = 0; i < FURROW_ROWS; i++) {
+        const ridge = solid(
+            new THREE.BoxGeometry(FARMLAND_TILE_SIZE * 0.92, 0.026, FARMLAND_TILE_SIZE / FURROW_ROWS * 0.5),
+            furrowMat
+        );
+        ridge.position.set(
+            0,
+            FARMLAND_TILE_H + 0.013,
+            -FARMLAND_TILE_SIZE / 2 + (i + 0.5) * (FARMLAND_TILE_SIZE / FURROW_ROWS)
+        );
+        furrowGroup.add(ridge);
+    }
+    furrowGroup.visible = false;
+    g.add(furrowGroup);
+
+    /* ---------- 浇水后的湿润光泽 ---------- */
+    const glossMat = new THREE.MeshBasicMaterial({
+        color: 0x2c2013,
+        transparent: true,
+        opacity: 0.22,
+        depthWrite: false
+    });
+    const gloss = new THREE.Mesh(
+        new THREE.PlaneGeometry(FARMLAND_TILE_SIZE * 0.94, FARMLAND_TILE_SIZE * 0.94),
+        glossMat
+    );
+    gloss.rotation.x = -Math.PI / 2;
+    gloss.position.y = FARMLAND_TILE_H + 0.006;
+    gloss.visible = false;
+    g.add(gloss);
+
+    /* ---------- 靠近时的瞄准描边 ---------- */
+    const highlightMat = new THREE.LineBasicMaterial({
+        color: 0xffe066,
+        transparent: true,
+        opacity: 0.9
+    });
+    const hw = FARMLAND_TILE_SIZE / 2;
+    const highlight = new THREE.LineLoop(
+        new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(-hw, FARMLAND_TILE_H + 0.02, -hw),
+            new THREE.Vector3(hw, FARMLAND_TILE_H + 0.02, -hw),
+            new THREE.Vector3(hw, FARMLAND_TILE_H + 0.02, hw),
+            new THREE.Vector3(-hw, FARMLAND_TILE_H + 0.02, hw)
+        ]),
+        highlightMat
+    );
+    highlight.visible = false;
+    g.add(highlight);
+
+    const state = {
+        tilled: false,
+        watered: false,
+        crop: null,
+        harvested: 0,
+        group: g,
+        material: mat,
+        x, z,
+        interactEntry: null,
+        furrowGroup,
+        gloss,
+        highlight
+    };
     g.userData.aimLabel = farmPlotLabel(state);
     regMagic(g, () => onFarmPlotClick(state));
     const entry = { x, z, r: 0.9, label: farmPlotLabel(state), act: () => onFarmPlotClick(state) };
@@ -154,6 +280,31 @@ function buildFarmPlot(x, z) {
     interactables.push(entry);
     farmPlots.push(state);
     return state;
+}
+
+/* ---------- 每帧检测最近的地块，点亮瞄准描边 ---------- */
+let focusedFarmPlot = null;
+const FARM_FOCUS_RADIUS = 1.25;
+function updateFarmPlotFocus(dt, time) {
+    if (typeof player === 'undefined') return;
+    updateHoeSoilBursts(dt);
+    let best = null;
+    let bestD = FARM_FOCUS_RADIUS;
+    for (const state of farmPlots) {
+        const d = Math.hypot(player.pos.x - state.x, player.pos.z - state.z);
+        if (d < bestD) {
+            bestD = d;
+            best = state;
+        }
+    }
+    if (best !== focusedFarmPlot) {
+        if (focusedFarmPlot) focusedFarmPlot.highlight.visible = false;
+        focusedFarmPlot = best;
+    }
+    if (focusedFarmPlot) {
+        focusedFarmPlot.highlight.visible = true;
+        focusedFarmPlot.highlight.material.opacity = 0.55 + Math.sin(time * 4.2) * 0.35;
+    }
 }
 //对每一块农田进行初始化，生成 6×6 的农田网格
 for (let row = 0; row < FARMLAND_N; row++) {
@@ -168,10 +319,7 @@ for (let row = 0; row < FARMLAND_N; row++) {
 /* ============ 农场雇佣系统：自动照料农田 ============ */
 /* ========================================================== */
 
-function makeFarmHireLabel(text) {
-    const canvas = document.createElement('canvas');
-    canvas.width = 256;
-    canvas.height = 128;
+function drawFarmHireLabel(canvas, text, subtext) {
     const ctx = canvas.getContext('2d');
     ctx.fillStyle = '#f7efd6';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -184,11 +332,28 @@ function makeFarmHireLabel(text) {
     ctx.textBaseline = 'middle';
     ctx.fillText(text, 128, 47);
     ctx.font = '18px "Songti SC", "STSong", serif';
-    ctx.fillText('日薪 ' + FARM_WORKER_DAILY_WAGE + ' 金币', 128, 84);
+    ctx.fillText(subtext, 128, 84);
+}
+
+function makeFarmHireLabel(text, subtext) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 128;
+    drawFarmHireLabel(canvas, text, subtext);
 
     const texture = new THREE.CanvasTexture(canvas);
     const material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
-    return new THREE.Mesh(new THREE.PlaneGeometry(0.88, 0.44), material);
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.88, 0.44), material);
+    mesh.userData.labelCanvas = canvas;
+    mesh.userData.labelTexture = texture;
+    return mesh;
+}
+
+function updateFarmHireSignMesh() {
+    const mesh = farmHireState.signMesh;
+    if (!mesh || !mesh.userData.labelCanvas) return;
+    drawFarmHireLabel(mesh.userData.labelCanvas, farmHireSignTitle(), farmHireSignSubtext());
+    if (mesh.userData.labelTexture) mesh.userData.labelTexture.needsUpdate = true;
 }
 
 function currentFarmDay() {
@@ -198,36 +363,165 @@ function currentFarmDay() {
 
 function farmHireLabel() {
     if (farmHireState.striking) return '农工罢工中 · 补发工资';
-    return farmHireState.hired
-        ? '农工工作中'
-        : '雇佣农工';
+    if (farmHireState.hired) return '农工工作中';
+    if (farmHireState.playerHarvests < FARM_RESUME_HARVEST_TARGET) {
+        return '收割萝卜 ' + farmHireState.playerHarvests + '/' + FARM_RESUME_HARVEST_TARGET + ' 后开放招聘';
+    }
+    if (!farmHireState.resumeViewed) return '查看第一份简历';
+    return '雇佣农场经营者';
+}
+
+function farmHireSignTitle() {
+    if (farmHireState.striking) return '补发工资';
+    if (farmHireState.hired) return '经营中';
+    if (farmHireState.playerHarvests < FARM_RESUME_HARVEST_TARGET) return '农场招募';
+    if (!farmHireState.resumeViewed) return '查看简历';
+    return '雇佣申请人';
+}
+
+function farmHireSignSubtext() {
+    if (farmHireState.striking) return '日薪 ' + FARM_WORKER_DAILY_WAGE + ' 金币';
+    if (farmHireState.hired) return '日薪 ' + FARM_WORKER_DAILY_WAGE + ' 金币';
+    if (farmHireState.playerHarvests < FARM_RESUME_HARVEST_TARGET) {
+        return '收割 ' + farmHireState.playerHarvests + '/' + FARM_RESUME_HARVEST_TARGET;
+    }
+    if (!farmHireState.resumeViewed) return '读完序章后面试';
+    return '雇佣费 ' + FARM_WORKER_HIRE_COST + ' 金币';
 }
 
 function updateFarmHireLabel() {
     if (farmHireState.labelEntry) farmHireState.labelEntry.label = farmHireLabel();
     if (farmHireState.worker) farmHireState.worker.userData.aimLabel = farmHireLabel();
+    updateFarmHireSignMesh();
 }
 
 function saveFarmHireStateNow() {
     if (typeof saveGameState === 'function') saveGameState(false);
 }
 
+function noteFarmPlayerHarvest() {
+    farmHireState.playerHarvests = Math.max(
+        farmHireState.playerHarvests + 1,
+        farmPlots.reduce((sum, p) => sum + (p.harvested || 0), 0)
+    );
+    if (
+        farmHireState.playerHarvests >= FARM_RESUME_HARVEST_TARGET &&
+        !farmHireState.resumePrompted &&
+        !farmHireState.hired
+    ) {
+        farmHireState.resumePrompted = true;
+        showHintOverride('你觉得一个人经营农场太累了，也许该看看第一份求职简历');
+    }
+    updateFarmHireLabel();
+    saveFarmHireStateNow();
+}
+
+function workerPlantFarmCrop(state) {
+    if (
+        state.crop
+    ) {
+
+        return false;
+    }
+
+    state.crop =
+        createTurnip(
+            state.x,
+            0.02,
+            state.z
+        );
+
+    state.watered =
+        false;
+
+    applyFarmPlotState(
+        state,
+        'chim'
+    );
+
+    return true;
+}
+
+function pickFarmWorkerCandidate(
+    candidates
+) {
+
+    if (
+        !candidates.length
+    ) {
+
+        return null;
+    }
+
+    const total =
+        farmPlots.length;
+
+    let best =
+        candidates[0];
+
+    let bestStep =
+        total + 1;
+
+    for (
+        const plot of candidates
+    ) {
+
+        const index =
+            farmPlots.indexOf(
+                plot
+            );
+
+        const step =
+            (
+                index -
+                farmHireState.workCursor +
+                total
+            ) %
+            total;
+
+        if (
+            step < bestStep
+        ) {
+
+            best =
+                plot;
+
+            bestStep =
+                step;
+        }
+    }
+
+    return best;
+}
+
 function chooseFarmWorkerPlot() {
-    const hasSeed =
-        !window.getBackpackItemCount ||
-        window.getBackpackItemCount('turnipSeed') > 0;
     const growingCount =
         farmPlots.filter(p => p.crop && p.crop.userData.crop.stage < 3).length;
     const shouldPlantMore =
-        hasSeed &&
         growingCount < FARM_WORKER_PLANT_BATCH;
 
-    return farmPlots.find(p => p.crop && p.crop.userData.crop.stage >= 3) ||
-        (shouldPlantMore ? farmPlots.find(p => p.tilled && !p.crop) : null) ||
-        (shouldPlantMore ? farmPlots.find(p => !p.tilled) : null) ||
-        farmPlots.find(p => p.crop && p.crop.userData.crop.stage < 3) ||
-        (hasSeed ? farmPlots.find(p => p.tilled && !p.crop) : null) ||
-        farmPlots.find(p => !p.tilled) ||
+    return pickFarmWorkerCandidate(
+        farmPlots.filter(p => p.crop && p.crop.userData.crop.stage >= 3)
+    ) ||
+        (
+            shouldPlantMore
+                ? pickFarmWorkerCandidate(farmPlots.filter(p => p.tilled && !p.crop))
+                : null
+        ) ||
+        (
+            shouldPlantMore
+                ? pickFarmWorkerCandidate(farmPlots.filter(p => !p.tilled))
+                : null
+        ) ||
+        pickFarmWorkerCandidate(
+            farmPlots.filter(p => p.crop && p.crop.userData.crop.stage < 3)
+        ) ||
+        pickFarmWorkerCandidate(
+            farmPlots.filter(p => p.tilled && !p.crop)
+        ) ||
+        pickFarmWorkerCandidate(
+            farmPlots.filter(p => !p.tilled)
+        ) ||
         null;
 }
 
@@ -240,7 +534,7 @@ function getFarmWorkerAction(plot) {
         return { name: 'wateringCan', label: '浇水', apply: () => growFarmCrop(plot, true) };
     }
     if (plot.tilled && !plot.crop) {
-        return { name: 'seed', label: '播种', apply: () => plantFarmCrop(plot, true) };
+        return { name: 'seed', label: '播种', apply: () => workerPlantFarmCrop(plot) };
     }
     if (!plot.tilled) {
         return {
@@ -269,14 +563,79 @@ function payFarmWorker(reason) {
     return true;
 }
 
+function openFarmResumeStory() {
+    const panel = document.getElementById('farmResumePanel');
+    const frame = document.getElementById('farmResumeFrame');
+    if (!panel || !frame) {
+        showHintOverride('第一份简历已经放在桌上：先阅读序章剧情');
+        return;
+    }
+    if (typeof window.clearPlayerInputState === 'function') window.clearPlayerInputState();
+    if (document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
+    window.APP_SHELL_BLOCK_GAME = true;
+    frame.src = 'farm-resume/first.html';
+    panel.hidden = false;
+}
+
+function closeFarmResumeStory() {
+    const panel = document.getElementById('farmResumePanel');
+    const frame = document.getElementById('farmResumeFrame');
+    if (panel) panel.hidden = true;
+    if (frame) frame.src = 'about:blank';
+    if (typeof window.clearPlayerInputState === 'function') window.clearPlayerInputState();
+    window.APP_SHELL_BLOCK_GAME = false;
+}
+
+function completeFarmResumeStory() {
+    farmHireState.resumeViewed = true;
+    farmHireState.candidateUnlocked = true;
+    farmHireState.resumePrompted = true;
+    closeFarmResumeStory();
+    updateFarmHireLabel();
+    SND.play('chim');
+    showHintOverride('简历读完了：申请人想来经营农场，帮助家里减轻负担');
+    saveFarmHireStateNow();
+}
+
+function setupFarmResumePanel() {
+    const closeBtn = document.getElementById('closeFarmResumeBtn');
+    if (closeBtn) closeBtn.addEventListener('click', closeFarmResumeStory);
+    window.addEventListener('message', event => {
+        if (!event.data || event.data.type !== 'farm-resume-complete') return;
+        completeFarmResumeStory();
+    });
+}
+
 function hireFarmWorker() {
+    if (
+        !farmHireState.hired &&
+        farmHireState.playerHarvests < FARM_RESUME_HARVEST_TARGET
+    ) {
+        const left = FARM_RESUME_HARVEST_TARGET - farmHireState.playerHarvests;
+        showHintOverride('你还没累到想招人 · 再亲自收割 ' + left + ' 次萝卜');
+        return;
+    }
+
+    if (!farmHireState.hired && !farmHireState.resumeViewed) {
+        farmHireState.resumePrompted = true;
+        updateFarmHireLabel();
+        saveFarmHireStateNow();
+        openFarmResumeStory();
+        return;
+    }
+
     if (!farmHireState.hired) {
+        if (!window.spendCabinCoins) {
+            showHintOverride('金币系统还没准备好，暂时不能雇佣');
+            return;
+        }
+        if (!window.spendCabinCoins(FARM_WORKER_HIRE_COST, '雇佣农场经营者')) return;
         farmHireState.hired = true;
         farmHireState.lastPaidDay = currentFarmDay();
         farmHireState.phase = 'seek';
         updateFarmHireLabel();
         SND.play('chim');
-        showHintOverride('已雇佣农工 · 日结工资 ' + FARM_WORKER_DAILY_WAGE);
+        showHintOverride('已雇佣农场经营者 · 日结工资 ' + FARM_WORKER_DAILY_WAGE);
         saveFarmHireStateNow();
         return;
     }
@@ -290,7 +649,7 @@ function hireFarmWorker() {
     }
 
     updateFarmHireLabel();
-    showHintOverride('农工已在工作 · 每日结算日薪 ' + FARM_WORKER_DAILY_WAGE);
+    showHintOverride('农场经营者已在工作 · 每日结算日薪 ' + FARM_WORKER_DAILY_WAGE);
 }
 
 function makeWorkerToolPart(geo, mat) {
@@ -301,6 +660,25 @@ function makeWorkerToolPart(geo, mat) {
     return g;
 }
 
+function farmToolSmooth(k) {
+    const t =
+        Math.max(
+            0,
+            Math.min(
+                1,
+                k
+            )
+        );
+
+    return t *
+        t *
+        (
+            3 -
+            2 *
+            t
+        );
+}
+
 function buildWorkerTool(name) {
     const g = new THREE.Group();
     const wood = LITMAT(0xc59a68);
@@ -308,12 +686,42 @@ function buildWorkerTool(name) {
     const green = LITMAT(0x91aaa0);
 
     if (name === 'hoe') {
-        const handle = makeWorkerToolPart(new THREE.CylinderGeometry(0.014, 0.018, 0.46, 8), wood);
+        const handle = makeWorkerToolPart(new THREE.CylinderGeometry(0.009, 0.013, 0.35, 8), wood);
         handle.rotation.x = Math.PI / 2;
+        handle.position.z = -0.05;
         g.add(handle);
-        const blade = makeWorkerToolPart(new THREE.BoxGeometry(0.19, 0.035, 0.08), metal);
-        blade.position.set(0, -0.05, 0.24);
-        blade.rotation.x = -0.38;
+
+        const grip = makeWorkerToolPart(new THREE.CylinderGeometry(0.014, 0.015, 0.08, 8), LITMAT(0x9e7049));
+        grip.rotation.x = Math.PI / 2;
+        grip.position.z = -0.205;
+        g.add(grip);
+
+        for (const z of [-0.225, -0.185]) {
+            const wrap = makeWorkerToolPart(new THREE.TorusGeometry(0.016, 0.0028, 6, 12), LITMAT(0x8c9395));
+            wrap.rotation.x = Math.PI / 2;
+            wrap.position.z = z;
+            g.add(wrap);
+        }
+
+        const socket = makeWorkerToolPart(new THREE.BoxGeometry(0.070, 0.052, 0.055), LITMAT(0x8c9395));
+        socket.position.set(0, 0, 0.155);
+        g.add(socket);
+
+        const cap = makeWorkerToolPart(new THREE.BoxGeometry(0.052, 0.038, 0.026), LITMAT(0x9e7049));
+        cap.position.set(0, 0.032, 0.158);
+        g.add(cap);
+
+        const bladeShape = new THREE.Shape();
+        bladeShape.moveTo(-0.078, 0.022);
+        bladeShape.lineTo(0.078, 0.022);
+        bladeShape.lineTo(0.055, -0.115);
+        bladeShape.lineTo(-0.055, -0.115);
+        bladeShape.closePath();
+        const bladeGeo = new THREE.ExtrudeGeometry(bladeShape, { depth: 0.010, bevelEnabled: false });
+        bladeGeo.translate(0, 0, -0.005);
+        const blade = makeWorkerToolPart(bladeGeo, metal);
+        blade.position.set(0, -0.030, 0.185);
+        blade.rotation.x = -0.46;
         g.add(blade);
     } else if (name === 'wateringCan') {
         const body = makeWorkerToolPart(new THREE.CylinderGeometry(0.08, 0.095, 0.13, 14), green);
@@ -323,6 +731,7 @@ function buildWorkerTool(name) {
         spout.rotation.z = -Math.PI / 3;
         spout.position.set(0.13, 0.03, 0);
         g.add(spout);
+        g.scale.setScalar(0.78);
     } else if (name === 'sickle') {
         const handle = makeWorkerToolPart(new THREE.CylinderGeometry(0.014, 0.018, 0.42, 8), wood);
         handle.rotation.x = Math.PI / 2;
@@ -331,6 +740,7 @@ function buildWorkerTool(name) {
         blade.position.set(-0.07, 0, 0.24);
         blade.rotation.set(Math.PI / 2, 0, Math.PI / 2);
         g.add(blade);
+        g.scale.setScalar(0.82);
     } else {
         const seed = makeWorkerToolPart(new THREE.SphereGeometry(0.045, 8, 6), LITMAT(0xd88963));
         seed.scale.y = 0.65;
@@ -353,10 +763,11 @@ function buildFarmWorkerContract() {
     post.add(new THREE.LineSegments(new THREE.EdgesGeometry(post.geometry, 1), MAT));
     g.add(post);
 
-    const sign = makeFarmHireLabel('雇佣农工');
+    const sign = makeFarmHireLabel(farmHireSignTitle(), farmHireSignSubtext());
     sign.position.set(0, 1.02, 0);
     sign.rotation.y = Math.PI / 2;
     g.add(sign);
+    farmHireState.signMesh = sign;
 
     const worker = new THREE.Group();
     worker.position.set(x + 0.75, 0, z + 0.25);
@@ -427,6 +838,14 @@ function startFarmWorkerTask() {
     farmHireState.targetPlot = plot;
     farmHireState.action = action;
     farmHireState.phase = 'move';
+    farmHireState.workCursor =
+        (
+            farmPlots.indexOf(
+                plot
+            ) +
+            1
+        ) %
+        farmPlots.length;
     setWorkerTool(action.name);
 }
 
@@ -448,14 +867,25 @@ function animateFarmWorker(dt, time, moving) {
     farmHireState.body.rotation.z = moving ? Math.sin(farmHireState.pulse * 0.5) * 0.08 : 0;
 
     if (farmHireState.toolRoot) {
-        farmHireState.toolRoot.position.y = 0.28 + Math.sin(time * 1.6) * 0.006;
+        farmHireState.toolRoot.position.set(
+            0.20,
+            0.28 + Math.sin(time * 1.6) * 0.006,
+            0.14
+        );
         farmHireState.toolRoot.rotation.set(0, 0, 0);
         if (farmHireState.phase === 'act') {
             const raw = Math.min(1, farmHireState.actionTimer / 0.95);
             const swing = Math.sin(raw * Math.PI);
             const action = farmHireState.action && farmHireState.action.name;
             if (action === 'hoe') {
-                farmHireState.toolRoot.rotation.x = -1.15 * swing;
+                const lift = raw < 0.25 ? farmToolSmooth(raw / 0.25) : 1;
+                const strike = raw < 0.25 ? 0 : raw < 0.62 ? farmToolSmooth((raw - 0.25) / 0.37) : 1;
+                const recoil = raw < 0.62 ? 0 : Math.sin(Math.min(1, (raw - 0.62) / 0.38) * Math.PI);
+                farmHireState.toolRoot.position.y += 0.034 * lift + 0.014 * strike + 0.010 * recoil;
+                farmHireState.toolRoot.position.z += -0.014 * lift + 0.060 * strike - 0.008 * recoil;
+                farmHireState.toolRoot.rotation.x = 0.30 * lift + 0.64 * strike - 0.10 * recoil;
+                farmHireState.toolRoot.rotation.y = -0.08 * lift + 0.05 * strike;
+                farmHireState.toolRoot.rotation.z = 0.16 * lift - 0.10 * strike + 0.04 * recoil;
             } else if (action === 'sickle') {
                 farmHireState.toolRoot.rotation.y = 1.45 * swing;
                 farmHireState.toolRoot.rotation.z = -0.22 * swing;
@@ -534,9 +964,13 @@ function updateFarmHireSystem(dt, time) {
         }
     } else if (farmHireState.phase === 'act') {
         farmHireState.actionTimer += dt;
-        if (farmHireState.actionTimer >= 0.50 && farmHireState.action) {
+        const actionHitTime = farmHireState.action && farmHireState.action.name === 'hoe' ? 0.62 : 0.50;
+        if (farmHireState.actionTimer >= actionHitTime && farmHireState.action) {
             const action = farmHireState.action;
             farmHireState.action = null;
+            if (action.name === 'hoe' && farmHireState.targetPlot) {
+                spawnHoeSoilBurst(farmHireState.targetPlot.x, farmHireState.targetPlot.z);
+            }
             action.apply();
             if (action.name !== 'seed') SND.play(action.name === 'hoe' ? 'ui' : 'chim');
         }
@@ -553,7 +987,11 @@ function captureFarmHireState() {
     return {
         hired: farmHireState.hired,
         striking: farmHireState.striking,
-        lastPaidDay: farmHireState.lastPaidDay
+        lastPaidDay: farmHireState.lastPaidDay,
+        playerHarvests: farmHireState.playerHarvests,
+        resumePrompted: farmHireState.resumePrompted,
+        resumeViewed: farmHireState.resumeViewed,
+        candidateUnlocked: farmHireState.candidateUnlocked
     };
 }
 
@@ -564,6 +1002,21 @@ function applyFarmHireState(save) {
         0,
         Math.trunc(Number(save && save.lastPaidDay) || currentFarmDay())
     );
+    const savedHarvests = Math.trunc(Number(save && save.playerHarvests) || 0);
+    const plotHarvests = farmPlots.reduce((sum, p) => sum + (p.harvested || 0), 0);
+    farmHireState.playerHarvests = Math.max(0, savedHarvests, plotHarvests);
+    farmHireState.resumePrompted = !!(
+        save &&
+        save.resumePrompted
+    ) || farmHireState.playerHarvests >= FARM_RESUME_HARVEST_TARGET;
+    farmHireState.resumeViewed = !!(
+        farmHireState.hired ||
+        (save && (save.resumeViewed || save.candidateUnlocked))
+    );
+    farmHireState.candidateUnlocked = !!(
+        farmHireState.resumeViewed ||
+        (save && save.candidateUnlocked)
+    );
     farmHireState.action = null;
     farmHireState.targetPlot = null;
     farmHireState.phase = farmHireState.hired && !farmHireState.striking ? 'seek' : 'idle';
@@ -571,6 +1024,7 @@ function applyFarmHireState(save) {
     updateFarmHireLabel();
 }
 
+setupFarmResumePanel();
 buildFarmWorkerContract();
 
 /* ==========================================================

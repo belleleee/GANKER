@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>制茶小屋</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <canvas id="teaHutCanvas"></canvas>
+
+    <div class="hud top-left">
+        <div class="title">制茶小屋</div>
+        <div id="teaHint">WASD 移动，靠近物品按 E 互动</div>
+        <button id="returnBtn" type="button">返回茶场</button>
+    </div>
+
+    <div class="hud top-right">
+        <div class="guide-title">屋内物品</div>
+        <div><kbd>E</kbd> 查看 / 操作</div>
+        <div><kbd>Shift</kbd> 疾走</div>
+        <div><kbd>鼠标</kbd> 转视角</div>
+    </div>
+
+    <div id="inspectPanel" class="inspect" hidden>
+        <button id="closePanelBtn" type="button" aria-label="关闭">×</button>
+        <div id="inspectTitle" class="inspect-title"></div>
+        <div id="inspectBody" class="inspect-body"></div>
+    </div>
+
+    <div id="crosshair"></div>
+
+    <script src="../three.min.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

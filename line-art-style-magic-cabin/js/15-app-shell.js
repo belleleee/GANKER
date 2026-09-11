@@ -144,6 +144,10 @@ function renderCoins(bump) {
     setTimeout(() => coinHud.classList.remove('bump'), 220);
 }
 
+window.getCabinCoins = function getCabinCoins() {
+    return cabinCoins;
+};
+
 function addCabinCoins(amount, reason) {
     const gain = Math.max(0, Math.trunc(Number(amount) || 0));
     if (!gain) return;
@@ -610,7 +614,9 @@ function captureSaveState() {
         },
         teaFarm: typeof captureTeaFarmState === 'function' ? captureTeaFarmState() : null,
         newspaper: typeof captureNewspaperState === 'function' ? captureNewspaperState() : null,
-        zongStory: typeof captureZongStoryState === 'function' ? captureZongStoryState() : null
+        zongStory: typeof captureZongStoryState === 'function' ? captureZongStoryState() : null,
+        mainStory: typeof captureMainStoryState === 'function' ? captureMainStoryState() : null,
+        achievements: typeof captureAchievementState === 'function' ? captureAchievementState() : null
     };
 }
 
@@ -779,6 +785,12 @@ function applySaveState(save) {
     if (typeof applyZongStoryState === 'function') {
         applyZongStoryState(save.zongStory);
     }
+    if (typeof applyMainStoryState === 'function') {
+        applyMainStoryState(save.mainStory);
+    }
+    if (typeof applyAchievementState === 'function') {
+        applyAchievementState(save.achievements);
+    }
 }
 
 function loadGameState(manual) {
@@ -880,6 +892,26 @@ bindClick('continueGameBtn', () => enterGame(true));
 bindClick('openMembersBtn', openMembers);
 bindClick('membersMenuBtn', openMembers);
 bindClick('showcaseMenuBtn', () => { window.location.href = 'index.html'; });
+
+(function setupMenuTabs() {
+    const menuPanelEl = document.getElementById('menuPanel');
+    if (!menuPanelEl) return;
+    menuPanelEl.addEventListener('click', event => {
+        const btn = event.target.closest('.menuTabBtn');
+        if (!btn || !menuPanelEl.contains(btn)) return;
+        const key = btn.dataset.menuTab;
+        menuPanelEl.querySelectorAll('.menuTabBtn').forEach(b => b.classList.toggle('on', b === btn));
+        menuPanelEl.querySelectorAll('.menuTabPanel').forEach(panel => {
+            panel.hidden = panel.dataset.menuPanel !== key;
+        });
+        menuPanelEl.scrollTop = 0;
+    });
+})();
+bindClick('investmentMenuBtn', () => {
+    if (typeof prepareStoreReturn === 'function') prepareStoreReturn();
+    else saveGameState(false);
+    window.location.href = 'investment-room/index.html';
+});
 bindClick('closeMembersBtn', closeMembers);
 bindClick('backToMembersBtn', showMemberList);
 document.querySelectorAll('.memberAvatar[data-member]').forEach(card => {

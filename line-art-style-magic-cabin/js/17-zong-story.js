@@ -192,6 +192,7 @@ function onZongSkip() {
 
 function openZongStory() {
     if (!storyPanel) return;
+    if (typeof window.clearPlayerInputState === 'function') window.clearPlayerInputState();
     if (zongChapterIndex >= ZONG_CHAPTERS.length) {
         renderZongFinished();
     } else {
@@ -209,6 +210,7 @@ function openZongStory() {
 function closeZongStory() {
     if (!storyPanel) return;
     storyPanel.hidden = true;
+    if (typeof window.clearPlayerInputState === 'function') window.clearPlayerInputState();
     window.APP_SHELL_BLOCK_GAME = false;
     window.APP_GAME_MODAL_OPEN = false;
     if (typeof saveGameState === 'function') saveGameState(false);

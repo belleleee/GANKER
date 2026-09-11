@@ -1,0 +1,41 @@
+.dashMainHead h3{margin:0;font-size:19px;color:#eafcff;text-shadow:0 0 10px rgba(96,244,255,.35)}
+.dashMainHead .dashPrice{font-size:24px;font-weight:700}
+.dashMainHead small{color:#c9f7ff;font-size:12px;text-shadow:0 0 7px rgba(96,244,255,.45)}
+.chartCanvas{flex:1;width:100%;min-height:0;border:1px solid rgba(96,244,255,.12);border-radius:6px;background:rgba(4,10,13,.5)}
+
+.dashTradeHead h3{margin:0 0 2px;font-size:17px;color:#eafcff}
+.dashTradeHead p{margin:0 0 12px;color:#c9f7ff;font-size:12px;text-shadow:0 0 7px rgba(96,244,255,.35)}
+.dashTradeActions{display:flex;gap:8px;margin-bottom:14px}
+.dashTradeActions button{
+  flex:1;border:1px solid #39ff9c;border-radius:6px;padding:10px;
+  background:rgba(57,255,156,.12);color:#9dffce;font:700 13px monospace;cursor:pointer;
+  text-shadow:0 0 8px rgba(57,255,156,.5);transition:.15s;
+}
+.dashTradeActions button:hover{background:rgba(57,255,156,.26);box-shadow:0 0 16px rgba(57,255,156,.35)}
+.dashTradeActions button.ghost{border-color:#ff6f91;background:rgba(255,111,145,.1);color:#ffbdd0;text-shadow:0 0 8px rgba(255,111,145,.45)}
+.dashTradeActions button.ghost:hover{background:rgba(255,111,145,.22);box-shadow:0 0 16px rgba(255,111,145,.3)}
+.dashTradeActions button.short{border-color:#c58bff;background:rgba(197,139,255,.12);color:#e4cfff;text-shadow:0 0 8px rgba(197,139,255,.5)}
+.dashTradeActions button.short:hover{background:rgba(197,139,255,.26);box-shadow:0 0 16px rgba(197,139,255,.35)}
+.dashTradeActions button.rumor{border-color:#ffd666;background:rgba(255,214,102,.1);color:#ffe9ad;text-shadow:0 0 8px rgba(255,214,102,.45)}
+.dashTradeActions button.rumor:hover{background:rgba(255,214,102,.22);box-shadow:0 0 16px rgba(255,214,102,.3)}
+.dashTradeActions button.rumor.ghost{border-color:#ff6f91;background:rgba(255,111,145,.1);color:#ffbdd0;text-shadow:0 0 8px rgba(255,111,145,.45)}
+.dashTradeActions button.rumor.ghost:hover{background:rgba(255,111,145,.22);box-shadow:0 0 16px rgba(255,111,145,.3)}
+.dashTradeActions button[disabled]{opacity:.35;cursor:not-allowed;box-shadow:none}
+.dashRumor{margin:2px 0 14px}
+.dashRumorHint{margin:0 0 8px;font-size:11px;color:#d7f7ff;line-height:1.5;text-shadow:0 0 6px rgba(96,244,255,.32)}
+.dashRumorHint.warn{color:#ffb04d;text-shadow:0 0 8px rgba(255,176,77,.45)}
+.dashTradeInfo{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;font-size:13px}
+.dashTradeInfo div{display:flex;justify-content:space-between;border-bottom:1px dashed rgba(96,244,255,.22);padding-bottom:6px}
+.dashTradeInfo span{color:#8fd3e6}
+.dashTradeInfo strong{color:#eafcff;text-shadow:0 0 6px rgba(96,244,255,.3)}
+.dashNextDay{
+  width:100%;border:1px solid rgba(96,244,255,.4);border-radius:6px;padding:10px;
+  background:rgba(96,244,255,.1);color:#9ff1ff;font:700 12px monospace;cursor:pointer;
+  text-shadow:0 0 8px rgba(96,244,255,.5);transition:.15s;
+}
+.dashNextDay:hover{background:rgba(96,244,255,.22);box-shadow:0 0 16px rgba(96,244,255,.35)}
+
+.dashHoldings h3,.dashNews h3{
+  margin:0 0 8px;font-size:13px;color:#5be6ff;letter-spacing:.1em;
+  text-shadow:0 0 8px rgba(91,230,255,.5);
+}

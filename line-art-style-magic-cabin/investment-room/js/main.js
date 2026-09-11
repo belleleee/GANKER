@@ -1,0 +1,3 @@
+loadState();
+buildRoom();
+requestAnimationFrame(animate);

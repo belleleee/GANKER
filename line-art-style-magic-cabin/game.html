@@ -13,69 +13,92 @@
     <button id="menuDot">●</button>
     <div id="menuPanel">
         <div class="title">菜单</div>
-        <div class="sub">房 屋</div>
-        <div class="row"><span>完整房屋</span>
-            <div class="toggle" id="houseToggle">
-                <div class="knob"></div>
-            </div>
+        <div class="menuTabs">
+            <button type="button" class="menuTabBtn on" data-menu-tab="world">世界</button>
+            <button type="button" class="menuTabBtn" data-menu-tab="biz">经营</button>
+            <button type="button" class="menuTabBtn" data-menu-tab="save">存档</button>
         </div>
-        <div class="sep"></div>
-        <div class="sub">天 气</div>
-        <div id="wxChips"></div>
-        <div class="row"><span>随机切换天气</span>
-            <div class="toggle" id="wxRandToggle">
-                <div class="knob"></div>
-            </div>
-        </div>
-        <div class="sep"></div>
-        <div class="sub">时 间</div>
-        <div class="sliderRow"><span class="slbl">时刻</span><input type="range" id="timeSlider" min="0" max="24"
-                step="0.05" value="10"></div>
-        <div class="sliderRow"><span class="slbl">流速</span><input type="range" id="speedSlider" min="0" max="1"
-                step="0.01" value="0.5"></div>
-        <div class="sep"></div>
-        <div class="sub">音 效</div>
-        <div class="row"><span>音效</span>
-            <div class="toggle on" id="sfxToggle">
-                <div class="knob"></div>
-            </div>
-        </div>
-        <div class="sliderRow"><span class="slbl">音量</span><input type="range" id="sfxSlider" min="0" max="1"
-                step="0.01" value="0.6"></div>
-        <div class="sep"></div>
-        <div class="sub">魔 法</div>
-        <div id="spellSlots">
-            <div class="slot on" id="slot1" title="空手 · 默认状态"><span class="ico"></span><span class="kb">1 空手</span>
-            </div>
-            <div class="slot" id="slot2" title="魔杖 · 可释放魔法"><span class="ico">🪄</span><span class="kb">2 魔杖</span>
-            </div>
-            <div class="slot" id="slot3" title="锄头 · 翻地"><span class="ico">⛏️</span><span class="kb">3 锄头</span>
-            </div>
-            <div class="slot" id="slot4" title="水壶 · 浇水"><span class="ico">💧</span><span class="kb">4 水壶</span>
-            </div>
-            <div class="slot" id="slot5" title="镰刀 · 收割"><span class="ico">🌾</span><span class="kb">5 镰刀</span>
-            </div>
-        </div>
-        <div class="sep"></div>
-        <div class="viewBtn on" id="viewFixedBtn">固定视角</div>
-        <div class="viewBtn" id="viewTpBtn">第三人称视角</div>
-        <div class="viewBtn" id="viewFpBtn">第一人称视角</div>
-        <div class="sep"></div>
-        <div class="viewBtn" id="resetBtn">重置史莱姆位置</div>
-        <div class="sep"></div>
-        <div class="sub">存 档</div>
-        <div class="saveStatus" id="saveStatus">尚未存档</div>
-        <div class="viewBtn" id="saveGameBtn">保存当前进度</div>
-        <div class="viewBtn" id="loadGameBtn">读取存档</div>
-        <div class="viewBtn" id="exportSaveBtn">导出 JSON 存档</div>
-        <div class="viewBtn" id="importSaveBtn">导入 JSON 存档</div>
-        <input id="importSaveInput" type="file" accept="application/json,.json" hidden>
-        <div class="viewBtn danger" id="clearSaveBtn">清除存档</div>
-        <div class="sep"></div>
-        <div class="sub">关 于</div>
-        <div class="viewBtn" id="membersMenuBtn">成员介绍</div>
-        <div class="viewBtn" id="showcaseMenuBtn">返回展示页</div>
 
+        <div class="menuTabPanel" data-menu-panel="world">
+            <div class="sub">房 屋</div>
+            <div class="row"><span>完整房屋</span>
+                <div class="toggle" id="houseToggle">
+                    <div class="knob"></div>
+                </div>
+            </div>
+            <div class="sep"></div>
+            <div class="sub">天 气</div>
+            <div id="wxChips"></div>
+            <div class="row"><span>随机切换天气</span>
+                <div class="toggle" id="wxRandToggle">
+                    <div class="knob"></div>
+                </div>
+            </div>
+            <div class="sep"></div>
+            <div class="sub">时 间</div>
+            <div class="sliderRow"><span class="slbl">时刻</span><input type="range" id="timeSlider" min="0" max="24"
+                    step="0.05" value="10"></div>
+            <div class="sliderRow"><span class="slbl">流速</span><input type="range" id="speedSlider" min="0" max="1"
+                    step="0.01" value="0.5"></div>
+            <div class="sep"></div>
+            <div class="sub">音 效</div>
+            <div class="row"><span>音效</span>
+                <div class="toggle on" id="sfxToggle">
+                    <div class="knob"></div>
+                </div>
+            </div>
+            <div class="sliderRow"><span class="slbl">音量</span><input type="range" id="sfxSlider" min="0" max="1"
+                    step="0.01" value="0.6"></div>
+            <div class="sep"></div>
+            <div class="sub">魔 法</div>
+            <div id="spellSlots">
+                <div class="slot on" id="slot1" title="空手 · 默认状态"><span class="ico"></span><span class="kb">1
+                        空手</span>
+                </div>
+                <div class="slot" id="slot2" title="魔杖 · 可释放魔法"><span class="ico">🪄</span><span class="kb">2
+                        魔杖</span>
+                </div>
+                <div class="slot" id="slot3" title="锄头 · 翻地"><span class="ico">⛏️</span><span class="kb">3
+                        锄头</span>
+                </div>
+                <div class="slot" id="slot4" title="水壶 · 浇水"><span class="ico">💧</span><span class="kb">4
+                        水壶</span>
+                </div>
+                <div class="slot" id="slot5" title="镰刀 · 收割"><span class="ico">🌾</span><span class="kb">5
+                        镰刀</span>
+                </div>
+            </div>
+            <div class="sep"></div>
+            <div class="viewBtn on" id="viewFixedBtn">固定视角</div>
+            <div class="viewBtn" id="viewTpBtn">第三人称视角</div>
+            <div class="viewBtn" id="viewFpBtn">第一人称视角</div>
+        </div>
+
+        <div class="menuTabPanel" data-menu-panel="biz" hidden>
+            <div class="sub">金 融</div>
+            <div class="viewBtn" id="investmentMenuBtn">投资与收入</div>
+            <div class="sep"></div>
+            <div class="sub">成 就</div>
+            <div class="viewBtn" id="achievementsMenuBtn">成就墙 <span id="achievementsBadge" class="achievementsBadge"
+                    hidden>0</span></div>
+            <div class="sep"></div>
+            <div class="viewBtn" id="resetBtn">重置史莱姆位置</div>
+        </div>
+
+        <div class="menuTabPanel" data-menu-panel="save" hidden>
+            <div class="sub">存 档</div>
+            <div class="saveStatus" id="saveStatus">尚未存档</div>
+            <div class="viewBtn" id="saveGameBtn">保存当前进度</div>
+            <div class="viewBtn" id="loadGameBtn">读取存档</div>
+            <div class="viewBtn" id="exportSaveBtn">导出 JSON 存档</div>
+            <div class="viewBtn" id="importSaveBtn">导入 JSON 存档</div>
+            <input id="importSaveInput" type="file" accept="application/json,.json" hidden>
+            <div class="viewBtn danger" id="clearSaveBtn">清除存档</div>
+            <div class="sep"></div>
+            <div class="sub">关 于</div>
+            <div class="viewBtn" id="membersMenuBtn">成员介绍</div>
+            <div class="viewBtn" id="showcaseMenuBtn">返回展示页</div>
+        </div>
     </div>
     <div id="signEditor">
         <div class="lbl">✏️ 编辑路牌文字</div><input id="signInput" maxlength="10" value="魔女小屋"><button
@@ -154,6 +177,47 @@
         </div>
     </section>
 
+    <section id="farmResumePanel" class="farmResumePanel" hidden>
+        <div class="farmResumeShell" role="dialog" aria-modal="true" aria-labelledby="farmResumeTitle">
+            <div class="farmResumeTopbar">
+                <div>
+                    <p>第一份简历</p>
+                    <h2 id="farmResumeTitle">家庭经营申请</h2>
+                </div>
+                <button id="closeFarmResumeBtn" type="button" aria-label="关闭">×</button>
+            </div>
+            <iframe id="farmResumeFrame" title="第一份农场简历"></iframe>
+        </div>
+    </section>
+
+    <div id="questBanner" class="questBanner" hidden>
+        <div id="questArrow" class="questArrow">▲</div>
+        <div class="questInfo">
+            <p class="questKicker">主线目标</p>
+            <p id="questText" class="questTextLine">去看看院子里那片茶场</p>
+            <p id="questDistance" class="questDistanceLine">0 米</p>
+        </div>
+    </div>
+
+    <section id="achievementsPanel" class="achievementsPanel" hidden>
+        <div class="achievementsCard" role="dialog" aria-modal="true" aria-labelledby="achievementsTitle">
+            <button id="closeAchievementsBtn" class="achievementsClose" type="button" aria-label="关闭">×</button>
+            <p class="achievementsKicker">Achievements</p>
+            <h2 id="achievementsTitle">成就墙</h2>
+            <p id="achievementsProgress" class="achievementsProgress">0 / 0 已达成</p>
+            <div id="achievementsList" class="achievementsList"></div>
+        </div>
+    </section>
+
+    <section id="mainStoryPanel" class="mainStoryPanel" hidden>
+        <div class="mainStoryCard" role="dialog" aria-modal="true" aria-labelledby="mainStoryTitle">
+            <p class="mainStoryKicker">主线 · 占位剧情</p>
+            <h2 id="mainStoryTitle">第一章</h2>
+            <div id="mainStoryBody" class="mainStoryBody"></div>
+            <button id="mainStoryNextBtn" type="button">继续</button>
+        </div>
+    </section>
+
     <script src="three.min.js"></script>
     <script>
         /* 本地 three.min.js 优先；当本地three.js缺失时回退 CDN。 */
@@ -184,6 +248,9 @@
     <script src="js/18-well.js"></script>
     <script src="js/19-teafarm.js"></script>
     <script src="js/20-coin-shop.js"></script>
+    <script src="js/21-investment-house.js"></script>
+    <script src="js/22-main-story.js"></script>
+    <script src="js/23-achievements.js"></script>
     <script src="js/15-app-shell.js"></script>
 </body>
 

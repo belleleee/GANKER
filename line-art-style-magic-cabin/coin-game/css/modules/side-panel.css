@@ -1,0 +1,42 @@
+#panelToggle{
+ position:fixed;right:20px;top:20px;z-index:35;
+ min-width:74px;padding:10px 14px;border:1.5px solid #8f816b;
+ background:#fff7e7;color:#2d3028;border-radius:8px;
+ font-family:inherit;font-size:15px;cursor:pointer;
+ box-shadow:0 5px 16px rgba(55,45,31,.12)
+}
+#sidePanel{
+ position:fixed;right:20px;top:68px;bottom:392px;z-index:32;
+ width:320px;display:flex;flex-direction:column;gap:12px;
+ overflow:auto;pointer-events:auto;
+ transform:translateX(0);opacity:1;
+ transition:transform .22s ease,opacity .18s ease
+}
+#sidePanel.collapsed{
+ transform:translateX(calc(100% + 26px));
+ opacity:0;pointer-events:none
+}
+.panel-card{
+ position:static;width:100%;padding:14px 16px
+}
+.panel-title{font-size:17px;font-weight:700;margin-bottom:5px}
+#upgrade button{
+ width:100%;display:block;margin:6px 0;padding:9px 11px;
+ text-align:left;border:1px solid #b5a789;background:#fff8e9;
+ color:var(--ink);font-family:inherit;cursor:pointer
+}
+#strategy{
+ max-height:none;overflow:visible
+}
+.strategy-empty{font-size:13px;opacity:.68;line-height:1.7}
+.strategy-row{
+ border:1px solid #c7b89a;background:#fff8e9;
+ padding:9px;margin:7px 0;border-radius:6px
+}
+.strategy-name{font-weight:700;font-size:14px;margin-bottom:7px}
+.strategy-controls{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.strategy-controls label{display:block;font-size:12px;color:#5d5548}
+.strategy-controls select,.strategy-controls input{
+ width:100%;margin-top:4px;padding:6px 7px;border:1px solid #b5a789;
+ background:#fffdf5;color:var(--ink);font-family:inherit;font-size:13px
+}

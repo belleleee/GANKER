@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
+  <title>股市大家 - 投资教室</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <canvas id="roomCanvas"></canvas>
+  <div id="topHud">
+    <div>
+      <p>股市大家</p>
+      <h1>一起看见更大的世界</h1>
+    </div>
+    <button id="returnGame" type="button">返回主游戏</button>
+  </div>
+
+  <div id="hint">WASD 移动 · 空格跳 · 拖动看房间 · 滚轮缩放</div>
+  <section id="screenPanel" class="screenPanel" hidden>
+    <div class="screenMonitor screenMonitor--dashboard">
+      <div class="screenMonitor__scanlines"></div>
+      <div class="dashHeader">
+        <div class="dashBrand">
+          <p>MARKET TERMINAL</p>
+          <h2>股市大家</h2>
+        </div>
+        <div class="dashRep" id="dashRep">声誉 60</div>
+        <div class="dashClock" id="dashClock">Day 1</div>
+        <button id="closeScreenPanel" type="button" aria-label="关闭">×</button>
+      </div>
+      <div class="dashBody">
+        <aside class="dashSidebar" id="dashSidebar"></aside>
+        <section class="dashMain">
+          <div class="dashMainHead" id="dashMainHead"></div>
+          <canvas id="chartCanvas" class="chartCanvas"></canvas>
+        </section>
+        <aside class="dashTrade" id="dashTrade"></aside>
+        <section class="dashHoldings" id="dashHoldings"></section>
+        <section class="dashNews" id="dashNews"></section>
+      </div>
+    </div>
+  </section>
+  <section id="knowledgePanel" class="knowledgePanel" hidden>
+    <article class="knowledgeCard">
+      <button id="closeKnowledgePanel" type="button" aria-label="关闭">×</button>
+      <section class="knowledgePage knowledgePage--title">
+        <p id="knowledgeKicker">STUDY CARD</p>
+        <h2 id="knowledgeTitle">股市知识</h2>
+      </section>
+      <section class="knowledgePage knowledgePage--body">
+        <div id="knowledgeBody"></div>
+      </section>
+    </article>
+  </section>
+
+  <script src="../three.min.js"></script>
+  <script src="js/core/setup.js"></script>
+  <script src="js/market/screen-textures.js"></script>
+  <script src="js/scene/house.js"></script>
+  <script src="js/scene/props.js"></script>
+  <script src="js/player/slime-player.js"></script>
+  <script src="js/interaction/interactions.js"></script>
+  <script src="js/market/state.js"></script>
+  <script src="js/market/dashboard.js"></script>
+  <script src="js/core/input-loop.js"></script>
+  <script src="js/scene/animations.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
