@@ -1,0 +1,77 @@
+.wealthEventPanel {
+    position: fixed;
+    inset: 0;
+    z-index: 28;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(24, 12, 10, .55);
+    backdrop-filter: blur(4px);
+}
+
+.wealthEventPanel[hidden] {
+    display: none
+}
+
+.wealthEventCard {
+    position: relative;
+    width: min(520px, 94vw);
+    max-height: min(80vh, 520px);
+    overflow: auto;
+    padding: 26px 30px 24px;
+    color: #3a2f22;
+    background: repeating-linear-gradient(45deg, rgba(163, 64, 47, .05) 0 10px, rgba(163, 64, 47, 0) 10px 20px),
+        linear-gradient(180deg, #fdf1e6 0%, #f2ddc4 100%);
+    border: 2px dashed rgba(163, 64, 47, .55);
+    border-radius: 10px;
+    box-shadow: 0 22px 70px rgba(20, 10, 6, .38);
+    font-family: 'Segoe Print', Georgia, 'Times New Roman', serif;
+}
+
+.wealthEventKicker {
+    margin: 0;
+    letter-spacing: .28em;
+    text-transform: uppercase;
+    color: #a3402f;
+    font: 700 12px/1.3 monospace;
+}
+
+#wealthEventTitle {
+    margin: 6px 0 14px;
+    font-size: clamp(20px, 4.6vw, 26px);
+    line-height: 1.15;
+}
+
+.wealthEventBody {
+    min-height: 70px;
+    padding: 14px 16px;
+    margin-bottom: 18px;
+    background: rgba(255, 253, 242, .55);
+    border: 1px dashed rgba(163, 64, 47, .4);
+    border-radius: 8px;
+    font-size: 15px;
+    line-height: 1.8;
+    text-align: justify;
+}
+
+.wealthEventActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.wealthEventBtn {
+    border: 1px solid #a3402f;
+    border-radius: 999px;
+    padding: 9px 18px;
+    background: #fdf1e6;
+    color: #a3402f;
+    font: 700 13px/1 monospace;
+    cursor: pointer;
+}
+
+.wealthEventBtn.primary {
+    background: #a3402f;
+    color: #fdf1e6;
+}

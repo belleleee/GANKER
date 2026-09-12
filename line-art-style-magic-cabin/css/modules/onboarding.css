@@ -1,0 +1,142 @@
+.onboardingPanel {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(20, 16, 10, .55);
+    backdrop-filter: blur(4px);
+}
+
+.onboardingPanel[hidden] {
+    display: none
+}
+
+.onboardingCard {
+    position: relative;
+    width: min(600px, 94vw);
+    max-height: min(86vh, 640px);
+    overflow: auto;
+    padding: 26px 30px 24px;
+    color: #3a2f22;
+    background: repeating-linear-gradient(45deg, rgba(58, 47, 34, .05) 0 10px, rgba(58, 47, 34, 0) 10px 20px),
+        linear-gradient(180deg, #fbf3df 0%, #efe0bd 100%);
+    border: 2px dashed rgba(138, 106, 60, .55);
+    border-radius: 10px;
+    box-shadow: 0 22px 70px rgba(20, 14, 6, .35);
+    font-family: 'Segoe Print', Georgia, 'Times New Roman', serif;
+}
+
+.onboardingClose {
+    position: absolute;
+    right: 14px;
+    top: 14px;
+    border: 1px solid #a8763c;
+    background: #fbf3df;
+    color: #3a2f22;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.onboardingKicker {
+    margin: 0;
+    letter-spacing: .28em;
+    text-transform: uppercase;
+    color: #a8763c;
+    font: 700 12px/1.3 monospace;
+}
+
+#onboardingTitle {
+    margin: 6px 0 16px;
+    font-size: clamp(22px, 5vw, 28px);
+    line-height: 1.15;
+}
+
+.onboardingBody {
+    font-size: 15px;
+    line-height: 1.8;
+    text-align: justify;
+    margin-bottom: 18px;
+}
+
+.onboardingSection {
+    margin-bottom: 16px;
+}
+
+.onboardingSection h3 {
+    margin: 0 0 10px;
+    font-size: 14px;
+    letter-spacing: .08em;
+    color: #8a6a3a;
+}
+
+.onboardingKeys {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 8px 14px;
+}
+
+.onboardingKeys div {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 6px 10px;
+    background: rgba(255, 253, 242, .55);
+    border: 1px dashed rgba(138, 106, 60, .35);
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.onboardingKeys b {
+    color: #a8763c;
+    white-space: nowrap;
+}
+
+.onboardingSteps {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.onboardingSteps li {
+    margin-bottom: 8px;
+    font-size: 15px;
+    line-height: 1.7;
+}
+
+.onboardingHint {
+    margin: 10px 0 0;
+    padding: 8px 10px;
+    border: 1px dashed rgba(184, 84, 47, .45);
+    border-radius: 6px;
+    background: rgba(184, 84, 47, .06);
+    color: #8a4326;
+    font-size: 12.5px;
+    line-height: 1.6;
+}
+
+.onboardingNav {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.onboardingNav button {
+    border: 1px solid #a8763c;
+    border-radius: 999px;
+    padding: 9px 22px;
+    background: #fbf3df;
+    color: #a8763c;
+    font: 700 13px/1 monospace;
+    cursor: pointer;
+}
+
+#onboardingNextBtn {
+    margin-left: auto;
+    background: #a8763c;
+    color: #fbf3df;
+}

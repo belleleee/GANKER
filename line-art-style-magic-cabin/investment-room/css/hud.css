@@ -5,9 +5,18 @@
 }
 .screenPanel{
   position:fixed;inset:0;z-index:14;display:none;
-  align-items:center;justify-content:center;padding:26px;
+  align-items:flex-start;justify-content:center;padding:26px;
+  overflow-y:auto;
   background:radial-gradient(circle at 50% 18%,rgba(18,52,62,.88),rgba(2,7,11,.96) 72%);
   backdrop-filter:blur(3px);
 }
 .screenPanel:not([hidden]){display:flex}
 .screenMonitor{
+  position:relative;overflow:hidden;
+  background:linear-gradient(180deg,#0d1e24,#040a0d);
+  border:1px solid rgba(96,244,255,.35);border-radius:12px;
+  box-shadow:0 0 0 1px rgba(96,244,255,.12),0 0 70px rgba(64,220,255,.16),0 40px 90px rgba(0,0,0,.55);
+  color:#c9f7ff;
+  font-family:"SF Mono","Menlo","Consolas",monospace;
+  animation:screenBoot .38s cubic-bezier(.2,.9,.3,1.15);
+}

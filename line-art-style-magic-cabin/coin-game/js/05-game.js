@@ -28,8 +28,13 @@ const state={
   roundActive:false,
   waiting:false,
   consecutive:0,
-  nextAuto:0
+  nextAuto:0,
+  warnedHelper:false,
+  addictionWarnings:0,
+  cooldownUntil:0
 };
+
+const BANKRUPT_COOLDOWN_SECONDS=90;
 
 const employeeRounds=Array.from({length:MAX_HELPERS},()=>({
   active:false,
@@ -52,6 +57,7 @@ const strategyList=$('strategyList');
 const employeeList=$('employeeList'),employeeDetail=$('employeeDetail');
 const buyCoinSlot=$('buyCoinSlot'),upgradeCoin=$('upgradeCoin'),upgradeChance=$('upgradeChance'),buyHelper=$('buyHelper'),toggleAuto=$('toggleAuto');
 const bookOverlay=$('bookOverlay'),bookName=$('bookName'),bookStatus=$('bookStatus'),bookPhoto=$('bookPhoto'),bookSkills=$('bookSkills'),bookStats=$('bookStats'),bookLog=$('bookLog'),closeBookBtn=$('closeBook');
+const warningOverlay=$('warningOverlay'),warningTitle=$('warningTitle'),warningBody=$('warningBody'),warningCooldown=$('warningCooldown'),warningCloseBtn=$('warningCloseBtn');
 
 const COIN_GAME_FALLBACK_SAVE_KEY='coinGame.v4.save';
 const CABIN_SESSION_KEY='magicCabin.session.v1';
@@ -207,6 +213,9 @@ function applyCoinGameSave(save){
   state.luckBought=clampInt(save.luckBought,0,0,9999);
   state.luckStartWallet=clampInt(save.luckStartWallet,state.wallet,0,999999);
   state.auto=state.helperCount>0||!!save.auto;
+  state.warnedHelper=!!save.warnedHelper;
+  state.addictionWarnings=clampInt(save.addictionWarnings,0,0,9999);
+  state.cooldownUntil=Number(save.cooldownUntil)||0;
   return true;
 }
 
@@ -231,6 +240,9 @@ function captureCoinGameSave(){
     luckBought:state.luckBought,
     luckStartWallet:state.luckStartWallet,
     auto:state.auto,
+    warnedHelper:state.warnedHelper,
+    addictionWarnings:state.addictionWarnings,
+    cooldownUntil:state.cooldownUntil,
     savedAt:new Date().toISOString()
   };
 }
@@ -315,6 +327,33 @@ function stakeOptions(){
 function showResult(t){
   resultEl.textContent=t;resultEl.classList.add('show');
   setTimeout(()=>resultEl.classList.remove('show'),950);
+}
+
+function inCooldown(){return nowSec()<state.cooldownUntil;}
+function cooldownRemaining(){return Math.max(0,Math.ceil(state.cooldownUntil-nowSec()));}
+
+function showAddictionWarning(title,body,cooldownSeconds){
+  state.addictionWarnings=clampInt(state.addictionWarnings+1,1,0,9999);
+  if(cooldownSeconds)state.cooldownUntil=Math.max(state.cooldownUntil,nowSec()+cooldownSeconds);
+  saveCoinGameState();
+  if(!warningOverlay)return;
+  warningTitle.textContent=title;
+  warningBody.innerHTML=body;
+  warningOverlay.classList.add('show');
+  refresh();
+}
+
+function closeAddictionWarning(){
+  if(!warningOverlay)return;
+  warningOverlay.classList.remove('show');
+  refresh();
+}
+
+if(warningCloseBtn)warningCloseBtn.onclick=closeAddictionWarning;
+if(warningOverlay){
+  warningOverlay.addEventListener('click',e=>{
+    if(e.target===warningOverlay)closeAddictionWarning();
+  });
 }
 function gainText(t){
   const d=document.createElement('div');d.className='gain';d.textContent=t;
@@ -453,7 +492,10 @@ function refresh(){
   renderHelperStrategies();
   renderEmployees();
 
-  if(!state.roundActive){
+  if(inCooldown()){
+    mainAction.textContent='冷静期 '+cooldownRemaining()+' 秒';
+    hintEl.innerHTML='刚刚输光过一次，先歇一歇，别急着回本';
+  }else if(!state.roundActive){
     mainAction.textContent='让史莱姆抛硬币';
     hintEl.innerHTML='Q / R 调整下注 · 当前下注 '+state.stake;
   }else if(state.waiting){
@@ -467,6 +509,9 @@ function refresh(){
 
 function refreshTimedPanels(time){
   if(time<state.nextTimedUi)return;
+  if(inCooldown()&&!state.roundActive){
+    mainAction.textContent='冷静期 '+cooldownRemaining()+' 秒';
+  }
   const wasActive=state.luckUntil>0;
   if(!luckActive())state.luckUntil=0;
   if(chanceEl)chanceEl.textContent=Math.round(headChance()*100)+'%';
@@ -484,6 +529,7 @@ function startRound(){
 
 function startRoundWithStake(stake,strategyIndex){
   if(state.roundActive)return;
+  if(inCooldown()){showResult('冷静期还剩 '+cooldownRemaining()+' 秒，先歇一歇');return;}
   const wager=clampInt(stake,state.stake,1,100);
   if(state.wallet<wager){showResult('金币不足');return;}
   state.stake=wager;
@@ -527,6 +573,13 @@ function onCoinsResolved(){
     showResult('反面 · 本轮归零');
     state.lost=Math.min(999999,state.lost+Math.max(0,Math.floor(state.roundStart)));
     state.roundActive=false;state.waiting=false;state.roundValue=0;state.multiplier=1;state.activeStrategyIndex=-1;
+    if(state.wallet<=0){
+      showAddictionWarning(
+        '投机不是正经生意',
+        '钱包见底了。<br>钱来得快，也能去得一样快——真正能撑住一份家业的，从来不是赌一把的运气，是种一茬地、开一间店那样，日子一天天攒出来的本钱。<br>接下来 '+BANKRUPT_COOLDOWN_SECONDS+' 秒，史莱姆需要冷静一下，先歇歇手。',
+        BANKRUPT_COOLDOWN_SECONDS
+      );
+    }
     saveCoinGameState();refresh();return;
   }
 
@@ -552,6 +605,7 @@ function ensureEmployeeRoundState(i){
 }
 
 function startEmployeeRound(i){
+  if(inCooldown())return false;
   const emp=state.helperEmployees[i];
   if(!emp||emp.striking)return false;
   const r=ensureEmployeeRoundState(i);
@@ -608,6 +662,13 @@ function onEmployeeCoinsResolved(i){
     if(emp)emp.lost=Math.min(999999,emp.lost+lostAmount);
     showEmployeeFloatText(i,'-'+Math.floor(r.roundStart),false);
     r.active=false;r.waiting=false;r.roundValue=0;r.multiplier=1;
+    if(state.wallet<=0){
+      showAddictionWarning(
+        '投机不是正经生意',
+        '雇的助手把钱包也抛空了。<br>史莱姆助手再勤快，也扛不住主人上头——雇人是为了把生意做大，不是把风险外包出去。<br>接下来 '+BANKRUPT_COOLDOWN_SECONDS+' 秒，商店需要冷静一下。',
+        BANKRUPT_COOLDOWN_SECONDS
+      );
+    }
     saveCoinGameState();refresh();
     scheduleEmployeeAuto(i,1.0);
     return;
@@ -673,7 +734,19 @@ upgradeChance.onclick=()=>{
 function wasActiveLabel(){
   return luckActive()?'幸运卡片时长叠加':'幸运卡片生效 180 秒';
 }
-buyHelper.onclick=()=>{if(state.helperCount<state.helperCap)spend(helperCost(),()=>{state.helperCount++;state.auto=true;ensureHelperStrategies();ensureEmployees();},'史莱姆助手加入');};
+buyHelper.onclick=()=>{
+  if(state.helperCount>=state.helperCap)return;
+  spend(helperCost(),()=>{
+    state.helperCount++;state.auto=true;ensureHelperStrategies();ensureEmployees();
+    if(state.helperCount>=3&&!state.warnedHelper){
+      state.warnedHelper=true;
+      showAddictionWarning(
+        '雇人不是为了赌得更大',
+        '第 '+state.helperCount+' 个史莱姆助手加入了。<br>雇人本该是把生意做稳、做大——如果雇人只是为了让自己能同时押更多注，那和亲手把钱包越掏越空，没什么两样。<br>见好该收手的时候，谁都替不了你做这个决定。'
+      );
+    }
+  },'史莱姆助手加入');
+};
 toggleAuto.onclick=()=>{if(state.helperCount===0){showResult('需要史莱姆助手');return;}state.auto=true;showResult('助手会一直自动抛币');saveCoinGameState();refresh();};
 
 if(strategyList){

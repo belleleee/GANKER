@@ -1,15 +1,32 @@
-function buyStock(id, count) {
+function safeMoney(value, fallback) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : (fallback || 0);
+}
+
+function safeStockForTrade(id) {
   const stock = getStock(id);
-  const cost = Math.ceil(stock.price * count);
+  if (!Number.isFinite(stock.price) || stock.price < 1) {
+    marketState.stocks[id] = sanitizeStock(stock, id);
+    return getStock(id);
+  }
+  return stock;
+}
+
+function buyStock(id, count) {
+  const stock = safeStockForTrade(id);
+  const qty = Math.max(1, Math.trunc(Number(count)) || 1);
+  state.coins = Math.trunc(safeMoney(state.coins, 100));
+  const cost = Math.ceil(stock.price * qty);
+  if (!Number.isFinite(cost)) return;
   if (state.coins < cost) {
     if (typeof showToast === 'function') showToast('金币不够，买 ' + stock.name + ' 需要 ' + cost + ' 金币');
     return;
   }
   state.coins -= cost;
   const holding = getHolding(id);
-  holding.qty += count;
+  holding.qty += qty;
   holding.cost += cost;
-  stock.pressure += .01 * count;
+  stock.pressure += .01 * qty;
   setHolding(id, holding);
   redrawScreens();
   renderScreenPanel(activeScreen);
@@ -17,9 +34,9 @@ function buyStock(id, count) {
 }
 
 function sellStock(id, count) {
-  const stock = getStock(id);
+  const stock = safeStockForTrade(id);
   const holding = getHolding(id);
-  const qty = Math.min(count, holding.qty);
+  const qty = Math.min(Math.max(1, Math.trunc(Number(count)) || 1), holding.qty);
   if (!qty) {
     if (typeof showToast === 'function') showToast('你还没有持有 ' + stock.name);
     return;
@@ -41,27 +58,30 @@ function sellStock(id, count) {
 }
 
 function shortStock(id, count) {
-  const stock = getStock(id);
-  const proceeds = Math.floor(stock.price * count);
+  const stock = safeStockForTrade(id);
+  const qty = Math.max(1, Math.trunc(Number(count)) || 1);
+  state.coins = Math.trunc(safeMoney(state.coins, 100));
+  const proceeds = Math.floor(stock.price * qty);
+  if (!Number.isFinite(proceeds)) return;
   if (shortExposure() + proceeds > shortLimit()) {
     if (typeof showToast === 'function') showToast('做空额度不够了，先平掉一些空单');
     return;
   }
   const short = getShort(id);
-  short.qty += count;
+  short.qty += qty;
   short.entryValue += proceeds;
   setShort(id, short);
   state.coins = Math.min(999999, state.coins + proceeds);
-  stock.pressure -= .012 * count;
+  stock.pressure -= .012 * qty;
   redrawScreens();
   renderScreenPanel(activeScreen);
   saveState();
 }
 
 function coverShort(id, count) {
-  const stock = getStock(id);
+  const stock = safeStockForTrade(id);
   const short = getShort(id);
-  const qty = Math.min(count, short.qty);
+  const qty = Math.min(Math.max(1, Math.trunc(Number(count)) || 1), short.qty);
   if (!qty) {
     if (typeof showToast === 'function') showToast('你还没有 ' + stock.name + ' 的空单');
     return;
@@ -92,7 +112,8 @@ function marketIndexSummary() {
     return (stock.price - stock.prev) / Math.max(1, stock.prev);
   });
   const avg = diffs.reduce((a, b) => a + b, 0) / diffs.length;
-  const index = 1000 * (1 + STOCKS.reduce((sum, item) => sum + getStock(item.id).price, 0) / (STOCKS.length * 1000));
+  const totalPrice = STOCKS.reduce((sum, item) => sum + safeMoney(getStock(item.id).price, item.start), 0);
+  const index = 1000 * (1 + totalPrice / (STOCKS.length * 1000));
   const cls = avg >= 0 ? 'up' : 'down';
   return '<div class="dashIndexCard">' +
     '<small>大盘指数 · SIDX</small>' +
@@ -148,7 +169,7 @@ function tradePanelHtml(stock) {
     '<div><span>声誉</span><strong>' + reputation() + '</strong></div>' +
     '</div>' +
     rumorPanelHtml(stock) +
-    '<button class="dashNextDay" data-action="nextDay">下一交易日 · Day ' + marketState.day + '</button>';
+    '<button class="dashNextDay" data-action="nextDay">下一交易日 · Day ' + (marketState.day + 1) + '</button>';
 }
 
 function rumorPanelHtml(stock) {
@@ -170,6 +191,9 @@ function holdingsPanelHtml() {
   const longRows = STOCKS.filter(item => getHolding(item.id).qty > 0);
   const shortRows = STOCKS.filter(item => getShort(item.id).qty > 0);
   if (!longRows.length && !shortRows.length) return '<h3>我的持仓</h3><p class="dashEmpty">还没有持仓，去买点股票吧。</p>';
+  const header = '<div class="dashHoldingRow dashHoldingRow--head">' +
+    '<span>标的</span><span>数量</span><span>均价</span><span>现价</span><span>盈亏</span>' +
+    '</div>';
   const longBody = longRows.map(item => {
     const stock = getStock(item.id);
     const holding = getHolding(item.id);
@@ -195,7 +219,7 @@ function holdingsPanelHtml() {
       '<span class="' + cls + '">' + (profit >= 0 ? '+' : '') + Math.round(profit) + '</span>' +
       '</div>';
   }).join('');
-  return '<h3>我的持仓</h3>' + longBody + shortBody;
+  return '<h3>我的持仓</h3>' + header + longBody + shortBody;
 }
 
 function newsPanelHtml() {
@@ -245,10 +269,11 @@ function drawLineChart(canvas, stock) {
   const padB = 28;
   const plotW = w - padL - padR;
   const plotH = h - padT - padB;
-  const history = stock.history.slice(-24);
+  const cleanStock = sanitizeStock(stock, stock && stock.id);
+  const history = cleanStock.history.slice(-24);
   let min = Math.min(...history);
   let max = Math.max(...history);
-  if (max - min < Math.max(1, stock.price * 0.03)) {
+  if (max - min < Math.max(1, cleanStock.price * 0.03)) {
     const mid = (max + min) / 2;
     const pad = Math.max(1, mid * 0.04);
     min = mid - pad;
@@ -310,7 +335,8 @@ function drawLineChart(canvas, stock) {
 function renderScreenPanel(key) {
   activeScreen = key || activeScreen;
   screenPanel.hidden = false;
-  const stock = getStock(marketState.selectedStock);
+  state.coins = Math.trunc(safeMoney(state.coins, 100));
+  const stock = safeStockForTrade(marketState.selectedStock);
   dashClock.textContent = 'DAY ' + marketState.day;
   dashRep.textContent = '声誉 ' + reputation();
   dashRep.className = 'dashRep ' + (reputation() >= 60 ? 'up' : reputation() <= 30 ? 'down' : '');

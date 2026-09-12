@@ -37,9 +37,34 @@ const storeOpenableBoxes = [];
 let storeSitting = false;
 let currentStoreSeat = null;
 let activeStoreSeedChest = null;
+let storeSelectedCropIndex = 0;
 
 const STORE_SEED_PRICE =
     15;
+
+function storeCropOrder() {
+    return (typeof CROP_ORDER !== 'undefined' && CROP_ORDER.length) ? CROP_ORDER : ['turnip'];
+}
+
+function storeSelectedCrop() {
+    const order = storeCropOrder();
+    storeSelectedCropIndex = ((storeSelectedCropIndex % order.length) + order.length) % order.length;
+    return order[storeSelectedCropIndex];
+}
+
+function storeChestHintText() {
+    const cropId = storeSelectedCrop();
+    const crop = (typeof CROP_TYPES !== 'undefined' && CROP_TYPES[cropId]) ? CROP_TYPES[cropId] : null;
+    if (!crop) return '货箱打开了：按 <b>B</b> 购买种子';
+    return '货箱打开了：当前选购 <b>' + crop.name + '种子</b>（' + crop.seedPrice + ' 金币）· 按 <b>B</b> 购买 · 按 <b>C</b> 切换作物';
+}
+
+function cycleStoreCrop() {
+    if (!activeStoreSeedChest || !isStoreChestBuyable(activeStoreSeedChest)) return;
+    storeSelectedCropIndex++;
+    showHintOverride(storeChestHintText());
+    SND.play('ui');
+}
 
 
 /* ==========================================================
@@ -190,7 +215,7 @@ function buySeedFromActiveStoreChest() {
 
 
     if (
-        typeof window.buyTurnipSeed !== 'function'
+        typeof window.buySeed !== 'function'
     ) {
         showHintOverride('背包系统还没有准备好，请稍等一下再购买');
         return true;
@@ -198,9 +223,9 @@ function buySeedFromActiveStoreChest() {
 
 
     if (
-        window.buyTurnipSeed(
-            1,
-            STORE_SEED_PRICE
+        window.buySeed(
+            storeSelectedCrop(),
+            1
         )
     ) {
         SND.play('chim');
@@ -2417,7 +2442,7 @@ function makeOpenableStoreBox(
                 activeStoreSeedChest =
                     chest;
 
-                showHintOverride('货箱打开了：按 <b>B</b> 消耗 ' + STORE_SEED_PRICE + ' 金币购入萝卜种子');
+                showHintOverride(storeChestHintText());
             } else if (
                 activeStoreSeedChest === chest
             ) {
@@ -3469,6 +3494,22 @@ addEventListener('keydown', e => {
     if (
         buySeedFromActiveStoreChest()
     ) {
+        e.preventDefault();
+    }
+});
+
+addEventListener('keydown', e => {
+    if (
+        e.code !== 'KeyC' ||
+        e.repeat ||
+        window.APP_SHELL_BLOCK_GAME ||
+        isTypingInStoreField()
+    ) {
+        return;
+    }
+
+    if (activeStoreSeedChest && isStoreChestBuyable(activeStoreSeedChest)) {
+        cycleStoreCrop();
         e.preventDefault();
     }
 });

@@ -108,24 +108,43 @@ function drawCandleScreen(ctx, w, h) {
   ctx.font = 'bold 22px monospace';
   ctx.fillText(stock.name + '  DAY ' + marketState.day, 32, 78);
   clearGlow(ctx);
-  const candles = stock.history.slice(-12);
-  const min = Math.min(...candles);
-  const max = Math.max(...candles);
+  const history = stock.history.slice(-13);
+  const candles = [];
+  for (let i = 1; i < history.length; i++) {
+    const open = history[i - 1];
+    const close = history[i];
+    const spread = Math.max(.25, Math.abs(close - open) * .55);
+    candles.push({
+      open,
+      close,
+      high: Math.max(open, close) + spread,
+      low: Math.max(1, Math.min(open, close) - spread)
+    });
+  }
+  const prices = candles.flatMap(c => [c.high, c.low]);
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
   const span = Math.max(1, max - min);
-  candles.forEach((value, i) => {
+  const priceY = value => 322 - (value - min) / span * 210;
+  candles.forEach((candle, i) => {
     const x = 80 + i * 50;
-    const up = !i || value >= candles[i - 1];
-    const top = 322 - (value - min) / span * 210;
+    const up = candle.close >= candle.open;
     const tone = up ? '#39ff9c' : '#ff5d75';
+    const openY = priceY(candle.open);
+    const closeY = priceY(candle.close);
+    const highY = priceY(candle.high);
+    const lowY = priceY(candle.low);
+    const bodyTop = Math.min(openY, closeY);
+    const bodyH = Math.max(8, Math.abs(closeY - openY));
     neonGlow(ctx, tone, 9);
     ctx.strokeStyle = tone;
     ctx.fillStyle = tone;
     ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.moveTo(x, top - 28);
-    ctx.lineTo(x, top + 70);
+    ctx.moveTo(x, highY);
+    ctx.lineTo(x, lowY);
     ctx.stroke();
-    ctx.fillRect(x - 14, top, 28, 54);
+    ctx.fillRect(x - 14, bodyTop, 28, bodyH);
     clearGlow(ctx);
   });
   neonGlow(ctx, 'rgba(255,214,102,.7)', 8);
@@ -134,7 +153,7 @@ function drawCandleScreen(ctx, w, h) {
   ctx.beginPath();
   for (let i = 0; i < candles.length; i++) {
     const x = 80 + i * 50;
-    const y = 322 - (candles[i] - min) / span * 210 + 24;
+    const y = priceY(candles[i].close);
     if (!i) ctx.moveTo(x, y);
     else ctx.lineTo(x, y);
   }
@@ -188,6 +207,42 @@ function drawNewsScreen(ctx, w, h) {
   });
 }
 
+function drawPnlScreen(ctx, w, h) {
+  drawPanelBase(ctx, w, h, '盈亏总览');
+  const data = investmentPnlSummary();
+  const totalUp = data.totalPnl >= 0;
+  const totalTone = totalUp ? '#39ff9c' : '#ff5d75';
+  const signed = value => (value >= 0 ? '+' : '') + value;
+
+  readableText(ctx, '总盈亏', 46, 108, '#d7f7ff', 'bold 27px "Songti SC","STSong",serif');
+  neonGlow(ctx, totalTone, 18);
+  readableText(ctx, signed(data.totalPnl), w - 52, 112, totalTone, 'bold 46px "Menlo","Consolas",monospace', 'right');
+  clearGlow(ctx);
+
+  const rows = [
+    ['持仓浮盈亏', data.longPnl],
+    ['空单浮盈亏', data.shortPnl],
+    ['已实现盈亏', data.realized]
+  ];
+  rows.forEach((row, i) => {
+    const y = 178 + i * 54;
+    const tone = row[1] >= 0 ? '#39ff9c' : '#ff5d75';
+    ctx.fillStyle = i % 2 ? 'rgba(96,244,255,.045)' : 'rgba(255,255,255,.025)';
+    ctx.fillRect(42, y - 32, w - 84, 40);
+    readableText(ctx, row[0], 62, y, '#e7fbff', 'bold 23px "Songti SC","STSong",serif');
+    readableText(ctx, signed(row[1]), w - 62, y, tone, 'bold 27px "Menlo","Consolas",monospace', 'right');
+  });
+
+  ctx.strokeStyle = 'rgba(96,244,255,.22)';
+  ctx.setLineDash([8, 7]);
+  ctx.beginPath();
+  ctx.moveTo(46, h - 76);
+  ctx.lineTo(w - 46, h - 76);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  readableText(ctx, '持仓市值 ' + data.longValue + ' · 空单市值 ' + data.shortMarket, 52, h - 36, '#9eeef8', 'bold 19px "Songti SC","STSong",serif');
+}
+
 function buildFourScreenRig() {
   const rig = new THREE.Group();
   const main = chartScreen(2.55, 1.5, drawCandleScreen, 'chart');
@@ -198,10 +253,13 @@ function buildFourScreenRig() {
   put(right, 2.08, .03, -.18, 0, -.55, 0, rig);
   const top = chartScreen(1.75, .82, drawNewsScreen, 'news');
   put(top, 0, 1.23, -.08, 0, 0, 0, rig);
+  const pnl = chartScreen(1.75, .82, drawPnlScreen, 'pnl');
+  put(pnl, 0, -1.23, -.08, 0, 0, 0, rig);
 
   put(box(5.4, .08, .10, SCREEN_FRAME_MAT), 0, .9, -.05, 0, 0, 0, rig);
   put(box(5.4, .08, .10, SCREEN_FRAME_MAT), 0, -.86, -.05, 0, 0, 0, rig);
   put(box(1.95, .07, .10, SCREEN_FRAME_MAT), 0, 1.72, -.06, 0, 0, 0, rig);
+  put(box(1.95, .07, .10, SCREEN_FRAME_MAT), 0, -1.72, -.06, 0, 0, 0, rig);
   for (const x of [-2.5, -1.25, 0, 1.25, 2.5]) {
     put(box(.055, 1.82, .08, SCREEN_FRAME_MAT), x, .02, -.06, 0, 0, 0, rig);
     put(line([[x, .96, -.06], [x, 1.62, -.06]]), 0, 0, 0, 0, 0, 0, rig);

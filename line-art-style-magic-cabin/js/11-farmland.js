@@ -2,16 +2,16 @@
 /* ========================================================== */
 /* ============ 农田区域：6×6 地块（翻耕 / 播种 / 浇水 / 收获） ============ */
 /* ========================================================== */
-const FARMLAND_UNTILLED_COLOR = 0xece0c0; // 浅米白色：普通土地
-const FARMLAND_TILLED_COLOR = 0xc2965f;   // 浅棕色：翻耕后
+const FARMLAND_UNTILLED_COLOR = 0x7c8452; // 灰绿色：荒地，没打理过
+const FARMLAND_TILLED_COLOR = 0xc2965f;   // 浅棕色：翻耕后，颜色一下子亮起来
 const FARMLAND_WATERED_COLOR = 0x8f6a3f;  // 略深：浇水后
+const FARM_WEED_MAT = LITMAT(0x5f7a3c);
 
 const FARMLAND_CENTER = { x: 9.0, z: 0.0 }; // 小屋东侧空地，避开木屋/正门小路/树桩
 const FARMLAND_N = 6, FARMLAND_SPACING = 1.2, FARMLAND_TILE_SIZE = 0.85, FARMLAND_TILE_H = 0.01;
 
 const farmPlots = [];
 const hoeSoilBursts = [];
-const TURNIP_HARVEST_COINS = 25;
 const FARM_RESUME_HARVEST_TARGET = 3;
 const FARM_WORKER_HIRE_COST = 80;
 const FARM_WORKER_DAILY_WAGE = 60;
@@ -54,26 +54,45 @@ function farmPlotLabel(state) {
 function applyFarmPlotState(state, sound) {
     state.material.uniforms.uTint.value.setHex(farmPlotColor(state));
     if (state.furrowGroup) state.furrowGroup.visible = state.tilled;
+    if (state.weedGroup) state.weedGroup.visible = !state.tilled;
     if (state.gloss) state.gloss.visible = state.watered;
     const label = farmPlotLabel(state);
     state.group.userData.aimLabel = label;
     if (state.interactEntry) state.interactEntry.label = label;
     if (sound) SND.play(sound);
 }
-function plantFarmCrop(state, silent) {
+function plantFarmCropAs(state, cropId, silent) {
+    const crop = (typeof CROP_TYPES !== 'undefined' && CROP_TYPES[cropId]) ? CROP_TYPES[cropId] : CROP_TYPES.turnip;
     if (
         window.useBackpackItem &&
-        !window.useBackpackItem('turnipSeed', 1, silent)
+        !window.useBackpackItem(crop.seedItem, 1, silent)
     ) {
         if (!silent) SND.play('toggle');
         return false;
     }
 
-    state.crop = createTurnip(state.x, 0.02, state.z);
+    state.crop = createTurnip(state.x, 0.02, state.z, null, crop.id);
     state.watered = false;
     applyFarmPlotState(state, 'chim');
-    if (!silent) showHintOverride('萝卜种子已经种下，背包种子 -1，装备水壶继续浇水');
+    if (!silent) showHintOverride(crop.name + '种子已经种下，背包种子 -1，装备水壶继续浇水');
     return true;
+}
+function pickAutoPlantCrop() {
+    if (typeof CROP_ORDER === 'undefined' || typeof window.getBackpackItemCount !== 'function') return 'turnip';
+    let best = 'turnip';
+    let bestCount = -1;
+    CROP_ORDER.forEach(id => {
+        const crop = CROP_TYPES[id];
+        const count = window.getBackpackItemCount(crop.seedItem);
+        if (count > bestCount) {
+            best = id;
+            bestCount = count;
+        }
+    });
+    return bestCount > 0 ? best : 'turnip';
+}
+function plantFarmCrop(state, silent) {
+    return plantFarmCropAs(state, pickAutoPlantCrop(), silent);
 }
 function growFarmCrop(state, silent) {
     const cropData = state.crop.userData.crop;
@@ -81,21 +100,25 @@ function growFarmCrop(state, silent) {
     state.watered = true;
     setTurnipStage(state.crop, cropData.stage + 1);
     applyFarmPlotState(state, cropData.stage >= 3 ? 'magic' : 'chim');
-    if (!silent) showHintOverride(cropData.stage >= 3 ? '萝卜成熟了，装备镰刀收获' : '萝卜长高了一点');
+    if (!silent) showHintOverride(cropData.stage >= 3 ? '作物成熟了，装备镰刀收获' : '作物长高了一点');
     return true;
 }
 function harvestFarmCrop(state, silent) {
+    const cropId = (state.crop.userData.crop && state.crop.userData.crop.cropType) || 'turnip';
+    const cropDef = (typeof CROP_TYPES !== 'undefined' && CROP_TYPES[cropId]) ? CROP_TYPES[cropId] : CROP_TYPES.turnip;
     removeTurnip(state.crop);
     state.crop = null;
     state.watered = false;
     state.harvested++;
     applyFarmPlotState(state, 'magic');
-    if (window.addCropToStorage) window.addCropToStorage('turnip', 1);
+    if (window.addCropToStorage) window.addCropToStorage(cropDef.storageKey, 1);
+    const multiplier = typeof cropWeatherMultiplier === 'function' ? cropWeatherMultiplier(cropId) : 1;
+    const coins = Math.max(1, Math.round(cropDef.harvestCoins * multiplier));
     if (window.addCabinCoins) {
-        if (silent) window.addCabinCoins(TURNIP_HARVEST_COINS, false);
-        else window.addCabinCoins(TURNIP_HARVEST_COINS, '收获萝卜');
+        if (silent) window.addCabinCoins(coins, false);
+        else window.addCabinCoins(coins, '收获' + cropDef.name + (multiplier > 1 ? '（天气加成）' : multiplier < 1 ? '（天气减产）' : ''));
     } else if (!silent) {
-        showHintOverride('收获萝卜 +1，可以继续播种');
+        showHintOverride('收获' + cropDef.name + ' +1，可以继续播种');
     }
     if (!silent) noteFarmPlayerHarvest();
     return true;
@@ -147,6 +170,9 @@ function updateHoeSoilBursts(dt) {
 }
 
 function onFarmPlotClick(state) {
+    if (typeof window.requestLandAccess === 'function' && !window.requestLandAccess()) {
+        return;
+    }
     if (!state.tilled) {
         if (slotSel !== TOOL_SLOT.hoe) {
             SND.play('toggle');
@@ -166,7 +192,13 @@ function onFarmPlotClick(state) {
             showHintOverride('需要先空手播种 · 按 <b>1</b>');
             return;
         }
-        plantFarmCrop(state);
+        if (typeof window.openCropPicker === 'function') {
+            window.openCropPicker(cropId => {
+                if (cropId) plantFarmCropAs(state, cropId);
+            });
+        } else {
+            plantFarmCrop(state);
+        }
     } else if (state.crop.userData.crop.stage < 3) {
         if (slotSel !== TOOL_SLOT.wateringCan) {
             SND.play('toggle');
@@ -225,6 +257,30 @@ function buildFarmPlot(x, z) {
     furrowGroup.visible = false;
     g.add(furrowGroup);
 
+    /* ---------- 杂草：没翻地之前，这块地看起来是荒废的 ---------- */
+    const weedGroup = new THREE.Group();
+    const WEED_TUFTS = 4 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < WEED_TUFTS; i++) {
+        const bx = (Math.random() - 0.5) * FARMLAND_TILE_SIZE * 0.7;
+        const bz = (Math.random() - 0.5) * FARMLAND_TILE_SIZE * 0.7;
+        const bladeCount = 2 + Math.floor(Math.random() * 2);
+        for (let j = 0; j < bladeCount; j++) {
+            const h = 0.09 + Math.random() * 0.10;
+            const ang = Math.random() * Math.PI * 2;
+            const lean = 0.16 + Math.random() * 0.20;
+            const blade = new THREE.Mesh(new THREE.ConeGeometry(0.018, 1, 4), FARM_WEED_MAT);
+            blade.scale.set(1, h, 1);
+            blade.position.set(
+                bx + Math.cos(ang) * 0.035,
+                FARMLAND_TILE_H + h * 0.5,
+                bz + Math.sin(ang) * 0.035
+            );
+            blade.rotation.set(Math.cos(ang) * lean, Math.random() * Math.PI, Math.sin(ang) * lean);
+            weedGroup.add(blade);
+        }
+    }
+    g.add(weedGroup);
+
     /* ---------- 浇水后的湿润光泽 ---------- */
     const glossMat = new THREE.MeshBasicMaterial({
         color: 0x2c2013,
@@ -270,6 +326,7 @@ function buildFarmPlot(x, z) {
         x, z,
         interactEntry: null,
         furrowGroup,
+        weedGroup,
         gloss,
         highlight
     };
@@ -428,7 +485,9 @@ function workerPlantFarmCrop(state) {
         createTurnip(
             state.x,
             0.02,
-            state.z
+            state.z,
+            null,
+            pickAutoPlantCrop()
         );
 
     state.watered =
@@ -927,7 +986,8 @@ function settleFarmWorkerWage() {
 function updateFarmHireSystem(dt, time) {
     settleFarmWorkerWage();
 
-    if (!farmHireState.hired || farmHireState.striking) {
+    const landOk = typeof window.isLandOwnedOrRented !== 'function' || window.isLandOwnedOrRented();
+    if (!farmHireState.hired || farmHireState.striking || !landOk) {
         animateFarmWorker(dt, time, false);
         updateFarmHireLabel();
         return;

@@ -10,52 +10,56 @@
 const MAIN_STORY_STAGES = [
     {
         unlocks: null,
-        title: '序章 · 占位剧情',
+        title: '序章 · 白手起家',
         lines: [
-            { speaker: '旁白', text: '（占位剧情）主角盘下了院子里那块荒地，打算先翻地种上一茬萝卜，攒点本钱。' },
-            { speaker: '你', text: '（占位台词）先把地种起来，等收成好了，再看看能不能雇个帮手打理。' }
+            { speaker: '旁白', text: '院子里那块荒地是你现在拥有的全部家当。没有本钱，没有帮手，只有一把锄头和一身力气。' },
+            { speaker: '旁白', text: '这世上很多路，年轻时都堵死过一回——能靠自己双手挣出来的，才轮得到你走。' },
+            { speaker: '你', text: '先把地种起来。收成好了，再看看能不能雇个帮手打理。' }
         ],
         unlockToast: '📖 主线推进：正式开始经营',
-        questLabel: '去农场翻地、种萝卜，攒够收成后雇一个农场帮手',
+        questLabel: '去农场找地主租地（付得起就 all-in），翻地种萝卜（没种子先去商店买），种出来后雇一个农场帮手',
         target: { x: 9.0, z: 0.0 },
         auto: () => typeof farmHireState !== 'undefined' && farmHireState.hired === true &&
             typeof cropStorage !== 'undefined' && cropStorage.turnip >= 1
     },
     {
         unlocks: 'tea',
-        title: '第一章 · 占位剧情',
+        title: '第一章 · 校办经销部',
         lines: [
-            { speaker: '旁白', text: '（占位剧情）这里以后会补上真正的开篇故事——大致是主角决定把院子里那片荒地拾掇成茶场。' },
-            { speaker: '你', text: '（占位台词）先把这片地看一看。' }
+            { speaker: '旁白', text: '手里攒下第一笔本钱，光靠一块地终究撑不起一份家业。院子角落那片荒着的茶场，也该拾掇起来了。' },
+            { speaker: '旁白', text: '别人笑你一把年纪才想着折腾，可你等不起——机会从不会等一个犹豫的人。' },
+            { speaker: '你', text: '一块地能顾住嘴，两条路才能顾住将来。去把茶场开出来。' }
         ],
         unlockToast: '📖 主线推进：茶场解锁了',
         questLabel: '去看看院子里那片茶场',
         target: { x: -11.5, z: -9.0 },
-        coinRequirement: 100
+        coinRequirement: 250
     },
     {
         unlocks: 'coin',
-        title: '第二章 · 占位剧情',
+        title: '第二章 · 广告豪赌',
         lines: [
-            { speaker: '旁白', text: '（占位剧情）茶场慢慢有了起色，镇上有人提起了那家"钱滚钱商店"。' },
-            { speaker: '你', text: '（占位台词）去看看到底是怎么回事。' }
+            { speaker: '旁白', text: '茶场慢慢有了起色，镇上有人提起了那家"钱滚钱商店"——听说进去的人，有的一夜翻了身，有的血本无归。' },
+            { speaker: '旁白', text: '这一注，是把全部家底押上去的一注。签下去，可能一夜翻身；打了水漂，可能就此关门。' },
+            { speaker: '你', text: '……去看看。但记住，赌的是本事，不是命。见好该收手的时候，就得收。' }
         ],
         unlockToast: '📖 主线推进：钱滚钱商店解锁了',
         questLabel: '去钱滚钱商店看看',
         target: { x: -18.0, z: 8.2 },
-        coinRequirement: 300
+        coinRequirement: 900
     },
     {
         unlocks: 'investment',
-        title: '第三章 · 占位剧情',
+        title: '第三章 · 合资与股权',
         lines: [
-            { speaker: '旁白', text: '（占位剧情）手里渐渐攒下了一点本钱，是时候去看看股市小屋了。' },
-            { speaker: '你', text: '（占位台词）这次要更谨慎一点。' }
+            { speaker: '旁白', text: '手里渐渐攒下了不小的一笔本钱，镇上的股市小屋也终于对你敞开了门——这是比雇人经营更远一层的生意：把钱交给一纸合同去打理。' },
+            { speaker: '旁白', text: '钱可以一起出，厂可以一起建，但你亲手挣出来的这份家业，一个字一个字都得看仔细，不能拱手让人。' },
+            { speaker: '你', text: '这次要更谨慎一点。合同上的每一条，都得自己读懂了才能签。' }
         ],
         unlockToast: '📖 主线推进：股市小屋解锁了',
         questLabel: '去股市小屋看看',
         target: { x: 16.5, z: -8.5 },
-        coinRequirement: 800
+        coinRequirement: 2500
     }
 ];
 
@@ -184,6 +188,7 @@ function pollAutoStageAdvance() {
     if (!stage || typeof stage.auto !== 'function') return;
     if (mainStoryPanel && !mainStoryPanel.hidden) return;
     if (mainStoryAutoCooldown > 0) return;
+    if (!window.APP_ONBOARDING_DISMISSED) return;
     let met = false;
     try {
         met = !!stage.auto();
@@ -227,7 +232,7 @@ function updateQuestGuide(dt) {
     pollAutoStageAdvance();
     if (!questBanner) return;
     const objective = currentMainStoryObjective();
-    if (!objective || typeof player === 'undefined' || (mainStoryPanel && !mainStoryPanel.hidden)) {
+    if (!objective || typeof player === 'undefined' || (mainStoryPanel && !mainStoryPanel.hidden) || !window.APP_ONBOARDING_DISMISSED) {
         questBanner.hidden = true;
         return;
     }

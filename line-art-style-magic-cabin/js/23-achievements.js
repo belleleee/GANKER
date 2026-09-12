@@ -39,7 +39,8 @@ const ACHIEVEMENT_CATEGORIES = [
     { id: 'coin', label: '钱滚钱', color: '#d87b3f' },
     { id: 'invest', label: '股市', color: '#3f7fd8' },
     { id: 'zong', label: '创业笔记', color: '#b8542f' },
-    { id: 'explore', label: '探索小屋', color: '#5b8fa8' }
+    { id: 'explore', label: '探索小屋', color: '#5b8fa8' },
+    { id: 'charity', label: '慈善', color: '#5ba872' }
 ];
 
 const ACHIEVEMENTS = [
@@ -263,6 +264,167 @@ const ACHIEVEMENTS = [
         title: '小屋通透',
         desc: '同时点亮壁炉、油灯、灯笼，叫醒猫咪，还翻开了魔法书',
         check: () => typeof fireLit !== 'undefined' && fireLit && lampLit && lanternLit && catAwake && bookOn
+    },
+    {
+        id: 'steady_farmer',
+        category: 'wealth',
+        icon: '🌾',
+        title: '薄利多销',
+        desc: '从没进过钱滚钱商店，光靠种地开店把金币攒到 1500',
+        check: () => {
+            if (typeof cabinCoins !== 'number' || cabinCoins < 1500) return false;
+            const save = peekCoinGameSave();
+            return !save || !Number(save.helperCount);
+        }
+    },
+    {
+        id: 'two_hands_working',
+        category: 'farm',
+        icon: '🤝',
+        title: '授人以渔',
+        desc: '农场和茶场的帮手同时在替你干活',
+        check: () => typeof farmHireState !== 'undefined' && farmHireState.hired === true &&
+            typeof teaHireState !== 'undefined' && teaHireState.hired === true
+    },
+    {
+        id: 'gambler_warned',
+        category: 'coin',
+        icon: '🃏',
+        title: '赌徒的一夜',
+        desc: '在钱滚钱商店被投机风险的警示逮个正着',
+        check: () => {
+            const save = peekCoinGameSave();
+            return !!save && Number(save.addictionWarnings) >= 1;
+        }
+    },
+    {
+        id: 'paper_rich',
+        category: 'invest',
+        icon: '📄',
+        title: '纸上富贵',
+        desc: '在股市小屋同时持有 3 支以上股票，却一次也没卖出变现',
+        check: () => {
+            const save = peekInvestmentRoomSave();
+            return !!save && save.holdings && Object.keys(save.holdings).length >= 3 && !Number(save.realizedGain);
+        }
+    },
+    {
+        id: 'cash_out_in_time',
+        category: 'invest',
+        icon: '🎯',
+        title: '见好就收',
+        desc: '在股市小屋累计兑现盈利 300 金币，且亏损始终没超过 100',
+        check: () => {
+            const save = peekInvestmentRoomSave();
+            return !!save && Number(save.realizedGain) >= 300 && Number(save.realizedLoss) <= 100;
+        }
+    },
+    {
+        id: 'one_track_mind',
+        category: 'farm',
+        icon: '🥕',
+        title: '一根筋',
+        desc: '仓库里存下 500 颗萝卜——肯把一件事做到底的人，差不了',
+        check: () => typeof cropStorage !== 'undefined' && cropStorage.turnip >= 500
+    },
+    {
+        id: 'back_from_the_edge',
+        category: 'coin',
+        icon: '🧗',
+        title: '悬崖勒马',
+        desc: '在钱滚钱商店血本无归过一次之后，靠自己重新攒回 500 金币',
+        check: () => {
+            const save = peekCoinGameSave();
+            return !!achievementState.unlocked['coin_bankrupt'] && !!save && Number(save.wallet) >= 500;
+        }
+    },
+    {
+        id: 'burned_by_pitch',
+        category: 'wealth',
+        icon: '📉',
+        title: '经一堑',
+        desc: '被上门的"稳赚不赔"项目坑过 3 次',
+        check: () => typeof window.getFinancingStats === 'function' && window.getFinancingStats().losses >= 3
+    },
+    {
+        id: 'lucky_pitch',
+        category: 'wealth',
+        icon: '🍀',
+        title: '慧眼识金',
+        desc: '接下一笔上门融资，居然真赚到了',
+        check: () => typeof window.getFinancingStats === 'function' && window.getFinancingStats().wins >= 1
+    },
+    {
+        id: 'tea_first_batch',
+        category: 'tea',
+        icon: '📦',
+        title: '手工茶第一单',
+        desc: '在制茶小屋里走完晒茶→炒茶→打包一整套流程，卖出第一批成品茶',
+        check: () => typeof teaProcessState !== 'undefined' && teaProcessState.finished >= 1
+    },
+    {
+        id: 'tea_batch_master',
+        category: 'tea',
+        icon: '🍱',
+        title: '制茶老师傅',
+        desc: '累计打包卖出 10 批成品茶',
+        check: () => typeof teaProcessState !== 'undefined' && teaProcessState.finished >= 10
+    },
+    {
+        id: 'charity_starter',
+        category: 'charity',
+        icon: '🪙',
+        title: '热心肠',
+        desc: '累计捐款达到 100 金币',
+        check: () => typeof window.getCharityTotalDonated === 'function' && window.getCharityTotalDonated() >= 100
+    },
+    {
+        id: 'charity_regular',
+        category: 'charity',
+        icon: '❤️',
+        title: '热心人',
+        desc: '累计捐款达到 500 金币',
+        check: () => typeof window.getCharityTotalDonated === 'function' && window.getCharityTotalDonated() >= 500
+    },
+    {
+        id: 'cafe_first_shift',
+        category: 'wealth',
+        icon: '☕',
+        title: '打工人',
+        desc: '第一次去咖啡馆打工，赚到营业收入',
+        check: () => typeof window.getCafeTotalRevenue === 'function' && window.getCafeTotalRevenue() >= 1
+    },
+    {
+        id: 'cafe_barista',
+        category: 'wealth',
+        icon: '🧋',
+        title: '金牌咖啡师',
+        desc: '咖啡馆累计营业收入达到 500 金币',
+        check: () => typeof window.getCafeTotalRevenue === 'function' && window.getCafeTotalRevenue() >= 500
+    },
+    {
+        id: 'land_allin',
+        category: 'farm',
+        icon: '🎲',
+        title: '孤注一掷',
+        desc: '身上没剩几个钱的时候，还是把那块荒地租了下来',
+        check: () => typeof landState !== 'undefined' && landState.rentedUntilDay >= 0
+    },
+    {
+        id: 'land_owner',
+        category: 'farm',
+        icon: '📜',
+        title: '地契到手',
+        desc: '把租的地直接买断，从此这块地是自己的了',
+        check: () => typeof landState !== 'undefined' && landState.owned === true
+    },
+    {
+        id: 'charity_grand',
+        category: 'charity',
+        icon: '🏅',
+        title: '大慈善家',
+        desc: '累计捐款达到 2000 金币——赚钱是本事，舍得给出去，是另一种本事',
+        check: () => typeof window.getCharityTotalDonated === 'function' && window.getCharityTotalDonated() >= 2000
     }
 ];
 

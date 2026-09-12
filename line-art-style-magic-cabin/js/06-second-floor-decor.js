@@ -573,6 +573,7 @@
                 }
             }
 
+            hatG.userData.aimLabel = '摸一摸魔法帽子 · 变出糖果，通向咖啡馆打工';
             regMagic(hatG, () => {
                 if (hatState.phase !== 'idle') return;
                 hatState.phase = 'rising';

@@ -1018,6 +1018,7 @@
             };
             function selectSlot(n) {
                 if (n < 1 || n > 5 || n === slotSel) return;
+                if (typeof window.isToolUnlocked === 'function' && !window.isToolUnlocked(n)) return;
                 slotSel = n;
                 SND.play('ui');
                 for (let i = 1; i <= 5; i++) {

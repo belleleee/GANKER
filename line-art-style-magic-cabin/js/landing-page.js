@@ -55,6 +55,7 @@ const MEMBER_PROFILES = {
 };
 
 const authMsg = document.getElementById('authMsg');
+const logoutBtn = document.getElementById('logoutBtn');
 const loginForm = document.getElementById('loginForm');
 const registerForm = document.getElementById('registerForm');
 const showLoginBtn = document.getElementById('showLoginBtn');
@@ -123,12 +124,20 @@ function switchAuth(mode) {
 function setCurrentUser(user) {
     if (user) writeJson(APP_SESSION_KEY, { id: user.id });
     updateAuthMessage(user ? '已登录：' + user.name + '，存档会绑定到这个账号。' : '未登录也可以游客进入，登录后会使用独立存档。');
+    if (logoutBtn) logoutBtn.hidden = !user;
 }
 
 function loadSessionUser() {
     const session = readJson(APP_SESSION_KEY, null);
     if (!session || typeof session.id !== 'string') return null;
     return loadUsers().find(user => user.id === session.id) || null;
+}
+
+function logoutUser() {
+    try {
+        localStorage.removeItem(APP_SESSION_KEY);
+    } catch (err) { }
+    setCurrentUser(null);
 }
 
 function registerUser() {
@@ -220,6 +229,7 @@ bindClick('showLoginBtn', () => switchAuth('login'));
 bindClick('showRegisterBtn', () => switchAuth('register'));
 bindClick('registerBtn', registerUser);
 bindClick('loginBtn', loginUser);
+bindClick('logoutBtn', logoutUser);
 
 document.querySelectorAll('.memberAvatar[data-member]').forEach(card => {
     card.addEventListener('click', () => showMemberDetail(card.dataset.member));

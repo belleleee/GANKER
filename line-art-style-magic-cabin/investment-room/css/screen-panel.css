@@ -1,14 +1,7 @@
-  position:relative;overflow:hidden;
-  background:linear-gradient(180deg,#0d1e24,#040a0d);
-  border:1px solid rgba(96,244,255,.35);border-radius:12px;
-  box-shadow:0 0 0 1px rgba(96,244,255,.12),0 0 70px rgba(64,220,255,.16),0 40px 90px rgba(0,0,0,.55);
-  color:#c9f7ff;
-  font-family:"SF Mono","Menlo","Consolas",monospace;
-  animation:screenBoot .38s cubic-bezier(.2,.9,.3,1.15);
-}
 .screenMonitor--dashboard{
-  width:min(1400px,96vw);height:min(900px,92vh);
-  display:flex;flex-direction:column;padding:18px 22px 18px;
+  width:min(980px,88vw);height:min(620px,76vh);
+  display:flex;flex-direction:column;padding:14px 18px 14px;
+  overflow-y:auto;
 }
 .screenMonitor__scanlines{
   position:absolute;inset:0;pointer-events:none;border-radius:12px;overflow:hidden;

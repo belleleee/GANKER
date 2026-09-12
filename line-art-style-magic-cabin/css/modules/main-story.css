@@ -119,6 +119,21 @@
     display: none
 }
 
+.guideBanner {
+    max-width: min(560px, 86vw);
+}
+
+.guideBannerSkip {
+    cursor: pointer;
+    text-decoration: underline;
+    pointer-events: auto;
+    opacity: .85;
+}
+
+.guideBannerSkip:hover {
+    opacity: 1;
+}
+
 .questArrow {
     font-size: 18px;
     line-height: 1;

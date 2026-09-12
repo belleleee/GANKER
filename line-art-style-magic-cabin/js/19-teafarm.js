@@ -41,11 +41,17 @@ const TEA_HUT_OFFSET = {
     z: -3.00
 };
 
+/* 数值 = 墙体在 addHutLogWall 里的本地坐标 × g.scale(1.3)。
+   房间放大过一次（四面墙的 fixed/halfLen 都改了），这里跟着
+   重新算过——以后再调墙体位置/尺寸，记得同步换算这里，
+   不然墙体碰撞盒会跟视觉模型对不上。 */
 const TEA_HUT_COLLISION = {
-    left: -3.20,
-    right: 3.20,
-    back: -2.35,
-    front: 3.05
+    left: -2.34,
+    right: 2.34,
+    back: -1.76,
+    front: 1.89,
+    doorCenter: 1.18,
+    doorHalf: 0.60
 };
 
 const TEA_PICK_DISTANCE = 1.15;
@@ -58,9 +64,11 @@ const TEA_PICK_DISTANCE = 1.15;
    300
    或者跟游戏内日期系统绑定。
 */
-const TEA_REGROW_SECONDS = 45;
-const TEA_PICK_COINS = 18;
-const TEA_WORKER_DAILY_WAGE = 60;
+const TEA_REGROW_SECONDS = 75;
+const TEA_PICK_COINS = 8;
+const TEA_WORKER_DAILY_WAGE = 90;
+const TEA_WEATHER_GOOD = ['fog', 'cloudy'];
+const TEA_WEATHER_BAD = ['storm', 'blizzard'];
 const TEA_WORKER_SPEED = 1.55;
 
 
@@ -72,7 +80,180 @@ const teaPlants = [];
 
 const teaPickParticles = [];
 
+const teaHutDoors = [];
+
 let teaLeafCount = 0;
+
+/* ==========================================================
+   制茶流程：生茶青 → 晒茶筛 → 炒茶灶 → 工作台(装袋卖钱)
+   采茶时立刻拿一笔小钱，是"卖鲜叶"；愿意攒够一批拿去
+   小屋里三个工位加工，能换到明显更高的一笔——鼓励玩家
+   真的走进小屋里跟这些"摆设"打交道，而不是路过看一眼。
+   ========================================================== */
+const TEA_PROCESS_BATCH = 5;
+const TEA_FINISHED_SELL_PRICE = 45;
+let teaProcessState = { raw: 0, dried: 0, roasted: 0, finished: 0 };
+
+const teaRoastState = {
+    lit: false,
+    firePower: 0,
+    stirTime: 0,
+    stirPhase: 0,
+    flames: [],
+    panLeaves: null,
+    panRim: null,
+    glow: null
+};
+
+const teaHutLampState = {
+    lit: true,
+    core: null,
+    beams: [],
+    floorGlow: null,
+    light: null
+};
+
+function setTeaHutLampLit(lit) {
+    teaHutLampState.lit = lit;
+
+    if (teaHutLampState.core) {
+        teaHutLampState.core.visible = lit;
+    }
+
+    for (const beam of teaHutLampState.beams) {
+        if (beam) {
+            beam.visible = lit;
+        }
+    }
+
+    if (teaHutLampState.floorGlow) {
+        teaHutLampState.floorGlow.visible = lit;
+    }
+
+    if (teaHutLampState.light) {
+        teaHutLampState.light.intensity = lit ? 1.15 : 0;
+    }
+}
+
+function toggleTeaHutLamp() {
+    setTeaHutLampLit(!teaHutLampState.lit);
+    SND.play('lamp');
+    showHintOverride(teaHutLampState.lit ? '茶屋吊灯点亮了' : '茶屋吊灯熄灭了');
+}
+
+function sieveTeaLeaves() {
+    if (teaProcessState.raw < TEA_PROCESS_BATCH) {
+        SND.play('toggle');
+        showHintOverride('生茶青不够，还差 ' + (TEA_PROCESS_BATCH - teaProcessState.raw) + ' 份 · 先去茶园多采一点');
+        return;
+    }
+    teaProcessState.raw -= TEA_PROCESS_BATCH;
+    teaProcessState.dried += TEA_PROCESS_BATCH;
+    SND.play('chim');
+    showHintOverride('晒好一批茶青 · 得到 ' + TEA_PROCESS_BATCH + ' 份晒干茶青，去炒茶灶翻炒');
+    if (typeof saveGameState === 'function') saveGameState(false);
+}
+
+function roastTeaLeaves() {
+    if (!teaRoastState.lit) {
+        SND.play('toggle');
+        showHintOverride('炒茶灶还没点火 · 先靠近灶口点火');
+        return;
+    }
+
+    if (teaProcessState.dried < TEA_PROCESS_BATCH) {
+        SND.play('toggle');
+        showHintOverride('晒干茶青不够，还差 ' + (TEA_PROCESS_BATCH - teaProcessState.dried) + ' 份 · 先去晒茶筛晒一批');
+        return;
+    }
+    teaProcessState.dried -= TEA_PROCESS_BATCH;
+    teaProcessState.roasted += TEA_PROCESS_BATCH;
+    teaRoastState.stirTime = 3.2;
+    teaRoastState.stirPhase = 0;
+    SND.play('fire');
+    showHintOverride('炒好一批茶叶 · 得到 ' + TEA_PROCESS_BATCH + ' 份炒制茶叶，去工作台分拣装袋');
+    if (typeof saveGameState === 'function') saveGameState(false);
+}
+
+function toggleTeaRoastFire() {
+    teaRoastState.lit = !teaRoastState.lit;
+
+    if (!teaRoastState.lit) {
+        teaRoastState.stirTime = 0;
+    }
+
+    SND.play('fire');
+    showHintOverride(teaRoastState.lit ? '炒茶灶点着了 · 可以开始翻炒茶叶' : '炒茶灶熄灭了');
+}
+
+function updateTeaRoastStation(dt, time) {
+    const target = teaRoastState.lit ? 1 : 0;
+    teaRoastState.firePower += (target - teaRoastState.firePower) * Math.min(1, dt * 7);
+
+    const activeFire = teaRoastState.firePower > 0.025;
+    for (const flame of teaRoastState.flames) {
+        if (!flame || !flame.obj) continue;
+
+        const pulse = 0.82 + Math.sin(time * flame.speed + flame.phase) * 0.18;
+        flame.obj.visible = activeFire;
+        flame.obj.scale.set(
+            0.78 + teaRoastState.firePower * 0.30,
+            Math.max(0.001, teaRoastState.firePower * pulse),
+            0.78 + teaRoastState.firePower * 0.18
+        );
+        flame.obj.position.y = flame.baseY + Math.sin(time * 2.4 + flame.phase) * 0.012;
+    }
+
+    if (teaRoastState.glow) {
+        teaRoastState.glow.visible = activeFire;
+        teaRoastState.glow.scale.setScalar(0.85 + teaRoastState.firePower * 0.22);
+        if (teaRoastState.glow.material) {
+            teaRoastState.glow.material.opacity = 0.06 + teaRoastState.firePower * 0.13;
+        }
+    }
+
+    if (teaRoastState.stirTime > 0) {
+        teaRoastState.stirTime = Math.max(0, teaRoastState.stirTime - dt);
+        teaRoastState.stirPhase += dt * 8.5;
+    }
+
+    const stirring = teaRoastState.stirTime > 0;
+    if (teaRoastState.panLeaves) {
+        const wobble = stirring ? Math.sin(teaRoastState.stirPhase) : Math.sin(time * 1.8) * 0.12;
+        const hop = stirring ? Math.abs(Math.sin(teaRoastState.stirPhase * 1.35)) * 0.075 : 0;
+
+        teaRoastState.panLeaves.rotation.y += dt * (stirring ? 4.6 : 0.25);
+        teaRoastState.panLeaves.rotation.x = wobble * 0.18;
+        teaRoastState.panLeaves.rotation.z = Math.sin(teaRoastState.stirPhase * 0.72) * (stirring ? 0.14 : 0.025);
+        teaRoastState.panLeaves.position.x = Math.sin(teaRoastState.stirPhase * 0.9) * (stirring ? 0.08 : 0.018);
+        teaRoastState.panLeaves.position.y = 0.56 + hop;
+        teaRoastState.panLeaves.scale.set(
+            1.20 + (stirring ? Math.sin(teaRoastState.stirPhase * 1.1) * 0.08 : 0),
+            0.09 + (stirring ? Math.sin(teaRoastState.stirPhase * 1.6) * 0.025 : 0),
+            0.82 + (stirring ? Math.cos(teaRoastState.stirPhase) * 0.06 : 0)
+        );
+    }
+
+    if (teaRoastState.panRim) {
+        teaRoastState.panRim.rotation.z = stirring ? Math.sin(teaRoastState.stirPhase * 1.2) * 0.035 : 0;
+    }
+}
+
+function packageTeaLeaves() {
+    if (teaProcessState.roasted < TEA_PROCESS_BATCH) {
+        SND.play('toggle');
+        showHintOverride('炒制茶叶不够，还差 ' + (TEA_PROCESS_BATCH - teaProcessState.roasted) + ' 份 · 先去炒茶灶炒一批');
+        return;
+    }
+    teaProcessState.roasted -= TEA_PROCESS_BATCH;
+    teaProcessState.finished += 1;
+    if (typeof window.addCabinCoins === 'function') {
+        window.addCabinCoins(TEA_FINISHED_SELL_PRICE, '卖出一批成品茶');
+    }
+    SND.play('ui');
+    showHintOverride('分拣装袋完成 · 卖出一批成品茶 +' + TEA_FINISHED_SELL_PRICE + ' 金币（累计装过 ' + teaProcessState.finished + ' 批）');
+    if (typeof saveGameState === 'function') saveGameState(false);
+}
 
 const teaHireState = {
     hired: false,
@@ -88,6 +269,123 @@ const teaHireState = {
     actionTimer: 0,
     pulse: 0
 };
+
+function addTeaSolidBoxOnce(
+    box
+) {
+
+    if (
+        typeof solidBoxes ===
+        'undefined' ||
+        !box ||
+        solidBoxes.includes(
+            box
+        )
+    ) {
+
+        return;
+    }
+
+    solidBoxes.push(
+        box
+    );
+}
+
+function removeTeaSolidBox(
+    box
+) {
+
+    if (
+        typeof solidBoxes ===
+        'undefined' ||
+        !box
+    ) {
+
+        return;
+    }
+
+    const idx =
+        solidBoxes.indexOf(
+            box
+        );
+
+    if (
+        idx >=
+        0
+    ) {
+        solidBoxes.splice(
+            idx,
+            1
+        );
+    }
+}
+
+function setTeaHutDoorBlock(
+    doorState,
+    closed
+) {
+
+    if (
+        !doorState ||
+        !doorState.block
+    ) {
+
+        return;
+    }
+
+    if (
+        closed
+    ) {
+        addTeaSolidBoxOnce(
+            doorState.block
+        );
+    } else {
+        removeTeaSolidBox(
+            doorState.block
+        );
+    }
+}
+
+function updateTeaHutDoors(
+    dt
+) {
+
+    const k =
+        Math.min(
+            1,
+            dt *
+            7
+        );
+
+    for (
+        const door of teaHutDoors
+    ) {
+
+        if (
+            !door ||
+            !door.pivot
+        ) {
+
+            continue;
+        }
+
+        const target =
+            door.open ?
+                1 :
+                0;
+
+        door.amount +=
+            (
+                target -
+                door.amount
+            ) *
+            k;
+
+        door.pivot.rotation.y =
+            -1.42 *
+            door.amount;
+    }
+}
 
 
 /* ==========================================================
@@ -108,6 +406,65 @@ const teaWoodDarkMat =
     LITMAT(
         0x75583f
     );
+
+/* 屋顶/部分墙体专用的半透明材质。
+   注意：不能用 LITMAT——LITMAT 生成的是共用 FILL 那套自定义
+   ShaderMaterial，它的片元着色器里写死了 gl_FragColor = vec4(finalColor, 1.0)，
+   根本不读 opacity/transparent 这两个属性，设了也白设，之前的"透明"从没生效过。
+   这里改用普通的 MeshBasicMaterial，它是内置材质，真的会按 opacity 混合。 */
+const teaRoofMat = new THREE.MeshBasicMaterial({
+    color: 0x75583f,
+    transparent: true,
+    opacity: 0.32,
+    depthWrite: false,
+    side: THREE.DoubleSide
+});
+
+const teaPostGhostMat = new THREE.MeshBasicMaterial({
+    color: 0x75583f,
+    transparent: true,
+    opacity: 0.18,
+    depthWrite: false
+});
+
+const teaPostGhostLineMat =
+    MAT.clone();
+
+teaPostGhostLineMat.transparent =
+    true;
+
+teaPostGhostLineMat.opacity =
+    0.26;
+
+teaPostGhostLineMat.depthWrite =
+    false;
+
+const teaBackWallGhostMat = new THREE.MeshBasicMaterial({
+    color: 0xf4eedb,
+    transparent: true,
+    opacity: 0.20,
+    depthWrite: false,
+    side: THREE.DoubleSide
+});
+
+const teaBackWallGhostLineMat =
+    MAT.clone();
+
+teaBackWallGhostLineMat.transparent =
+    true;
+
+teaBackWallGhostLineMat.opacity =
+    0.22;
+
+teaBackWallGhostLineMat.depthWrite =
+    false;
+
+const teaBackWindowGhostMat = new THREE.MeshBasicMaterial({
+    color: 0xa67c52,
+    transparent: true,
+    opacity: 0.22,
+    depthWrite: false
+});
 
 const teaLeafMat =
     LITMAT(
@@ -1071,44 +1428,16 @@ function buildTeaProcessingHutV2(
     );
 
     g.scale.setScalar(
-        1.85
+        1.3
     );
 
     scene.add(
         g
     );
 
-    const enterTeaHut = () => {
-        const go = () => {
-            if (
-                typeof window.prepareStoreReturn ===
-                'function'
-            ) {
-                window.prepareStoreReturn();
-            } else if (
-                typeof saveGameState ===
-                'function'
-            ) {
-                saveGameState(
-                    false
-                );
-            }
-
-            window.location.href =
-                'tea-hut/index.html';
-        };
-
-        if (
-            typeof window.requestMainStoryAccess ===
-            'function'
-        ) {
-            window.requestMainStoryAccess(
-                'tea',
-                go
-            );
-        } else {
-            go();
-        }
+    const roastStationLocal = {
+        x: 0.78,
+        z: -0.98
     };
 
     const beam = (
@@ -1169,13 +1498,382 @@ function buildTeaProcessingHutV2(
         );
     };
 
+    const teaLogBetween = (
+        parent,
+        p1,
+        p2,
+        r,
+        mat = teaWoodDarkMat
+    ) => {
+
+        const a =
+            new THREE.Vector3(
+                p1[0],
+                p1[1],
+                p1[2]
+            );
+
+        const b =
+            new THREE.Vector3(
+                p2[0],
+                p2[1],
+                p2[2]
+            );
+
+        const v =
+            b.clone().sub(
+                a
+            );
+
+        const leg =
+            teaPart(
+                new THREE.CylinderGeometry(
+                    r,
+                    r,
+                    v.length(),
+                    7
+                ),
+                mat
+            );
+
+        leg.position.copy(
+            a.add(
+                b
+            ).multiplyScalar(
+                0.5
+            )
+        );
+
+        leg.quaternion.setFromUnitVectors(
+            new THREE.Vector3(
+                0,
+                1,
+                0
+            ),
+            v.normalize()
+        );
+
+        parent.add(
+            leg
+        );
+
+        return leg;
+    };
+
+    const addHutLog = (
+        len,
+        r,
+        px,
+        py,
+        pz,
+        rx = 0,
+        ry = 0,
+        rz = 0,
+        mat = teaWoodMat
+    ) => {
+
+        /* mat 传 null：这段木头完全不建（连黑色描边都没有），
+           不是材质变透明——用于"这面墙整个看不见"的需求。 */
+        if (mat === null) return;
+
+        put(
+            teaPart(
+                new THREE.CylinderGeometry(
+                    r,
+                    r,
+                    len,
+                    8
+                ),
+                mat
+            ),
+            px,
+            py,
+            pz,
+            rx,
+            ry,
+            rz,
+            g
+        );
+    };
+
+    const addHutLogWall = (
+        along,
+        fixed,
+        halfLen,
+        openings,
+        mat
+    ) => {
+
+        const logR =
+            0.052;
+
+        const gap =
+            0.142;
+
+        const wallTop =
+            1.55;
+
+        for (
+            let yLog = 0.34;
+            yLog <= wallTop;
+            yLog += gap
+        ) {
+
+            let segs = [
+                [
+                    -halfLen,
+                    halfLen
+                ]
+            ];
+
+            for (
+                const op of openings
+            ) {
+
+                if (
+                    yLog <= op.y0 ||
+                    yLog >= op.y1
+                ) {
+                    continue;
+                }
+
+                const next = [];
+
+                for (
+                    const seg of segs
+                ) {
+
+                    const a =
+                        seg[0];
+
+                    const b =
+                        seg[1];
+
+                    const lo =
+                        op.c -
+                        op.hw;
+
+                    const hi =
+                        op.c +
+                        op.hw;
+
+                    if (
+                        hi <= a ||
+                        lo >= b
+                    ) {
+                        next.push(
+                            seg
+                        );
+                        continue;
+                    }
+
+                    if (
+                        lo > a
+                    ) {
+                        next.push([
+                            a,
+                            lo
+                        ]);
+                    }
+
+                    if (
+                        hi < b
+                    ) {
+                        next.push([
+                            hi,
+                            b
+                        ]);
+                    }
+                }
+
+                segs =
+                    next;
+            }
+
+            for (
+                const seg of segs
+            ) {
+
+                const a =
+                    seg[0];
+
+                const b =
+                    seg[1];
+
+                if (
+                    b - a < 0.18
+                ) {
+                    continue;
+                }
+
+                if (
+                    along ===
+                    'x'
+                ) {
+                    addHutLog(
+                        b - a,
+                        logR,
+                        (a + b) / 2,
+                        yLog,
+                        fixed,
+                        0,
+                        0,
+                        Math.PI / 2,
+                        mat
+                    );
+                } else {
+                    addHutLog(
+                        b - a,
+                        logR,
+                        fixed,
+                        yLog,
+                        (a + b) / 2,
+                        Math.PI / 2,
+                        0,
+                        0,
+                        mat
+                    );
+                }
+            }
+        }
+    };
+
+    const addHutWindow = (
+        px,
+        py,
+        pz,
+        face
+    ) => {
+
+        const frame =
+            new THREE.Group();
+
+        const frameMat =
+            teaWoodDarkMat;
+
+        put(
+            teaPart(
+                new THREE.BoxGeometry(
+                    0.56,
+                    0.065,
+                    0.08
+                ),
+                frameMat
+            ),
+            0,
+            0.25,
+            0,
+            0,
+            0,
+            0,
+            frame
+        );
+
+        put(
+            teaPart(
+                new THREE.BoxGeometry(
+                    0.56,
+                    0.065,
+                    0.08
+                ),
+                frameMat
+            ),
+            0,
+            -0.25,
+            0,
+            0,
+            0,
+            0,
+            frame
+        );
+
+        for (
+            const sx of [
+                -0.25,
+                0.25
+            ]
+        ) {
+            put(
+                teaPart(
+                    new THREE.BoxGeometry(
+                        0.065,
+                        0.56,
+                        0.08
+                    ),
+                    frameMat
+                ),
+                sx,
+                0,
+                0,
+                0,
+                0,
+                0,
+                frame
+            );
+        }
+
+        put(
+            teaPart(
+                new THREE.BoxGeometry(
+                    0.045,
+                    0.48,
+                    0.055
+                ),
+                frameMat
+            ),
+            0,
+            0,
+            0.02,
+            0,
+            0,
+            0,
+            frame
+        );
+
+        put(
+            teaPart(
+                new THREE.BoxGeometry(
+                    0.46,
+                    0.045,
+                    0.055
+                ),
+                frameMat
+            ),
+            0,
+            0,
+            0.02,
+            0,
+            0,
+            0,
+            frame
+        );
+
+        frame.position.set(
+            px,
+            py,
+            pz
+        );
+
+        if (
+            face ===
+            'x'
+        ) {
+            frame.rotation.y =
+                Math.PI / 2;
+        }
+
+        g.add(
+            frame
+        );
+    };
+
     beam(
-        3.05,
+        3.85,
         0.16,
-        2.28,
+        3.05,
         0,
         0.08,
-        0,
+        0.05,
         0,
         0,
         0,
@@ -1183,17 +1881,101 @@ function buildTeaProcessingHutV2(
     );
 
     beam(
-        2.72,
+        3.55,
         0.10,
-        2.02,
+        2.75,
         0,
         0.20,
-        0,
+        0.05,
         0,
         0,
         0,
         teaWoodMat
     );
+
+    /* ======================================================
+       把小屋地板登记成可站立平台
+       之前地板是垫高的（石头地基+木地板，局部 y=0.20~0.25），
+       但 groundAt()/collideXZ() 完全不知道这块地板的存在，
+       史莱姆走进来脚下高度还是按室外地面(0)算，看起来就像
+       陷进地基里——这里把地板范围和高度登记进 platformBoxes。
+       ====================================================== */
+    if (typeof platformBoxes !== 'undefined') {
+        const floorHalfX = 1.775 * g.scale.x;
+        const floorHalfZ = 1.375 * g.scale.z;
+        const floorCenterZ = z + 0.05 * g.scale.z;
+        platformBoxes.push({
+            x1: x - floorHalfX,
+            z1: floorCenterZ - floorHalfZ,
+            x2: x + floorHalfX,
+            z2: floorCenterZ + floorHalfZ,
+            top: y + 0.25 * g.scale.y,
+            bot: y
+        });
+
+        const addEntranceStepPlatform = (
+            px,
+            pz,
+            w,
+            d,
+            top
+        ) => {
+
+            platformBoxes.push({
+                x1:
+                    x +
+                    (px - w / 2) *
+                    g.scale.x,
+
+                z1:
+                    z +
+                    (pz - d / 2) *
+                    g.scale.z,
+
+                x2:
+                    x +
+                    (px + w / 2) *
+                    g.scale.x,
+
+                z2:
+                    z +
+                    (pz + d / 2) *
+                    g.scale.z,
+
+                top:
+                    y +
+                    top *
+                    g.scale.y,
+
+                bot:
+                    y
+            });
+        };
+
+        addEntranceStepPlatform(
+            0.91,
+            1.97,
+            1.30,
+            0.48,
+            0.10
+        );
+
+        addEntranceStepPlatform(
+            0.91,
+            1.69,
+            1.02,
+            0.40,
+            0.19
+        );
+
+        addEntranceStepPlatform(
+            0.91,
+            1.45,
+            0.72,
+            0.24,
+            0.29
+        );
+    }
 
     for (
         const px of [
@@ -1228,107 +2010,158 @@ function buildTeaProcessingHutV2(
         ]
     ) {
 
-        cylinder(
-            new THREE.CylinderGeometry(
-                0.065,
-                0.080,
-                1.62,
-                7
-            ),
-            teaWoodDarkMat,
+        const post =
+            teaPart(
+                new THREE.CylinderGeometry(
+                    0.065,
+                    0.080,
+                    1.62,
+                    7
+                ),
+                teaPostGhostMat
+            );
+
+        post.traverse(
+            o => {
+                if (
+                    o.isLineSegments
+                ) {
+                    o.material =
+                        teaPostGhostLineMat;
+                }
+            }
+        );
+
+        put(
+            post,
             p[0],
             1.02,
-            p[1]
+            p[1],
+            0,
+            0,
+            0,
+            g
         );
     }
 
-    beam(
-        2.82,
-        0.12,
-        0.12,
-        0,
-        1.64,
-        0.86
-    );
+    /* ======================================================
+       仓库式闭合墙体
+       ====================================================== */
 
-    beam(
-        2.82,
-        0.12,
-        0.12,
-        0,
-        1.64,
-        -0.86
-    );
-
-    beam(
-        0.12,
-        0.12,
-        1.92,
-        -1.25,
-        1.58,
-        0
-    );
-
-    beam(
-        0.12,
-        0.12,
-        1.92,
-        1.25,
-        1.58,
-        0
-    );
-
-    beam(
-        2.52,
-        0.95,
-        0.08,
-        0,
-        0.96,
-        -0.92,
-        0,
-        0,
-        0,
-        teaClothMat
-    );
-
-    for (
-        const wx of [
-            -0.76,
-            0.76
+    addHutLogWall(
+        'x',
+        1.45,
+        2.05,
+        [
+            {
+                c:
+                    0.91,
+                hw:
+                    0.46,
+                y0:
+                    0.20,
+                y1:
+                    1.36
+            },
+            {
+                c:
+                    -0.62,
+                hw:
+                    0.34,
+                y0:
+                    0.82,
+                y1:
+                    1.28
+            }
         ]
-    ) {
+    );
 
-        beam(
-            0.42,
-            0.46,
-            0.055,
-            wx,
-            1.05,
-            -0.965,
-            0,
-            0,
-            0,
-            teaWoodMat
-        );
+    addHutLogWall(
+        'x',
+        -1.35,
+        2.05,
+        [
+            {
+                c:
+                    -0.72,
+                hw:
+                    0.34,
+                y0:
+                    0.82,
+                y1:
+                    1.28
+            },
+            {
+                c:
+                    0.72,
+                hw:
+                    0.34,
+                y0:
+                    0.82,
+                y1:
+                    1.28
+            }
+        ],
+        null
+    );
 
-        beam(
-            0.36,
-            0.035,
-            0.065,
-            wx,
-            1.05,
-            -1.005
-        );
+    addHutLogWall(
+        'z',
+        -1.80,
+        1.35,
+        [
+            {
+                c:
+                    -0.18,
+                hw:
+                    0.32,
+                y0:
+                    0.82,
+                y1:
+                    1.28
+            }
+        ]
+    );
 
-        beam(
-            0.035,
-            0.36,
-            0.065,
-            wx,
-            1.05,
-            -1.005
-        );
-    }
+    addHutLogWall(
+        'z',
+        1.80,
+        1.35,
+        [
+            {
+                c:
+                    0.22,
+                hw:
+                    0.32,
+                y0:
+                    0.82,
+                y1:
+                    1.28
+            }
+        ],
+        null
+    );
+
+    addHutWindow(
+        -0.62,
+        1.05,
+        1.51,
+        'z'
+    );
+
+    /* 后墙、右墙整面都不可见了，挂在这两面墙上的窗户
+       也一并去掉，不然会出现"窗户浮在空气里"的情况。 */
+
+    addHutWindow(
+        -1.86,
+        1.05,
+        -0.18,
+        'x'
+    );
+
+    /* 屋顶的檩条/桁架（原来这里有4根梁）按要求整体去掉，不建。 */
+
+    /* 后侧这块整墙挡视线，直接不生成。 */
 
     for (
         const side of [
@@ -1340,17 +2173,17 @@ function buildTeaProcessingHutV2(
         const roof =
             teaPart(
                 new THREE.BoxGeometry(
-                    3.18,
+                    4.02,
                     0.10,
-                    1.28
+                    1.70
                 ),
-                teaWoodDarkMat
+                teaRoofMat
             );
 
         roof.position.set(
             0,
             1.96,
-            side * 0.48
+            side * 0.64
         );
 
         roof.rotation.x =
@@ -1360,132 +2193,13 @@ function buildTeaProcessingHutV2(
             roof
         );
 
-        for (
-            let i = -3;
-            i <= 3;
-            i++
-        ) {
-
-            cylinder(
-                new THREE.CylinderGeometry(
-                    0.035,
-                    0.035,
-                    1.25,
-                    6
-                ),
-                teaWoodMat,
-                i * 0.44,
-                2.04,
-                side * 0.52,
-                Math.PI / 2 + side * 0.34
-            );
-        }
+        /* 屋顶下的椽子("架子")按要求不建了。 */
     }
 
-    beam(
-        0.16,
-        0.16,
-        2.10,
-        0,
-        2.12,
-        0
-    );
+    /* 屋顶正脊梁、烟囱和烟囱冒出的烟按要求都不建了。 */
 
-    beam(
-        0.36,
-        0.58,
-        0.36,
-        0.86,
-        2.32,
-        -0.34,
-        0,
-        0.05,
-        0,
-        teaStoneMat
-    );
+    /* 这块白色制茶布牌挡住室内视线，直接不生成。 */
 
-    for (
-        let i = 0;
-        i < 3;
-        i++
-    ) {
-
-        const smoke =
-            teaPart(
-                new THREE.SphereGeometry(
-                    0.12 + i * 0.04,
-                    8,
-                    6
-                ),
-                teaClothMat
-            );
-
-        smoke.position.set(
-            0.88 + i * 0.08,
-            2.70 + i * 0.18,
-            -0.34 - i * 0.05
-        );
-
-        smoke.scale.y =
-            1.25;
-
-        g.add(
-            smoke
-        );
-    }
-
-    beam(
-        1.18,
-        0.72,
-        0.045,
-        -0.48,
-        1.05,
-        0.93,
-        0,
-        0,
-        0,
-        teaClothMat
-    );
-
-    const curtain =
-        makeTeaTextPlane(
-            [
-                {
-                    text:
-                        '茶',
-                    font:
-                        'bold 68px "Songti SC", "STSong", serif',
-                    y:
-                        126
-                },
-                {
-                    text:
-                        '手工制茶',
-                    font:
-                        '22px "Songti SC", "STSong", serif',
-                    y:
-                        218
-                }
-            ],
-            0.98,
-            0.58,
-            {
-                bg:
-                    '#f4eedb',
-                stroke:
-                    '#9f8664'
-            }
-        );
-
-    curtain.position.set(
-        -0.48,
-        1.05,
-        0.958
-    );
-
-    g.add(
-        curtain
-    );
 
     beam(
         1.28,
@@ -1540,49 +2254,313 @@ function buildTeaProcessingHutV2(
         teaWoodMat
     );
 
-    beam(
-        0.66,
-        0.48,
-        0.66,
-        0.82,
-        0.46,
-        -0.34,
+    const roastStove =
+        new THREE.Group();
+
+    roastStove.position.set(
+        roastStationLocal.x,
         0,
-        0,
-        0,
-        teaStoneMat
+        roastStationLocal.z
     );
 
-    beam(
-        0.30,
-        0.18,
-        0.035,
-        0.82,
-        0.40,
-        0.01,
-        0,
-        0,
-        0,
-        teaCharcoalMat
+    g.add(
+        roastStove
     );
 
-    cylinder(
-        new THREE.CylinderGeometry(
-            0.42,
-            0.34,
-            0.16,
-            18
-        ),
-        teaCharcoalMat,
-        0.82,
-        0.76,
-        -0.34
+    roastStove.userData.aimLabel =
+        '点火 / 熄灭炒茶灶';
+
+    if (
+        typeof regMagic ===
+        'function'
+    ) {
+        regMagic(
+            roastStove,
+            toggleTeaRoastFire
+        );
+    }
+
+    const stoneCount =
+        10;
+
+    const stoneRadius =
+        0.34;
+
+    for (
+        let course = 0;
+        course < 3;
+        course++
+    ) {
+        const yy =
+            0.07 +
+            course *
+            0.105;
+
+        const off =
+            course % 2 ?
+                Math.PI / stoneCount :
+                0;
+
+        for (
+            let i = 0;
+            i < stoneCount;
+            i++
+        ) {
+            const a =
+                i / stoneCount *
+                Math.PI *
+                2 +
+                off;
+
+            let frontGap =
+                Math.abs(
+                    a -
+                    Math.PI / 2
+                );
+
+            frontGap =
+                Math.min(
+                    frontGap,
+                    Math.PI *
+                    2 -
+                    frontGap
+                );
+
+            if (
+                frontGap <
+                0.38
+            ) {
+                continue;
+            }
+
+            const stone =
+                teaPart(
+                    new THREE.BoxGeometry(
+                        0.18,
+                        0.10,
+                        0.13
+                    ),
+                    teaStoneMat
+                );
+
+            stone.position.set(
+                Math.cos(
+                    a
+                ) *
+                stoneRadius,
+                yy,
+                Math.sin(
+                    a
+                ) *
+                stoneRadius
+            );
+
+            stone.rotation.y =
+                -a +
+                Math.PI / 2;
+
+            roastStove.add(
+                stone
+            );
+        }
+    }
+
+    if (
+        typeof logBetween ===
+        'function'
+    ) {
+        logBetween(
+            [-0.23, 0.12, -0.07],
+            [0.23, 0.12, -0.11],
+            0.035,
+            roastStove
+        );
+
+        logBetween(
+            [-0.19, 0.12, 0.12],
+            [0.22, 0.12, 0.08],
+            0.035,
+            roastStove
+        );
+
+        logBetween(
+            [-0.21, 0.17, 0.00],
+            [0.23, 0.17, -0.04],
+            0.030,
+            roastStove
+        );
+    }
+
+    const flameMat =
+        new THREE.MeshBasicMaterial({
+            color:
+                0xd58a3a,
+
+            transparent:
+                true,
+
+            opacity:
+                0.56,
+
+            depthWrite:
+                false,
+
+            side:
+                THREE.DoubleSide
+        });
+
+    teaRoastState.flames =
+        [];
+
+    for (
+        const [i, f] of [
+            [0, 0.24, 0.00, 0.16, 0.30],
+            [-0.08, 0.22, 0.03, 0.10, 0.22],
+            [0.09, 0.22, -0.03, 0.09, 0.20]
+        ].entries()
+    ) {
+        const flame =
+            teaPart(
+                new THREE.ConeGeometry(
+                    f[3],
+                    f[4],
+                    7
+                ),
+                flameMat
+            );
+
+        flame.visible =
+            false;
+
+        teaRoastState.flames.push({
+            obj:
+                flame,
+
+            baseY:
+                f[1],
+
+            phase:
+                i *
+                1.7,
+
+            speed:
+                4.2 +
+                i *
+                0.9
+        });
+
+        put(
+            flame,
+            f[0],
+            f[1],
+            f[2],
+            0,
+            0,
+            0,
+            roastStove
+        );
+    }
+
+    const roastGlowMat =
+        new THREE.MeshBasicMaterial({
+            color:
+                0xd58a3a,
+
+            transparent:
+                true,
+
+            opacity:
+                0.01,
+
+            depthWrite:
+                false,
+
+            side:
+                THREE.DoubleSide
+        });
+
+    const roastGlow =
+        new THREE.Mesh(
+            new THREE.CircleGeometry(
+                0.46,
+                24
+            ),
+            roastGlowMat
+        );
+
+    roastGlow.visible =
+        false;
+
+    roastGlow.rotation.x =
+        -Math.PI / 2;
+
+    roastGlow.position.set(
+        0,
+        0.016,
+        0
     );
+
+    roastStove.add(
+        roastGlow
+    );
+
+    teaRoastState.glow =
+        roastGlow;
+
+    const flatPan =
+        teaPart(
+            new THREE.CylinderGeometry(
+                0.36,
+                0.32,
+                0.070,
+                24,
+                1,
+                true
+            ),
+            teaCharcoalMat
+        );
+
+    flatPan.position.set(
+        0,
+        0.47,
+        0
+    );
+
+    roastStove.add(
+        flatPan
+    );
+
+    const panRim =
+        teaPart(
+            new THREE.TorusGeometry(
+                0.34,
+                0.025,
+                6,
+                28
+            ),
+            teaCharcoalMat
+        );
+
+    panRim.rotation.x =
+        Math.PI / 2;
+
+    panRim.position.set(
+        0,
+        0.515,
+        0
+    );
+
+    roastStove.add(
+        panRim
+    );
+
+    teaRoastState.panRim =
+        panRim;
 
     const panLeaves =
         teaPart(
             new THREE.SphereGeometry(
-                0.27,
+                0.21,
                 10,
                 6
             ),
@@ -1590,20 +2568,33 @@ function buildTeaProcessingHutV2(
         );
 
     panLeaves.scale.set(
-        1.08,
-        0.13,
-        0.72
+        1.20,
+        0.09,
+        0.82
     );
 
     panLeaves.position.set(
-        0.82,
-        0.85,
-        -0.34
+        0,
+        0.56,
+        0
     );
 
-    g.add(
+    roastStove.add(
         panLeaves
     );
+
+    teaRoastState.panLeaves =
+        panLeaves;
+
+    if (
+        typeof regMagic ===
+        'function'
+    ) {
+        regMagic(
+            roastStove,
+            toggleTeaRoastFire
+        );
+    }
 
     for (
         const item of [
@@ -1653,29 +2644,6 @@ function buildTeaProcessingHutV2(
         );
     }
 
-    for (
-        const item of [
-            [1.18, 0.52, 0.24],
-            [1.20, 0.20, 0.17]
-        ]
-    ) {
-
-        cylinder(
-            new THREE.CylinderGeometry(
-                item[2],
-                item[2] * 0.82,
-                0.36,
-                12,
-                1,
-                true
-            ),
-            teaBasketMat,
-            item[0],
-            0.38,
-            item[1]
-        );
-    }
-
     beam(
         0.46,
         0.34,
@@ -1689,54 +2657,8 @@ function buildTeaProcessingHutV2(
         teaWoodMat
     );
 
-    const bag =
-        teaPart(
-            new THREE.BoxGeometry(
-                0.36,
-                0.58,
-                0.22
-            ),
-            teaClothMat
-        );
+    /* 茶叶布袋太挡视线，直接不生成。 */
 
-    bag.position.set(
-        1.13,
-        0.48,
-        -0.82
-    );
-
-    bag.rotation.z =
-        -0.04;
-
-    g.add(
-        bag
-    );
-
-    const bagLabel =
-        makeTeaTextPlane(
-            [
-                {
-                    text:
-                        '茶叶',
-                    font:
-                        'bold 26px "Songti SC", "STSong", serif',
-                    y:
-                        132
-                }
-            ],
-            0.25,
-            0.20
-        );
-
-    bagLabel.position.set(
-        1.13,
-        0.50,
-        -0.935
-    );
-
-    g.add(
-        bagLabel
-    );
 
     const scissors =
         new THREE.Group();
@@ -1842,7 +2764,7 @@ function buildTeaProcessingHutV2(
         );
 
     board.position.set(
-        -1.52,
+        -1.96,
         0.78,
         0.70
     );
@@ -1854,6 +2776,411 @@ function buildTeaProcessingHutV2(
         board
     );
 
+    const teaHutStool =
+        new THREE.Group();
+
+    teaHutStool.position.set(
+        -0.78,
+        0,
+        0.92
+    );
+
+    teaHutStool.rotation.y =
+        -0.18;
+
+    g.add(
+        teaHutStool
+    );
+
+    put(
+        teaPart(
+            new THREE.CylinderGeometry(
+                0.21,
+                0.18,
+                0.05,
+                12
+            ),
+            teaWoodMat
+        ),
+        0,
+        0.45,
+        0,
+        0,
+        0,
+        0,
+        teaHutStool
+    );
+
+    for (
+        let i = 0;
+        i < 3;
+        i++
+    ) {
+        const a =
+            i *
+            (
+                Math.PI *
+                2 /
+                3
+            ) +
+            0.55;
+
+        teaLogBetween(
+            teaHutStool,
+            [
+                Math.cos(
+                    a
+                ) *
+                0.12,
+                0.43,
+                Math.sin(
+                    a
+                ) *
+                0.12
+            ],
+            [
+                Math.cos(
+                    a
+                ) *
+                0.19,
+                0.03,
+                Math.sin(
+                    a
+                ) *
+                0.19
+            ],
+            0.024,
+            teaWoodDarkMat
+        );
+    }
+
+    teaHutStool.userData.aimLabel =
+        '茶屋小圆凳';
+
+    if (
+        typeof regMagic ===
+        'function'
+    ) {
+        regMagic(
+            teaHutStool,
+            () => {
+                SND.play(
+                    'ui'
+                );
+
+                showHintOverride(
+                    '茶屋小圆凳 · 从主屋搬来的三脚圆凳'
+                );
+            }
+        );
+    }
+
+    if (
+        typeof platformBoxes !==
+        'undefined'
+    ) {
+        platformBoxes.push({
+            x1:
+                x +
+                (
+                    -0.78 -
+                    0.23
+                ) *
+                g.scale.x,
+
+            z1:
+                z +
+                (
+                    0.92 -
+                    0.23
+                ) *
+                g.scale.z,
+
+            x2:
+                x +
+                (
+                    -0.78 +
+                    0.23
+                ) *
+                g.scale.x,
+
+            z2:
+                z +
+                (
+                    0.92 +
+                    0.23
+                ) *
+                g.scale.z,
+
+            top:
+                y +
+                0.475 *
+                g.scale.y,
+
+            bot:
+                y
+        });
+    }
+
+    const teaHutLamp =
+        new THREE.Group();
+
+    teaHutLamp.position.set(
+        -0.10,
+        1.54,
+        0.08
+    );
+
+    g.add(
+        teaHutLamp
+    );
+
+    put(
+        teaPart(
+            new THREE.CylinderGeometry(
+                0.012,
+                0.012,
+                0.44,
+                6
+            ),
+            teaCharcoalMat
+        ),
+        0,
+        0.22,
+        0,
+        0,
+        0,
+        0,
+        teaHutLamp
+    );
+
+    put(
+        teaPart(
+            new THREE.ConeGeometry(
+                0.22,
+                0.12,
+                12
+            ),
+            teaWoodDarkMat
+        ),
+        0,
+        0.02,
+        0,
+        Math.PI,
+        0,
+        0,
+        teaHutLamp
+    );
+
+    const teaLampGlowMat =
+        new THREE.MeshBasicMaterial({
+            color:
+                0xffd28a,
+
+            transparent:
+                true,
+
+            opacity:
+                0.32,
+
+            depthWrite:
+                false,
+
+            side:
+                THREE.DoubleSide
+        });
+
+    const teaLampCore =
+        teaPart(
+            new THREE.SphereGeometry(
+                0.15,
+                12,
+                8
+            ),
+            teaLampGlowMat
+        );
+
+    teaLampCore.scale.set(
+        1,
+        1.24,
+        1
+    );
+
+    teaLampCore.position.set(
+        0,
+        -0.10,
+        0
+    );
+
+    teaHutLamp.add(
+        teaLampCore
+    );
+
+    teaHutLampState.core =
+        teaLampCore;
+
+    const teaLampBeamMat =
+        new THREE.MeshBasicMaterial({
+            color:
+                0xffd28a,
+
+            transparent:
+                true,
+
+            opacity:
+                0.075,
+
+            depthWrite:
+                false,
+
+            side:
+                THREE.DoubleSide
+        });
+
+    for (
+        const beamSpec of [
+            [0, 0.00],
+            [0.18, 0.42],
+            [-0.18, -0.36]
+        ]
+    ) {
+        const ray =
+            new THREE.Mesh(
+                new THREE.ConeGeometry(
+                    0.78,
+                    1.42,
+                    18,
+                    1,
+                    true
+                ),
+                teaLampBeamMat
+            );
+
+        ray.userData.noHit =
+            true;
+
+        ray.position.set(
+            beamSpec[0],
+            -0.86,
+            0
+        );
+
+        ray.rotation.z =
+            beamSpec[1];
+
+        teaHutLamp.add(
+            ray
+        );
+
+        teaHutLampState.beams.push(
+            ray
+        );
+    }
+
+    const teaLampFloorGlow =
+        new THREE.Mesh(
+            new THREE.CircleGeometry(
+                1.35,
+                32
+            ),
+            new THREE.MeshBasicMaterial({
+                color:
+                    0xffd28a,
+
+                transparent:
+                true,
+
+                opacity:
+                    0.075,
+
+                depthWrite:
+                    false,
+
+                side:
+                    THREE.DoubleSide
+            })
+        );
+
+    teaLampFloorGlow.userData.noHit =
+        true;
+
+    teaLampFloorGlow.rotation.x =
+        -Math.PI / 2;
+
+    teaLampFloorGlow.position.set(
+        0,
+        -1.50,
+        0
+    );
+
+    teaHutLamp.add(
+        teaLampFloorGlow
+    );
+
+    teaHutLampState.floorGlow =
+        teaLampFloorGlow;
+
+    put(
+        teaPart(
+            new THREE.ConeGeometry(
+                0.18,
+                0.09,
+                12
+            ),
+            teaWoodDarkMat
+        ),
+        0,
+        -0.26,
+        0,
+        0,
+        0,
+        0,
+        teaHutLamp
+    );
+
+    if (
+        typeof THREE.PointLight ===
+        'function'
+    ) {
+        const teaLampLight =
+            new THREE.PointLight(
+                0xffd89a,
+                1.15,
+                4.2,
+                1.8
+            );
+
+        teaLampLight.position.set(
+            0,
+            -0.07,
+            0
+        );
+
+        teaHutLamp.add(
+            teaLampLight
+        );
+
+        teaHutLampState.light =
+            teaLampLight;
+    }
+
+    setTeaHutLampLit(
+        teaHutLampState.lit
+    );
+
+    teaHutLamp.userData.aimLabel =
+        '点亮 / 熄灭茶屋吊灯';
+
+    if (
+        typeof regMagic ===
+        'function'
+    ) {
+        regMagic(
+            teaHutLamp,
+            toggleTeaHutLamp
+        );
+    }
+
     /* ======================================================
        正面入口
        ====================================================== */
@@ -1864,7 +3191,7 @@ function buildTeaProcessingHutV2(
         0.12,
         0.64,
         0.88,
-        0.98
+        1.33
     );
 
     beam(
@@ -1873,7 +3200,7 @@ function buildTeaProcessingHutV2(
         0.12,
         1.18,
         0.88,
-        0.98
+        1.33
     );
 
     beam(
@@ -1882,7 +3209,7 @@ function buildTeaProcessingHutV2(
         0.12,
         0.91,
         1.38,
-        0.98
+        1.33
     );
 
     beam(
@@ -1891,7 +3218,7 @@ function buildTeaProcessingHutV2(
         0.24,
         0.91,
         0.29,
-        1.10,
+        1.45,
         0,
         0,
         0,
@@ -1904,7 +3231,7 @@ function buildTeaProcessingHutV2(
         0.40,
         0.91,
         0.16,
-        1.34,
+        1.69,
         0,
         0,
         0,
@@ -1917,7 +3244,7 @@ function buildTeaProcessingHutV2(
         0.48,
         0.91,
         0.07,
-        1.62,
+        1.97,
         0,
         0,
         0,
@@ -1942,8 +3269,8 @@ function buildTeaProcessingHutV2(
     const doorway =
         new THREE.Mesh(
             new THREE.PlaneGeometry(
-                0.46,
-                0.82
+                0.72,
+                1.10
             ),
             entryMat
         );
@@ -1951,12 +3278,179 @@ function buildTeaProcessingHutV2(
     doorway.position.set(
         0.91,
         0.86,
-        1.012
+        1.362
     );
 
     g.add(
         doorway
     );
+
+    const warehouseDoor =
+        new THREE.Group();
+
+    warehouseDoor.position.set(
+        0.55,
+        0.27,
+        1.425
+    );
+
+    for (
+        const px of [
+            0.08,
+            0.24,
+            0.40,
+            0.56,
+            0.72
+        ]
+    ) {
+
+        put(
+            teaPart(
+                new THREE.BoxGeometry(
+                    0.13,
+                    1.08,
+                    0.07
+                ),
+                teaWoodMat
+            ),
+            px,
+            0.54,
+            0,
+            0,
+            0,
+            0,
+            warehouseDoor
+        );
+    }
+
+    put(
+        teaPart(
+            new THREE.BoxGeometry(
+                0.90,
+                0.08,
+                0.08
+            ),
+            teaWoodDarkMat
+        ),
+        0.40,
+        0.25,
+        0.035,
+        0,
+        0,
+        0,
+        warehouseDoor
+    );
+
+    put(
+        teaPart(
+            new THREE.BoxGeometry(
+                0.90,
+                0.08,
+                0.08
+            ),
+            teaWoodDarkMat
+        ),
+        0.40,
+        0.78,
+        0.035,
+        0,
+        0,
+        0,
+        warehouseDoor
+    );
+
+    put(
+        teaPart(
+            new THREE.TorusGeometry(
+                0.055,
+                0.014,
+                6,
+                16
+            ),
+            teaCharcoalMat
+        ),
+        0.71,
+        0.62,
+        0.065,
+        0,
+        0,
+        0,
+        warehouseDoor
+    );
+
+    g.add(
+        warehouseDoor
+    );
+
+    warehouseDoor.userData.aimLabel =
+        '打开 / 关上制茶小屋门';
+
+    const doorState = {
+        pivot:
+            warehouseDoor,
+
+        open:
+            false,
+
+        amount:
+            0,
+
+        block: {
+            x1:
+                x +
+                TEA_HUT_COLLISION.doorCenter -
+                TEA_HUT_COLLISION.doorHalf,
+
+            z1:
+                z +
+                TEA_HUT_COLLISION.front -
+                0.22,
+
+            x2:
+                x +
+                TEA_HUT_COLLISION.doorCenter +
+                TEA_HUT_COLLISION.doorHalf,
+
+            z2:
+                z +
+                TEA_HUT_COLLISION.front
+        }
+    };
+
+    teaHutDoors.push(
+        doorState
+    );
+
+    setTeaHutDoorBlock(
+        doorState,
+        true
+    );
+
+    const toggleTeaHutDoor = () => {
+
+        doorState.open =
+            !doorState.open;
+
+        setTeaHutDoorBlock(
+            doorState,
+            !doorState.open
+        );
+
+        if (
+            typeof SND !==
+            'undefined'
+        ) {
+            SND.play(
+                'door'
+            );
+        }
+
+        showHintOverride(
+            doorState.open ?
+                '制茶小屋的门打开了' :
+                '制茶小屋的门关上了'
+        );
+    };
 
     const doorHit =
         teaPart(
@@ -1971,7 +3465,7 @@ function buildTeaProcessingHutV2(
     doorHit.position.set(
         0.91,
         0.86,
-        1.04
+        1.39
     );
 
     doorHit.traverse(
@@ -2002,7 +3496,7 @@ function buildTeaProcessingHutV2(
     );
 
     doorHit.userData.aimLabel =
-        '进入制茶小屋';
+        '打开 / 关上制茶小屋门';
 
     g.add(
         doorHit
@@ -2013,35 +3507,211 @@ function buildTeaProcessingHutV2(
         'function'
     ) {
         regMagic(
+            warehouseDoor,
+            toggleTeaHutDoor
+        );
+
+        regMagic(
             doorHit,
-            enterTeaHut
+            toggleTeaHutDoor
         );
     }
 
-    g.userData.aimLabel =
-        '进入制茶小屋';
+    interactables.push({
+        x:
+            x +
+            0.91 *
+            g.scale.x,
 
-    regMagic(
-        g,
-        enterTeaHut
-    );
+        z:
+            z +
+            1.45 *
+            g.scale.z,
+
+        r:
+            0.9,
+
+        label:
+            '打开 / 关上制茶小屋门',
+
+        act:
+            toggleTeaHutDoor
+    });
 
     interactables.push({
         x:
-            x,
+            x -
+            0.92 *
+            g.scale.x,
 
         z:
-            z,
+            z -
+            0.12 *
+            g.scale.z,
 
         r:
-            3.15,
+            1.65,
 
         label:
-            '进入制茶小屋',
+            '晒茶青（消耗生茶青 ×' + TEA_PROCESS_BATCH + '）',
 
         act:
-            enterTeaHut
+            sieveTeaLeaves
     });
+
+    interactables.push({
+        x:
+            x -
+            0.10 *
+            g.scale.x,
+
+        z:
+            z +
+            0.08 *
+            g.scale.z,
+
+        r:
+            1.15,
+
+        label:
+            '点亮 / 熄灭茶屋吊灯',
+
+        act:
+            toggleTeaHutLamp
+    });
+
+    interactables.push({
+        x:
+            x +
+            (
+                roastStationLocal.x -
+                0.36
+            ) *
+            g.scale.x,
+
+        z:
+            z +
+            roastStationLocal.z *
+            g.scale.z,
+
+        r:
+            0.58,
+
+        label:
+            '点火 / 熄灭炒茶灶',
+
+        act:
+            toggleTeaRoastFire
+    });
+
+    interactables.push({
+        x:
+            x +
+            (
+                roastStationLocal.x +
+                0.28
+            ) *
+            g.scale.x,
+
+        z:
+            z +
+            roastStationLocal.z *
+            g.scale.z,
+
+        r:
+            0.72,
+
+        label:
+            '炒茶叶（消耗晒干茶青 ×' + TEA_PROCESS_BATCH + '）',
+
+        act:
+            roastTeaLeaves
+    });
+
+    interactables.push({
+        x:
+            x - 0.16 * g.scale.x,
+
+        z:
+            z + 0.34 * g.scale.z,
+
+        r:
+            1.00,
+
+        label:
+            '打包卖茶（消耗炒制茶叶 ×' + TEA_PROCESS_BATCH + '）',
+
+        act:
+            packageTeaLeaves
+    });
+
+    /* ======================================================
+       室内家具碰撞：晒茶筛 / 炒茶灶 / 工作台
+       之前只有外墙和门有碰撞盒，家具本身没有，
+       史莱姆会直接穿模走进木头里——这里给三件大家具补上。
+       ====================================================== */
+    if (typeof solidBoxes !== 'undefined') {
+        const addFurnitureBlock = (
+            lx,
+            lz,
+            hx,
+            hz
+        ) => {
+            const fx =
+                x +
+                lx *
+                g.scale.x;
+
+            const fz =
+                z +
+                lz *
+                g.scale.z;
+
+            addTeaSolidBoxOnce({
+                x1:
+                    fx -
+                    hx *
+                    g.scale.x,
+
+                z1:
+                    fz -
+                    hz *
+                    g.scale.z,
+
+                x2:
+                    fx +
+                    hx *
+                    g.scale.x,
+
+                z2:
+                    fz +
+                    hz *
+                    g.scale.z
+            });
+        };
+
+        addFurnitureBlock(
+            -0.70,
+            -0.34,
+            0.72,
+            0.67
+        );
+
+        addFurnitureBlock(
+            roastStationLocal.x,
+            roastStationLocal.z,
+            0.33,
+            0.33
+        );
+
+        addFurnitureBlock(
+            -0.16,
+            0.34,
+            0.74,
+            0.40
+        );
+
+    }
 
     return g;
 }
@@ -2095,92 +3765,6 @@ function buildTeaBench(
             parent
         );
     }
-}
-
-function buildTeaWashBasin(
-    parent,
-    x,
-    z
-) {
-
-    const basin =
-        teaPart(
-            new THREE.CylinderGeometry(
-                0.38,
-                0.46,
-                0.32,
-                12,
-                1,
-                true
-            ),
-            teaStoneMat
-        );
-
-    basin.position.set(
-        x,
-        0.20,
-        z
-    );
-
-    parent.add(
-        basin
-    );
-
-    put(
-        teaPart(
-            new THREE.CylinderGeometry(
-                0.31,
-                0.31,
-                0.035,
-                14
-            ),
-            teaWaterMat
-        ),
-        x,
-        0.37,
-        z,
-        0,
-        0,
-        0,
-        parent
-    );
-
-    put(
-        teaPart(
-            new THREE.CylinderGeometry(
-                0.035,
-                0.04,
-                0.72,
-                6
-            ),
-            teaWoodDarkMat
-        ),
-        x - 0.18,
-        0.72,
-        z,
-        0,
-        0,
-        0,
-        parent
-    );
-
-    put(
-        teaPart(
-            new THREE.BoxGeometry(
-                0.62,
-                0.055,
-                0.055
-            ),
-            teaWoodDarkMat
-        ),
-        x + 0.08,
-        1.04,
-        z,
-        0,
-        0,
-        0,
-        parent
-    );
 }
 
 function buildTeaLantern(
@@ -2729,12 +4313,6 @@ function buildTeaFieldBase() {
         3.02
     );
 
-
-    buildTeaWashBasin(
-        g,
-        3.30,
-        -2.88
-    );
 
     buildTeaLantern(
         g,
@@ -4330,13 +5908,19 @@ function pickTeaPlant(
     teaLeafCount +=
         1;
 
+    teaProcessState.raw += 1;
+
+    const teaWeatherMult = typeof weatherYieldMultiplier === 'function'
+        ? weatherYieldMultiplier(TEA_WEATHER_GOOD, TEA_WEATHER_BAD)
+        : 1;
+    const teaPickCoins = Math.max(1, Math.round(TEA_PICK_COINS * teaWeatherMult));
 
     if (
         window.addCabinCoins
     ) {
 
         window.addCabinCoins(
-            TEA_PICK_COINS,
+            teaPickCoins,
             false
         );
     }
@@ -4369,8 +5953,9 @@ function pickTeaPlant(
             teaLeafCount +
             '</b> · 金币 +' +
             '<b>' +
-            TEA_PICK_COINS +
-            '</b>'
+            teaPickCoins +
+            '</b>' +
+            (teaWeatherMult > 1 ? '（天气加成）' : teaWeatherMult < 1 ? '（天气减产）' : '')
         );
     }
 
@@ -4466,6 +6051,11 @@ function updateTeaFarm(
     dt,
     time
 ) {
+
+    updateTeaRoastStation(
+        dt,
+        time
+    );
 
     /* ======================================================
        更新所有茶树
@@ -5678,6 +7268,10 @@ function updateTeaHireSystem(
     time
 ) {
 
+    updateTeaHutDoors(
+        dt
+    );
+
     settleTeaWorkerWage();
 
 
@@ -5934,51 +7528,106 @@ function addTeaFarmCollisions() {
 
 
     /* ======================================================
-       制茶小屋 / 洗手池碰撞
+       制茶小屋碰撞
        ====================================================== */
 
+    const hx =
+        TEA_FARM_CENTER.x +
+        TEA_HUT_OFFSET.x;
+
+    const hz =
+        TEA_FARM_CENTER.z +
+        TEA_HUT_OFFSET.z;
+
+    const t =
+        0.22;
+
+    const left =
+        hx +
+        TEA_HUT_COLLISION.left;
+
+    const right =
+        hx +
+        TEA_HUT_COLLISION.right;
+
+    const back =
+        hz +
+        TEA_HUT_COLLISION.back;
+
+    const front =
+        hz +
+        TEA_HUT_COLLISION.front;
+
+    const doorLeft =
+        hx +
+        TEA_HUT_COLLISION.doorCenter -
+        TEA_HUT_COLLISION.doorHalf;
+
+    const doorRight =
+        hx +
+        TEA_HUT_COLLISION.doorCenter +
+        TEA_HUT_COLLISION.doorHalf;
+
     solidBoxes.push({
-
         x1:
-            TEA_FARM_CENTER.x +
-            TEA_HUT_OFFSET.x +
-            TEA_HUT_COLLISION.left,
-
+            left,
         z1:
-            TEA_FARM_CENTER.z +
-            TEA_HUT_OFFSET.z +
-            TEA_HUT_COLLISION.back,
-
+            back,
         x2:
-            TEA_FARM_CENTER.x +
-            TEA_HUT_OFFSET.x +
-            TEA_HUT_COLLISION.right,
-
+            right,
         z2:
-            TEA_FARM_CENTER.z +
-            TEA_HUT_OFFSET.z +
-            TEA_HUT_COLLISION.front
+            back +
+            t
     });
 
+    solidBoxes.push({
+        x1:
+            left,
+        z1:
+            back,
+        x2:
+            left +
+            t,
+        z2:
+            front
+    });
 
     solidBoxes.push({
-
         x1:
-            TEA_FARM_CENTER.x +
-            2.88,
-
+            right -
+            t,
         z1:
-            TEA_FARM_CENTER.z -
-            3.25,
-
+            back,
         x2:
-            TEA_FARM_CENTER.x +
-            3.72,
-
+            right,
         z2:
-            TEA_FARM_CENTER.z -
-            2.50
+            front
     });
+
+    solidBoxes.push({
+        x1:
+            left,
+        z1:
+            front -
+            t,
+        x2:
+            doorLeft,
+        z2:
+            front
+    });
+
+    solidBoxes.push({
+        x1:
+            doorRight,
+        z1:
+            front -
+            t,
+        x2:
+            right,
+        z2:
+            front
+    });
+
 }
 
 
@@ -6107,6 +7756,19 @@ window.captureTeaFarmState =
 
 
             /* ------------------------------------------------
+               制茶流程库存（生茶青/晒干/炒制/成品批次）
+               ------------------------------------------------ */
+
+            process:
+                {
+                    raw: teaProcessState.raw,
+                    dried: teaProcessState.dried,
+                    roasted: teaProcessState.roasted,
+                    finished: teaProcessState.finished
+                },
+
+
+            /* ------------------------------------------------
                每株茶树状态
                ------------------------------------------------ */
 
@@ -6194,6 +7856,14 @@ window.applyTeaFarmState =
                     )
                 )
             );
+
+        const proc = raw.process || {};
+        teaProcessState = {
+            raw: Math.max(0, Math.min(999999, Math.trunc(Number(proc.raw) || 0))),
+            dried: Math.max(0, Math.min(999999, Math.trunc(Number(proc.dried) || 0))),
+            roasted: Math.max(0, Math.min(999999, Math.trunc(Number(proc.roasted) || 0))),
+            finished: Math.max(0, Math.min(999999, Math.trunc(Number(proc.finished) || 0)))
+        };
 
 
         if (

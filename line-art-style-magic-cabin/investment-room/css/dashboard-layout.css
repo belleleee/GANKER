@@ -4,14 +4,14 @@
 
 .dashHeader{
   position:relative;flex:0 0 auto;display:flex;align-items:center;gap:16px;
-  padding-bottom:12px;margin-bottom:14px;border-bottom:1px solid rgba(96,244,255,.22);
+  padding-bottom:8px;margin-bottom:8px;border-bottom:1px solid rgba(96,244,255,.22);
 }
 .dashBrand{margin-right:auto}
 .dashBrand p{
-  margin:0 0 3px;color:#5be6ff;font:700 11px/1 monospace;letter-spacing:.32em;
+  margin:0 0 2px;color:#5be6ff;font:700 10px/1 monospace;letter-spacing:.28em;
   text-shadow:0 0 8px rgba(91,230,255,.6);
 }
-.dashBrand h2{margin:0;color:#eafcff;font-size:20px;text-shadow:0 0 10px rgba(96,244,255,.35)}
+.dashBrand h2{margin:0;color:#eafcff;font-size:17px;text-shadow:0 0 10px rgba(96,244,255,.35)}
 .dashClock{color:#8ff3ff;font:700 13px monospace;text-shadow:0 0 8px rgba(96,244,255,.4)}
 .dashRep{font:700 13px monospace;color:#8ff3ff;text-shadow:0 0 8px rgba(96,244,255,.4)}
 .dashRep.up{color:#39ff9c;text-shadow:0 0 8px rgba(57,255,156,.45)}
@@ -19,45 +19,45 @@
 
 .dashBody{
   flex:1;min-height:0;display:grid;
-  grid-template-columns:230px 1fr 260px;
+  grid-template-columns:200px 1fr 230px;
   grid-template-rows:1.6fr 1fr;
   grid-template-areas:
     "sidebar main trade"
     "sidebar holdings news";
-  gap:14px;
+  gap:10px;
 }
 .dashSidebar{
-  grid-area:sidebar;overflow:auto;display:flex;flex-direction:column;gap:6px;
+  grid-area:sidebar;overflow:auto;display:flex;flex-direction:column;gap:5px;
   padding-right:2px;
 }
 .dashMain,.dashTrade,.dashHoldings,.dashNews{
   border:1px solid rgba(96,244,255,.16);border-radius:8px;
   background:rgba(6,16,20,.5);min-height:0;
 }
-.dashMain{grid-area:main;display:flex;flex-direction:column;padding:14px}
-.dashTrade{grid-area:trade;overflow:auto;padding:16px}
-.dashHoldings{grid-area:holdings;overflow:auto;padding:12px 16px}
-.dashNews{grid-area:news;overflow:auto;padding:12px 16px}
+.dashMain{grid-area:main;display:flex;flex-direction:column;padding:10px}
+.dashTrade{grid-area:trade;overflow:auto;padding:12px}
+.dashHoldings{grid-area:holdings;overflow:auto;padding:8px 12px}
+.dashNews{grid-area:news;overflow:auto;padding:8px 12px}
 
 .dashIndexCard{
-  display:flex;flex-direction:column;gap:4px;
-  border:1px solid rgba(96,244,255,.28);border-radius:8px;padding:12px 14px;
+  display:flex;flex-direction:column;gap:3px;
+  border:1px solid rgba(96,244,255,.28);border-radius:8px;padding:9px 12px;
   background:linear-gradient(180deg,rgba(96,244,255,.12),rgba(96,244,255,.02));
-  margin-bottom:8px;
+  margin-bottom:6px;
 }
-.dashIndexCard small{color:#5be6ff;font-size:10px;letter-spacing:.18em;text-shadow:0 0 6px rgba(91,230,255,.5)}
-.dashIndexCard strong{font-size:24px;color:#eafcff;text-shadow:0 0 10px rgba(96,244,255,.4)}
+.dashIndexCard small{color:#5be6ff;font-size:9px;letter-spacing:.16em;text-shadow:0 0 6px rgba(91,230,255,.5)}
+.dashIndexCard strong{font-size:20px;color:#eafcff;text-shadow:0 0 10px rgba(96,244,255,.4)}
 .dashStockRow{
   display:flex;justify-content:space-between;align-items:center;gap:8px;
-  border:1px solid rgba(96,244,255,.15);border-radius:6px;padding:13px 12px;
+  border:1px solid rgba(96,244,255,.15);border-radius:6px;padding:8px 10px;
   background:rgba(96,244,255,.04);color:#bfeeff;font-family:inherit;cursor:pointer;
   text-align:left;transition:.15s;
 }
 .dashStockRow:hover{background:rgba(96,244,255,.1)}
 .dashStockRow.on{border-color:#5be6ff;background:rgba(96,244,255,.14);box-shadow:0 0 12px rgba(96,244,255,.25)}
-.dashStockName{display:flex;flex-direction:column;gap:3px;font-size:14px;font-weight:700}
-.dashStockName small{font-weight:700;color:#c9f7ff;font-size:10px;letter-spacing:.05em;text-shadow:0 0 6px rgba(96,244,255,.35)}
-.dashStockPrice{display:flex;flex-direction:column;align-items:flex-end;gap:3px;font-weight:700;font-size:15px}
-.dashStockPrice small{font-size:11px}
+.dashStockName{display:flex;flex-direction:column;gap:2px;font-size:13px;font-weight:700}
+.dashStockName small{font-weight:700;color:#c9f7ff;font-size:9px;letter-spacing:.04em;text-shadow:0 0 6px rgba(96,244,255,.35)}
+.dashStockPrice{display:flex;flex-direction:column;align-items:flex-end;gap:2px;font-weight:700;font-size:14px}
+.dashStockPrice small{font-size:10px}
 
 .dashMainHead{display:flex;align-items:baseline;gap:14px;margin-bottom:10px;flex:0 0 auto}

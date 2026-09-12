@@ -17,10 +17,9 @@
             const WIND_DIR = { x: 0.86, z: 0.51 };
             const wxChipsBox = document.getElementById('wxChips'), wxRandToggle = document.getElementById('wxRandToggle'), timeSlider = document.getElementById('timeSlider'), speedSlider = document.getElementById('speedSlider'), clockEl = document.getElementById('clock');
             const chipEls = [];
-            for (const t of WX_LIST) { const b = document.createElement('div'); b.className = 'wxChip'; b.textContent = WX_NAME[t]; b.addEventListener('click', () => { SND.play('ui'); setWeather(t); }); wxChipsBox.appendChild(b); chipEls.push(b); }
-            function setWeather(t) { wx.type = t; chipEls.forEach((el, i) => el.classList.toggle('on', WX_LIST[i] === t)); }
+            for (const t of WX_LIST) { const b = document.createElement('div'); b.className = 'wxChip'; b.textContent = WX_NAME[t]; b.addEventListener('click', () => { if (typeof attemptWeatherChange === 'function') attemptWeatherChange(t); else setWeather(t); }); wxChipsBox.appendChild(b); chipEls.push(b); }
+            function setWeather(t) { wx.type = t; chipEls.forEach((el, i) => el.classList.toggle('on', WX_LIST[i] === t)); if (typeof onWeatherChanged === 'function') onWeatherChanged(t); }
             setWeather('sunny');
-            wxRandToggle.addEventListener('click', () => { SND.play('ui'); wx.random = !wx.random; wxRandToggle.classList.toggle('on', wx.random); wx.timer = 6 + Math.random() * 10; });
             function sliderToScale(v) { if (v <= 0) return 0; if (v <= 0.5) return v * 120; return 60 + (v - 0.5) * 2 * (3600 - 60); }
             speedSlider.addEventListener('input', () => { timeScale = sliderToScale(parseFloat(speedSlider.value)); });
             let draggingTime = false; timeSlider.addEventListener('pointerdown', () => draggingTime = true); addEventListener('pointerup', () => draggingTime = false);
@@ -317,7 +316,6 @@
             function updateWeatherSystem(dt, time) {
                 const cfg = WX_CFG[wx.type]; const k = 1 - Math.exp(-dt * 0.55);
                 wx.clouds += (cfg.clouds - wx.clouds) * k; wx.rain += (cfg.rain - wx.rain) * k; wx.snow += (cfg.snow - wx.snow) * k; wx.fog += (cfg.fog - wx.fog) * k; wx.gray += (cfg.gray - wx.gray) * k; wx.wind += (cfg.wind - wx.wind) * k;
-                if (wx.random) { wx.timer -= dt; if (wx.timer <= 0) { const others = WX_LIST.filter(t => t !== wx.type); setWeather(others[Math.floor(Math.random() * others.length)]); wx.timer = 16 + Math.random() * 18; } }
                 gameSec += timeScale * dt; const hour = curHour();
 
                 skyColorAt(hour, _sky);

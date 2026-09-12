@@ -31,7 +31,17 @@ function clearGroup(g) {
    stage 3：成熟
    ========================================================== */
 
-function buildTurnipStage(holder, stage) {
+const CROP_ROOT_CACHE = {};
+function cropRootMaterial(cropType) {
+    const type = cropType || 'turnip';
+    if (CROP_ROOT_CACHE[type]) return CROP_ROOT_CACHE[type];
+    const hex = (typeof CROP_TYPES !== 'undefined' && CROP_TYPES[type]) ? CROP_TYPES[type].rootColor : 0xd88963;
+    const mat = LITMAT(hex);
+    CROP_ROOT_CACHE[type] = mat;
+    return mat;
+}
+
+function buildTurnipStage(holder, stage, cropType) {
 
     clearGroup(holder);
 
@@ -185,7 +195,7 @@ function buildTurnipStage(holder, stage) {
                 10,
                 8
             ),
-            CROP_ROOT
+            cropRootMaterial(cropType)
         );
 
         root.scale.set(
@@ -253,11 +263,12 @@ function setTurnipStage(crop, stage) {
     crop.userData.crop.stage = nextStage;
     buildTurnipStage(
         crop,
-        nextStage
+        nextStage,
+        crop.userData.crop.cropType
     );
 }
 
-function createTurnip(x, y, z, parent) {
+function createTurnip(x, y, z, parent, cropType) {
 
     const crop = new THREE.Group();
 
@@ -272,13 +283,15 @@ function createTurnip(x, y, z, parent) {
 
     crop.userData.crop = {
         stage: 0,
-        plantedAt: gameSec
+        plantedAt: gameSec,
+        cropType: cropType || 'turnip'
     };
 
 
     buildTurnipStage(
         crop,
-        0
+        0,
+        crop.userData.crop.cropType
     );
 
     crops.push(crop);

@@ -32,6 +32,21 @@
                 if (typeof updateAchievements === 'function') {
                     updateAchievements(dt);
                 }
+                if (typeof updateOnboardingGuide === 'function') {
+                    updateOnboardingGuide(dt);
+                }
+                if (typeof updateToolProgression === 'function') {
+                    updateToolProgression();
+                }
+                if (typeof updateWealthEvents === 'function') {
+                    updateWealthEvents(dt);
+                }
+                if (typeof updateLandTenure === 'function') {
+                    updateLandTenure();
+                }
+                if (typeof updateWeatherFarming === 'function') {
+                    updateWeatherFarming();
+                }
                 
                 FILL.uniforms.uTime.value = time;
                 FILL.uniforms.uFireStrength.value = fireP;

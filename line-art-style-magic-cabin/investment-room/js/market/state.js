@@ -110,6 +110,18 @@ function intValue(value, fallback, min, max) {
   return Math.max(min, Math.min(max, n));
 }
 
+function finiteNumber(value, fallback, min, max) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  const low = min === undefined ? -Infinity : min;
+  const high = max === undefined ? Infinity : max;
+  return Math.max(low, Math.min(high, n));
+}
+
+function stockDefinition(id) {
+  return STOCKS.find(item => item.id === id) || STOCKS[0];
+}
+
 function stockTemplate(item) {
   return {
     id: item.id,
@@ -122,21 +134,31 @@ function stockTemplate(item) {
   };
 }
 
+function sanitizeStock(stock, id) {
+  const item = stockDefinition(id);
+  const base = stockTemplate(item);
+  const source = stock && typeof stock === 'object' ? stock : {};
+  const price = finiteNumber(source.price, base.price, 1, 999999);
+  const prev = finiteNumber(source.prev, price, 1, 999999);
+  const history = Array.isArray(source.history)
+    ? source.history.map(value => finiteNumber(value, NaN, 1, 999999)).filter(Number.isFinite).slice(-24)
+    : [];
+  return {
+    id: item.id,
+    name: item.name,
+    sector: item.sector,
+    price,
+    prev,
+    history: history.length >= 2 ? history : Array(12).fill(price),
+    pressure: finiteNumber(source.pressure, 0, -.2, .2)
+  };
+}
+
 function normalizeMarket(raw) {
   const stocks = {};
   for (const item of STOCKS) {
     const saved = raw && raw.stocks && raw.stocks[item.id];
-    const base = stockTemplate(item);
-    const priceValue = Number(saved && saved.price);
-    const prevValue = Number(saved && saved.prev);
-    base.price = Number.isFinite(priceValue) ? Math.max(1, priceValue) : base.price;
-    base.prev = Number.isFinite(prevValue) ? Math.max(1, prevValue) : base.prev;
-    if (saved && Array.isArray(saved.history)) {
-      base.history = saved.history.map(Number).filter(Number.isFinite).slice(-24);
-      if (base.history.length < 2) base.history = Array(12).fill(base.price);
-    }
-    base.pressure = Number(saved && saved.pressure) || 0;
-    stocks[item.id] = base;
+    stocks[item.id] = sanitizeStock(saved, item.id);
   }
   const news = raw && Array.isArray(raw.news) ? raw.news.slice(-8) : [];
   return {
@@ -147,25 +169,22 @@ function normalizeMarket(raw) {
   };
 }
 
+function sanitizePortfolioMap(raw, valueKey) {
+  const result = {};
+  if (!raw || typeof raw !== 'object') return result;
+  Object.keys(raw).forEach(id => {
+    if (!STOCKS.some(item => item.id === id)) return;
+    const item = raw[id] || {};
+    const qty = intValue(item.qty, 0, 0, 999999);
+    const value = intValue(item[valueKey], 0, 0, 999999999);
+    if (qty && value) result[id] = valueKey === 'cost' ? { qty, cost: value } : { qty, entryValue: value };
+  });
+  return result;
+}
+
 function normalizeInvestment(raw) {
-  const holdings = {};
-  if (raw && raw.holdings) {
-    Object.keys(raw.holdings).forEach(id => {
-      const h = raw.holdings[id] || {};
-      const qty = intValue(h.qty, 0, 0, 999999);
-      const cost = intValue(h.cost, 0, 0, 999999);
-      if (qty) holdings[id] = { qty, cost };
-    });
-  }
-  const shorts = {};
-  if (raw && raw.shorts) {
-    Object.keys(raw.shorts).forEach(id => {
-      const s = raw.shorts[id] || {};
-      const qty = intValue(s.qty, 0, 0, 999999);
-      const entryValue = intValue(s.entryValue, 0, 0, 999999999);
-      if (qty) shorts[id] = { qty, entryValue };
-    });
-  }
+  const holdings = sanitizePortfolioMap(raw && raw.holdings, 'cost');
+  const shorts = sanitizePortfolioMap(raw && raw.shorts, 'entryValue');
   return {
     jobLevel: intValue(raw && raw.jobLevel, 1, 1, 20),
     lastSalaryDay: intValue(raw && raw.lastSalaryDay, -1, -1, 999999),
@@ -188,13 +207,52 @@ function loadState() {
   state.coins = intValue(economy.coins, 100, 0, 999999);
   state.investment = normalizeInvestment(economy.investment);
   marketState = state.investment.market;
+  applyExternalMarketNews();
+  saveState();
+}
+
+/* 小屋那边的广告/融资/慈善弹窗，会把结果当"市场消息"写进同一份存档
+   （save.wealthEvents.marketNews）。这里读进来，当一次全市场冲击应用到
+   股价上，用完就把队列清空写回存档，避免同一条消息被反复吃两遍。 */
+function applyExternalMarketNews() {
+  const pending = state.save && state.save.wealthEvents && Array.isArray(state.save.wealthEvents.marketNews)
+    ? state.save.wealthEvents.marketNews
+    : [];
+  if (!pending.length) return;
+  pending.forEach(entry => {
+    const bad = !!entry.bad;
+    const magnitude = Math.max(0.01, Math.min(0.2, Number(entry.magnitude) || 0.05));
+    for (const item of STOCKS) {
+      const stock = getStock(item.id);
+      const variance = .5 + Math.random() * .5;
+      const change = (bad ? -1 : 1) * magnitude * variance;
+      const prevPrice = stock.price;
+      stock.prev = prevPrice;
+      stock.price = Math.max(1, Math.round(clampPrice(prevPrice * (1 + change), prevPrice, .25) * 10) / 10);
+      stock.history.push(stock.price);
+      stock.history = stock.history.slice(-24);
+    }
+    marketState.news.push({
+      title: entry.title || (bad ? '外部消息面偏空' : '外部消息面偏多'),
+      targetStock: 'EVENT',
+      isEvent: true,
+      bad,
+      delay: 0,
+      day: marketState.day
+    });
+  });
+  marketState.news = marketState.news.slice(-8);
+  if (state.save.wealthEvents) state.save.wealthEvents.marketNews = [];
+  saveState();
 }
 
 function saveState() {
   const save = state.save || { schema: SAVE_SCHEMA, content: CONTENT_ID, savedAt: new Date().toISOString(), economy: {} };
   save.savedAt = new Date().toISOString();
   save.economy = save.economy || {};
+  state.coins = intValue(state.coins, 100, 0, 999999);
   save.economy.coins = state.coins;
+  marketState = normalizeMarket(marketState);
   state.investment.market = marketState;
   save.economy.investment = normalizeInvestment(state.investment);
   state.save = save;
@@ -207,25 +265,45 @@ function formatPct(value) {
 }
 
 function getStock(id) {
-  return marketState.stocks[id] || marketState.stocks.TEA;
+  const key = STOCKS.some(item => item.id === id) ? id : 'TEA';
+  marketState.stocks[key] = sanitizeStock(marketState.stocks[key], key);
+  return marketState.stocks[key];
 }
 
 function getHolding(id) {
-  return state.investment.holdings[id] || { qty: 0, cost: 0 };
+  const raw = state.investment.holdings[id] || { qty: 0, cost: 0 };
+  const holding = {
+    qty: intValue(raw.qty, 0, 0, 999999),
+    cost: intValue(raw.cost, 0, 0, 999999999)
+  };
+  if (!holding.qty || !holding.cost) delete state.investment.holdings[id];
+  else state.investment.holdings[id] = holding;
+  return holding;
 }
 
 function setHolding(id, holding) {
-  if (!holding.qty) delete state.investment.holdings[id];
-  else state.investment.holdings[id] = { qty: holding.qty, cost: holding.cost };
+  const qty = intValue(holding && holding.qty, 0, 0, 999999);
+  const cost = intValue(holding && holding.cost, 0, 0, 999999999);
+  if (!qty || !cost) delete state.investment.holdings[id];
+  else state.investment.holdings[id] = { qty, cost };
 }
 
 function getShort(id) {
-  return state.investment.shorts[id] || { qty: 0, entryValue: 0 };
+  const raw = state.investment.shorts[id] || { qty: 0, entryValue: 0 };
+  const short = {
+    qty: intValue(raw.qty, 0, 0, 999999),
+    entryValue: intValue(raw.entryValue, 0, 0, 999999999)
+  };
+  if (!short.qty || !short.entryValue) delete state.investment.shorts[id];
+  else state.investment.shorts[id] = short;
+  return short;
 }
 
 function setShort(id, short) {
-  if (!short.qty) delete state.investment.shorts[id];
-  else state.investment.shorts[id] = { qty: short.qty, entryValue: short.entryValue };
+  const qty = intValue(short && short.qty, 0, 0, 999999);
+  const entryValue = intValue(short && short.entryValue, 0, 0, 999999999);
+  if (!qty || !entryValue) delete state.investment.shorts[id];
+  else state.investment.shorts[id] = { qty, entryValue };
 }
 
 function shortExposure() {
@@ -240,7 +318,38 @@ function reputation() {
 
 function shortLimit() {
   const repFactor = .7 + reputation() / 200;
+  state.coins = intValue(state.coins, 100, 0, 999999);
   return Math.round(state.coins * 1.5 * repFactor);
+}
+
+function investmentPnlSummary() {
+  let longValue = 0;
+  let longCost = 0;
+  let shortEntry = 0;
+  let shortMarket = 0;
+  for (const item of STOCKS) {
+    const stock = getStock(item.id);
+    const holding = getHolding(item.id);
+    const short = getShort(item.id);
+    longValue += holding.qty * stock.price;
+    longCost += holding.cost;
+    shortEntry += short.entryValue;
+    shortMarket += short.qty * stock.price;
+  }
+  const longPnl = Math.round(longValue - longCost);
+  const shortPnl = Math.round(shortEntry - shortMarket);
+  const realized = intValue(state.investment.realizedGain, 0, 0, 999999)
+    - intValue(state.investment.realizedLoss, 0, 0, 999999);
+  return {
+    longValue: Math.round(longValue),
+    longCost: Math.round(longCost),
+    longPnl,
+    shortEntry: Math.round(shortEntry),
+    shortMarket: Math.round(shortMarket),
+    shortPnl,
+    realized,
+    totalPnl: realized + longPnl + shortPnl
+  };
 }
 
 const RUMOR_IMPACT = .09;
@@ -261,6 +370,7 @@ function canSpreadRumor() {
 function spreadRumor(stockId, bad) {
   if (!canSpreadRumor()) return;
   const cost = rumorCost();
+  state.coins = intValue(state.coins, 100, 0, 999999);
   if (state.coins < cost) return;
   const stock = STOCKS.find(item => item.id === stockId);
   if (!stock) return;
@@ -353,6 +463,9 @@ function playerImpact(stockId) {
 }
 
 function clampPrice(price, prevPrice, maxChange) {
+  if (!Number.isFinite(price) || !Number.isFinite(prevPrice) || prevPrice < 1) {
+    return Math.max(1, finiteNumber(price, 1, 1, 999999));
+  }
   const cap = maxChange || .1;
   const upper = prevPrice * (1 + cap);
   const lower = prevPrice * (1 - cap);

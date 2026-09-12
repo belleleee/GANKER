@@ -11,6 +11,8 @@ dashBody.addEventListener('click', event => {
   if (button) {
     if (button.dataset.action === 'nextDay') {
       advanceMarketDay();
+      redrawScreens();
+      if (typeof showToast === 'function') showToast('市场推进到 Day ' + marketState.day);
       renderScreenPanel(activeScreen);
       return;
     }
@@ -28,6 +30,7 @@ dashBody.addEventListener('click', event => {
   if (row) {
     marketState.selectedStock = row.dataset.stock;
     saveState();
+    redrawScreens();
     renderScreenPanel(activeScreen);
   }
 });

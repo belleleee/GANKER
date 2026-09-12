@@ -39,3 +39,37 @@
   margin:0 0 8px;font-size:13px;color:#5be6ff;letter-spacing:.1em;
   text-shadow:0 0 8px rgba(91,230,255,.5);
 }
+.dashHoldingRow{
+  display:grid;
+  grid-template-columns:minmax(92px,1fr) 46px 58px 58px 66px;
+  align-items:center;
+  gap:8px;
+  min-height:28px;
+  padding:5px 2px;
+  border-bottom:1px dashed rgba(96,244,255,.16);
+  color:#d7f7ff;
+  font-size:13px;
+  line-height:1.25;
+}
+.dashHoldingRow span:first-child{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.dashHoldingRow span:not(:first-child){
+  text-align:right;
+  font-family:"Menlo","Consolas",monospace;
+  font-weight:700;
+}
+.dashHoldingRow--head{
+  min-height:22px;
+  padding-top:0;
+  color:#7eddeb;
+  font-size:10px;
+  letter-spacing:.08em;
+  opacity:.9;
+}
+.dashHoldingRow--head span:not(:first-child){
+  font-family:inherit;
+}

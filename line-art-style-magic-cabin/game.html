@@ -20,6 +20,9 @@
         </div>
 
         <div class="menuTabPanel" data-menu-panel="world">
+            <div class="sub">新 手</div>
+            <div class="viewBtn" id="onboardingMenuBtn">操作说明 · 怎么玩</div>
+            <div class="sep"></div>
             <div class="sub">房 屋</div>
             <div class="row"><span>完整房屋</span>
                 <div class="toggle" id="houseToggle">
@@ -29,7 +32,8 @@
             <div class="sep"></div>
             <div class="sub">天 气</div>
             <div id="wxChips"></div>
-            <div class="row"><span>随机切换天气</span>
+            <div id="weatherStatus" class="weatherStatus"></div>
+            <div class="row" id="wxRandToggleRow" hidden><span>随机切换天气</span>
                 <div class="toggle" id="wxRandToggle">
                     <div class="knob"></div>
                 </div>
@@ -55,16 +59,16 @@
                 <div class="slot on" id="slot1" title="空手 · 默认状态"><span class="ico"></span><span class="kb">1
                         空手</span>
                 </div>
-                <div class="slot" id="slot2" title="魔杖 · 可释放魔法"><span class="ico">🪄</span><span class="kb">2
+                <div class="slot hiddenSlot" id="slot2" title="魔杖 · 可释放魔法"><span class="ico">🪄</span><span class="kb">2
                         魔杖</span>
                 </div>
-                <div class="slot" id="slot3" title="锄头 · 翻地"><span class="ico">⛏️</span><span class="kb">3
+                <div class="slot hiddenSlot" id="slot3" title="锄头 · 翻地"><span class="ico">⛏️</span><span class="kb">3
                         锄头</span>
                 </div>
-                <div class="slot" id="slot4" title="水壶 · 浇水"><span class="ico">💧</span><span class="kb">4
+                <div class="slot hiddenSlot" id="slot4" title="水壶 · 浇水"><span class="ico">💧</span><span class="kb">4
                         水壶</span>
                 </div>
-                <div class="slot" id="slot5" title="镰刀 · 收割"><span class="ico">🌾</span><span class="kb">5
+                <div class="slot hiddenSlot" id="slot5" title="镰刀 · 收割"><span class="ico">🌾</span><span class="kb">5
                         镰刀</span>
                 </div>
             </div>
@@ -115,6 +119,7 @@
     <div id="coinHud">金币 0</div>
     <div id="storageHud">仓库 萝卜 0</div>
     <div id="backpackHud">背包 种子 0</div>
+    <div id="landHud">地契 · 尚未租下</div>
     <div id="hint"></div>
     <div id="crosshair"></div>
     <div id="lockTip">点击画面锁定鼠标 · Esc 退出</div>
@@ -199,6 +204,14 @@
         </div>
     </div>
 
+    <div id="guideBanner" class="questBanner guideBanner" hidden>
+        <div class="questInfo">
+            <p class="questKicker">引导</p>
+            <p id="guideBannerText" class="questTextLine">欢迎来到魔女小屋</p>
+            <p class="questDistanceLine"><span id="guideBannerSkip" class="guideBannerSkip">跳过引导</span></p>
+        </div>
+    </div>
+
     <section id="achievementsPanel" class="achievementsPanel" hidden>
         <div class="achievementsCard" role="dialog" aria-modal="true" aria-labelledby="achievementsTitle">
             <button id="closeAchievementsBtn" class="achievementsClose" type="button" aria-label="关闭">×</button>
@@ -215,6 +228,45 @@
             <h2 id="mainStoryTitle">第一章</h2>
             <div id="mainStoryBody" class="mainStoryBody"></div>
             <button id="mainStoryNextBtn" type="button">继续</button>
+        </div>
+    </section>
+
+    <section id="onboardingPanel" class="onboardingPanel" hidden>
+        <div class="onboardingCard" role="dialog" aria-modal="true" aria-labelledby="onboardingTitle">
+            <button id="closeOnboardingBtn" class="onboardingClose" type="button" aria-label="关闭">×</button>
+            <p class="onboardingKicker" id="onboardingKicker">Welcome · 1 / 4</p>
+            <h2 id="onboardingTitle">这只史莱姆，是谁？</h2>
+            <div id="onboardingBody" class="onboardingBody"></div>
+            <div class="onboardingNav">
+                <button id="onboardingPrevBtn" type="button" hidden>上一步</button>
+                <button id="onboardingNextBtn" type="button">下一步</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="cropPanel" class="cropPanel" hidden>
+        <div class="cropCard" role="dialog" aria-modal="true" aria-labelledby="cropPanelTitle">
+            <p class="cropKicker">播种</p>
+            <h2 id="cropPanelTitle">今天种点什么？</h2>
+            <div id="cropPanelBody" class="cropPanelBody"></div>
+        </div>
+    </section>
+
+    <section id="landPanel" class="landPanel" hidden>
+        <div class="landCard" role="dialog" aria-modal="true" aria-labelledby="landTitle">
+            <p class="landKicker" id="landKicker">这块地</p>
+            <h2 id="landTitle">要不要租下这块荒地？</h2>
+            <div id="landBody" class="landBody"></div>
+            <div id="landActions" class="landActions"></div>
+        </div>
+    </section>
+
+    <section id="wealthEventPanel" class="wealthEventPanel" hidden>
+        <div class="wealthEventCard" role="dialog" aria-modal="true" aria-labelledby="wealthEventTitle">
+            <p class="wealthEventKicker" id="wealthEventKicker">突发状况</p>
+            <h2 id="wealthEventTitle">标题</h2>
+            <div id="wealthEventBody" class="wealthEventBody"></div>
+            <div id="wealthEventActions" class="wealthEventActions"></div>
         </div>
     </section>
 
@@ -237,6 +289,7 @@
     <script src="js/07-magic-system.js"></script>
     <script src="js/08-player-controller.js"></script>
     <script src="js/09-weather-sky.js"></script>
+    <script src="js/crop-types.js"></script>
 
     <script src="js/11-farmland.js"></script>
     <script src="js/12.farming.js"></script>
@@ -251,6 +304,11 @@
     <script src="js/21-investment-house.js"></script>
     <script src="js/22-main-story.js"></script>
     <script src="js/23-achievements.js"></script>
+    <script src="js/24-wealth-events.js"></script>
+    <script src="js/25-onboarding.js"></script>
+    <script src="js/26-land-tenure.js"></script>
+    <script src="js/27-weather-farming.js"></script>
+    <script src="js/28-tool-progression.js"></script>
     <script src="js/15-app-shell.js"></script>
 </body>
 

@@ -37,8 +37,9 @@ let currentCabinUser = loadSessionUser();
 let autosaveTimer = 0;
 const STARTING_CABIN_COINS = 100;
 let cabinCoins = STARTING_CABIN_COINS;
-let cropStorage = { turnip: 0, starRelic: 0 };
-let cabinBackpack = { turnipSeed: 0 };
+let cropStorage = { turnip: 0, cabbage: 0, rice: 0, potato: 0, starRelic: 0 };
+let cabinBackpack = { turnipSeed: 0, cabbageSeed: 0, riceSeed: 0, potatoSeed: 0 };
+let cafeTotalRevenue = 0;
 
 const MEMBER_PROFILES = {
     zhou: {
@@ -176,10 +177,13 @@ function spendCabinCoins(amount, reason) {
 
 window.spendCabinCoins = spendCabinCoins;
 
+const CROP_STORAGE_KEYS = ['turnip', 'cabbage', 'rice', 'potato'];
+
 function renderStorage(bump) {
     if (!storageHud) return;
+    const total = CROP_STORAGE_KEYS.reduce((sum, key) => sum + (cropStorage[key] || 0), 0);
     storageHud.textContent =
-        '仓库 萝卜 ' + cropStorage.turnip + ' · 信物 ' + cropStorage.starRelic;
+        '仓库 作物 ' + total + ' · 信物 ' + cropStorage.starRelic;
     if (!bump) return;
     storageHud.classList.remove('bump');
     void storageHud.offsetWidth;
@@ -189,8 +193,8 @@ function renderStorage(bump) {
 
 function addCropToStorage(cropName, amount) {
     const gain = Math.max(0, Math.trunc(Number(amount) || 0));
-    if (!gain || cropName !== 'turnip') return;
-    cropStorage.turnip = Math.min(999999, cropStorage.turnip + gain);
+    if (!gain || CROP_STORAGE_KEYS.indexOf(cropName) < 0) return;
+    cropStorage[cropName] = Math.min(999999, (cropStorage[cropName] || 0) + gain);
     renderStorage(true);
 }
 
@@ -207,9 +211,13 @@ function addRelicToStorage(relicName, amount) {
 
 window.addRelicToStorage = addRelicToStorage;
 
+const BACKPACK_SEED_KEYS = ['turnipSeed', 'cabbageSeed', 'riceSeed', 'potatoSeed'];
+const SEED_LABELS = { turnipSeed: '萝卜种子', cabbageSeed: '白菜种子', riceSeed: '稻种', potatoSeed: '土豆种子' };
+
 function renderBackpack(bump) {
     if (!backpackHud) return;
-    backpackHud.textContent = '背包 种子 ' + cabinBackpack.turnipSeed;
+    const total = BACKPACK_SEED_KEYS.reduce((sum, key) => sum + (cabinBackpack[key] || 0), 0);
+    backpackHud.textContent = '背包 种子 ' + total;
     if (!bump) return;
     backpackHud.classList.remove('bump');
     void backpackHud.offsetWidth;
@@ -219,41 +227,43 @@ function renderBackpack(bump) {
 
 function addBackpackItem(itemName, amount) {
     const gain = Math.max(0, Math.trunc(Number(amount) || 0));
-    if (!gain || itemName !== 'turnipSeed') return;
-    cabinBackpack.turnipSeed = Math.min(999999, cabinBackpack.turnipSeed + gain);
+    if (!gain || BACKPACK_SEED_KEYS.indexOf(itemName) < 0) return;
+    cabinBackpack[itemName] = Math.min(999999, (cabinBackpack[itemName] || 0) + gain);
     renderBackpack(true);
 }
 
 function useBackpackItem(itemName, amount, silent) {
     const cost = Math.max(0, Math.trunc(Number(amount) || 0));
-    if (!cost || itemName !== 'turnipSeed') return true;
-    if (cabinBackpack.turnipSeed < cost) {
-        if (!silent) showHintOverride('背包里没有萝卜种子了，去商店开箱后按 <b>B</b> 购买');
+    if (!cost || BACKPACK_SEED_KEYS.indexOf(itemName) < 0) return true;
+    if ((cabinBackpack[itemName] || 0) < cost) {
+        if (!silent) showHintOverride('背包里没有' + (SEED_LABELS[itemName] || '种子') + '了，去商店开箱后按 <b>B</b> 购买');
         return false;
     }
-    cabinBackpack.turnipSeed -= cost;
+    cabinBackpack[itemName] -= cost;
     renderBackpack(true);
     return true;
 }
 
 function getBackpackItemCount(itemName) {
-    if (itemName !== 'turnipSeed') return 0;
-    return cabinBackpack.turnipSeed;
+    if (BACKPACK_SEED_KEYS.indexOf(itemName) < 0) return 0;
+    return cabinBackpack[itemName] || 0;
 }
 
-function buyTurnipSeed(amount, price) {
+function buySeed(cropId, amount) {
+    const crop = typeof CROP_TYPES !== 'undefined' ? CROP_TYPES[cropId] : null;
+    if (!crop) return false;
     const count = Math.max(1, Math.trunc(Number(amount) || 1));
-    const cost = Math.max(1, Math.trunc(Number(price) || 15)) * count;
+    const cost = crop.seedPrice * count;
     if (!spendCabinCoins(cost, null)) return false;
-    addBackpackItem('turnipSeed', count);
-    showHintOverride('购入萝卜种子 +' + count + ' · 花费 ' + cost + ' 金币 · 背包 ' + cabinBackpack.turnipSeed);
+    addBackpackItem(crop.seedItem, count);
+    showHintOverride('购入' + crop.name + '种子 +' + count + ' · 花费 ' + cost + ' 金币 · 背包 ' + cabinBackpack[crop.seedItem]);
     return true;
 }
 
 window.addBackpackItem = addBackpackItem;
 window.useBackpackItem = useBackpackItem;
 window.getBackpackItemCount = getBackpackItemCount;
-window.buyTurnipSeed = buyTurnipSeed;
+window.buySeed = buySeed;
 
 function loadUsers() {
     const users = readJson(APP_USERS_KEY, []);
@@ -411,10 +421,13 @@ function claimCafeRevenue() {
     try {
         localStorage.removeItem(APP_CAFE_REVENUE_KEY);
     } catch (err) { }
+    cafeTotalRevenue = Math.min(999999, cafeTotalRevenue + amount);
     addCabinCoins(amount, '咖啡馆营业收入');
     saveGameState(false);
     return amount;
 }
+
+window.getCafeTotalRevenue = function () { return cafeTotalRevenue; };
 
 function claimJournalRelic() {
     const reward = readJson(APP_JOURNAL_RELIC_KEY, null);
@@ -537,11 +550,20 @@ function readSavedCoinGameState() {
     return coinGame && typeof coinGame === 'object' ? coinGame : null;
 }
 
+function readSavedInvestmentState() {
+    const save = validateSave(readJson(cabinSaveKey(), null));
+    if (!save || typeof save !== 'object') return null;
+    const economy = save.economy || {};
+    const investment = economy.investment || save.investment || null;
+    return investment && typeof investment === 'object' ? investment : null;
+}
+
 function captureSaveState() {
     const savedCoinGame = readSavedCoinGameState();
     const syncedCoinGame = savedCoinGame
         ? Object.assign({}, savedCoinGame, { wallet: cabinCoins })
         : null;
+    const savedInvestment = readSavedInvestmentState();
 
     return {
         schema: APP_SAVE_SCHEMA,
@@ -588,12 +610,19 @@ function captureSaveState() {
             coins: cabinCoins,
             storage: {
                 turnip: cropStorage.turnip,
+                cabbage: cropStorage.cabbage || 0,
+                rice: cropStorage.rice || 0,
+                potato: cropStorage.potato || 0,
                 starRelic: cropStorage.starRelic || 0
             },
             backpack: {
-                turnipSeed: cabinBackpack.turnipSeed
+                turnipSeed: cabinBackpack.turnipSeed,
+                cabbageSeed: cabinBackpack.cabbageSeed || 0,
+                riceSeed: cabinBackpack.riceSeed || 0,
+                potatoSeed: cabinBackpack.potatoSeed || 0
             },
-            coinGame: syncedCoinGame
+            coinGame: syncedCoinGame,
+            investment: savedInvestment
         },
         ui: {
             sfxEnabled: SND.isEnabled(),
@@ -608,6 +637,7 @@ function captureSaveState() {
                 tilled: p.tilled,
                 watered: p.watered,
                 cropStage: p.crop && p.crop.userData.crop ? p.crop.userData.crop.stage : null,
+                cropType: p.crop && p.crop.userData.crop ? (p.crop.userData.crop.cropType || 'turnip') : null,
                 harvested: p.harvested || 0
             })) : [],
             hire: typeof captureFarmHireState === 'function' ? captureFarmHireState() : null
@@ -616,7 +646,12 @@ function captureSaveState() {
         newspaper: typeof captureNewspaperState === 'function' ? captureNewspaperState() : null,
         zongStory: typeof captureZongStoryState === 'function' ? captureZongStoryState() : null,
         mainStory: typeof captureMainStoryState === 'function' ? captureMainStoryState() : null,
-        achievements: typeof captureAchievementState === 'function' ? captureAchievementState() : null
+        achievements: typeof captureAchievementState === 'function' ? captureAchievementState() : null,
+        wealthEvents: typeof captureWealthEventsState === 'function' ? captureWealthEventsState() : null,
+        land: typeof captureLandState === 'function' ? captureLandState() : null,
+        weatherFarm: typeof captureWeatherFarmState === 'function' ? captureWeatherFarmState() : null,
+        cafeTotalRevenue: cafeTotalRevenue,
+        toolUnlock: typeof captureToolUnlockState === 'function' ? captureToolUnlockState() : null
     };
 }
 
@@ -658,7 +693,8 @@ function applyFarmPlotSave(plot, saved) {
     plot.watered = bool(saved.watered);
     plot.harvested = Math.max(0, Math.trunc(Number(saved.harvested) || 0));
     if (saved.cropStage !== null && saved.cropStage !== undefined) {
-        plot.crop = createTurnip(plot.x, 0.02, plot.z);
+        const cropType = (typeof CROP_TYPES !== 'undefined' && CROP_TYPES[saved.cropType]) ? saved.cropType : 'turnip';
+        plot.crop = createTurnip(plot.x, 0.02, plot.z, null, cropType);
         setTurnipStage(plot.crop, Math.max(0, Math.min(3, Math.trunc(Number(saved.cropStage) || 0))));
         plot.tilled = true;
     }
@@ -726,6 +762,9 @@ function applySaveState(save) {
     const storage = economy.storage || save.storage || {};
     cropStorage = {
         turnip: Math.max(0, Math.min(999999, Math.trunc(Number(storage.turnip) || 0))),
+        cabbage: Math.max(0, Math.min(999999, Math.trunc(Number(storage.cabbage) || 0))),
+        rice: Math.max(0, Math.min(999999, Math.trunc(Number(storage.rice) || 0))),
+        potato: Math.max(0, Math.min(999999, Math.trunc(Number(storage.potato) || 0))),
         starRelic: Math.max(
             0,
             Math.min(1, Math.trunc(Number(storage.starRelic) || 0))
@@ -733,7 +772,10 @@ function applySaveState(save) {
     };
     const backpack = economy.backpack || save.backpack || {};
     cabinBackpack = {
-        turnipSeed: Math.max(0, Math.min(999999, Math.trunc(Number(backpack.turnipSeed) || 0)))
+        turnipSeed: Math.max(0, Math.min(999999, Math.trunc(Number(backpack.turnipSeed) || 0))),
+        cabbageSeed: Math.max(0, Math.min(999999, Math.trunc(Number(backpack.cabbageSeed) || 0))),
+        riceSeed: Math.max(0, Math.min(999999, Math.trunc(Number(backpack.riceSeed) || 0))),
+        potatoSeed: Math.max(0, Math.min(999999, Math.trunc(Number(backpack.potatoSeed) || 0)))
     };
     renderCoins(false);
     renderStorage(false);
@@ -756,6 +798,9 @@ function applySaveState(save) {
         const pictureUrl = boundedText(ui.pictureUrl || '', 500);
         picState.url = pictureUrl;
         if (pictureUrl) setPicture(pictureUrl);
+    }
+    if (typeof applyToolUnlockState === 'function') {
+        applyToolUnlockState(save.toolUnlock);
     }
     selectSlot(Number.isInteger(ui.slotSel) ? ui.slotSel : 1);
 
@@ -791,6 +836,16 @@ function applySaveState(save) {
     if (typeof applyAchievementState === 'function') {
         applyAchievementState(save.achievements);
     }
+    if (typeof applyWealthEventsState === 'function') {
+        applyWealthEventsState(save.wealthEvents);
+    }
+    if (typeof applyLandState === 'function') {
+        applyLandState(save.land);
+    }
+    if (typeof applyWeatherFarmState === 'function') {
+        applyWeatherFarmState(save.weatherFarm);
+    }
+    cafeTotalRevenue = Math.max(0, Math.trunc(Number(save.cafeTotalRevenue) || 0));
 }
 
 function loadGameState(manual) {
