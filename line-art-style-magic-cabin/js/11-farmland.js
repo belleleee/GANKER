@@ -755,7 +755,7 @@ function openFarmResumeStory() {
     if (typeof window.clearPlayerInputState === 'function') window.clearPlayerInputState();
     if (document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
     window.APP_SHELL_BLOCK_GAME = true;
-    frame.src = 'farm-resume/first.html';
+    frame.src = 'prologue/first.html';
     panel.hidden = false;
 }
 
