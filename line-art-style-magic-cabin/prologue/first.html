@@ -12,7 +12,7 @@
 
   <!-- ===== 背景层 ===== -->
   <div class="pro-bg" id="bgStack">
-    <img class="pro-bg-img" id="bg" src="./assets/bg/scenes1-1.png" alt="老宅" />
+    <img class="pro-bg-img" id="bg" src="./assets/bg/scenes1-1.webp" alt="老宅" />
     <div class="pro-vignette"></div>
     <div class="pro-bottom-fade"></div>
     <div class="pro-grain"></div>
@@ -58,16 +58,16 @@
   <div class="pro-toast" id="toast"></div>
 
   <!-- 背景音乐-->
-  <audio id="bgm" src="./assets/bgm/test2.flac" loop preload="none"></audio>
+  <audio id="bgm" src="./assets/bgm/test2.mp3" loop preload="none"></audio>
 
 <script>
 /* =====================================================================
  * 配置区
  * ===================================================================== */
-/* 调试开关：true 时所有场景统一使用 assets/debug-bg.png；
+/* 调试开关：true 时所有场景统一使用 assets/debug-bg.webp；
    替换真实背景图后，请改为 false，各场景将使用下方 SCENES 里的占位路径。 */
 const USE_DEBUG_BG = false;
-const DEBUG_BG = './assets/debug-bg.png';
+const DEBUG_BG = './assets/debug-bg.webp';
 /* =====================================================================
  * 行类型：{who,text} 对白/旁白；{choice:{...}} 分支选择；{if:'标志',who,text} 条件行
  * ===================================================================== */
@@ -75,7 +75,7 @@ const SCENES = [
   {
     chapter: '第一幕 · 旧式宅院',
     tag: '宿迁 · 一九四五年秋',
-    img: './assets/bg/scenes1-1.png',
+    img: './assets/bg/scenes1-1.webp',
     alt: '旧宅院',
     lines: [
       { who: 'narration', text: '1945年，秋天。' },
@@ -86,7 +86,7 @@ const SCENES = [
   {
     chapter: '第一幕 · 内室',
     tag: '内室 · 一九四五年秋',
-    img: './assets/bg/scenes1-2.png',
+    img: './assets/bg/scenes1-2.webp',
     alt: '内室 · 父母与婴儿',
     lines: [
       { who: 'mother', text: '……你看清楚了？真的……一封都没有了？' },
@@ -100,7 +100,7 @@ const SCENES = [
   {
     chapter: '第一幕 · 新生',
     tag: '内室 · 一九四五年秋',
-    img: './assets/bg/出生孩子.png',
+    img: './assets/bg/出生孩子.webp',
     alt: '新生婴儿',
     lines: [
       { who: 'narration', text: '你当然不记得这一天。但很多年后，母亲偶尔提起，说那天的风特别大，院子里的老槐树落了一地的叶子，像是整个时代都在掉叶子。' }
@@ -109,7 +109,7 @@ const SCENES = [
   {
     chapter: '第二幕 · 祖父的书房',
     tag: '书房 · 一九四五年秋',
-    img: './assets/bg/scenes1-3.png',
+    img: './assets/bg/scenes1-3.webp',
     alt: '祖父的书房',
     lines: [
       { who: 'narration', text: '祖父曾经是张作霖手下的一名财政官员。在北洋时代，那是个能让人敬畏的职位。' },
@@ -125,7 +125,7 @@ const SCENES = [
   {
     chapter: '第三幕 · 杭州阁楼',
     tag: '杭州 · 一九五〇年代',
-    img: './assets/bg/scenes1-4.png',
+    img: './assets/bg/scenes1-4.webp',
     alt: '杭州老街阁楼',
     lines: [
       { who: 'narration', text: '祖父去世后，父亲变卖了宿迁最后的家产，举家迁往杭州。寄居在远房亲戚腾出的一间阁楼里。' },
@@ -136,7 +136,7 @@ const SCENES = [
   {
     chapter: '第三幕 · 阁楼夜',
     tag: '杭州阁楼 · 油灯夜',
-    img: './assets/bg/scenes1-5.png',
+    img: './assets/bg/scenes1-5.webp',
     alt: '阁楼油灯夜',
     lines: [
       { who: 'mother', text: '今天房东又来催租了。我说月底一定凑齐——拿什么凑，我心里也没底。' },
@@ -147,7 +147,7 @@ const SCENES = [
   {
     chapter: '第三幕 · 撑',
     tag: '杭州阁楼 · 油灯夜',
-    img: './assets/bg/scenes2-1.png',
+    img: './assets/bg/scenes2-1.webp',
     alt: '母亲操持',
     lines: [
       { who: 'narration', text: '你没完全听懂他们在说什么。但你记住了母亲那时的表情——她没叹气，也没掉眼泪，只是把作业本翻了一页，继续批改。' },
@@ -157,7 +157,7 @@ const SCENES = [
   {
     chapter: '第三幕 · 旧时代的尾巴',
     tag: '杭州阁楼 · 一九五〇年代',
-    img: './assets/bg/scenes3-1.png',
+    img: './assets/bg/scenes3-1.webp',
     alt: '阁楼米缸',
     lines: [
       { who: 'narration', text: '旧时代的尾巴，扫到了这个家。祖辈做过官，到父亲这一代，只剩下一份体面却挣不到钱的差事——很快，连这份差事也没了。' },
@@ -168,7 +168,7 @@ const SCENES = [
   {
     chapter: '第四幕 · 街头巷口',
     tag: '巷口 · 一九五〇年代',
-    img: './assets/bg/scenes4-1.png',
+    img: './assets/bg/scenes4-1.webp',
     alt: '街头巷口',
     lines: [
       { who: 'narration', text: '你几乎是从学会走路开始，就知道了"力气"两个字的分量。' },
@@ -180,7 +180,7 @@ const SCENES = [
   {
     chapter: '第五幕 · 师范学校门口',
     tag: '师范学校门口 · 一九六〇年代',
-    img: './assets/bg/scenes5-1.png',
+    img: './assets/bg/scenes5-1.webp',
     alt: '师范学校门口',
     lines: [
       { who: 'narration', text: '初中毕业那年，你偷偷报考了一所不收学费的师范学校。你不敢跟家里说，怕万一考不上，白高兴一场。通知书寄到的那天，你一个人跑到巷子外面的邮筒前，看了三遍，才敢拆开。' }
@@ -189,7 +189,7 @@ const SCENES = [
   {
     chapter: '第五幕 · 录取的喜悦',
     tag: '师范学校门口 · 一九六〇年代',
-    img: './assets/bg/scenes5-2.png',
+    img: './assets/bg/scenes5-2.webp',
     alt: '录取报喜',
     lines: [
       { who: 'narration', text: '录取了。上面写得很清楚：免学费，每月还有津贴。你站在邮筒前面，眼泪差点掉下来——不是难过，是高兴。你想，终于有一条路，可以不靠家里就能走下去。' },
@@ -199,7 +199,7 @@ const SCENES = [
   {
     chapter: '第五幕 · 成分核查',
     tag: '居委会 · 一九六〇年代',
-    img: './assets/bg/scenes6-1.png',
+    img: './assets/bg/scenes6-1.webp',
     alt: '成分核查',
     lines: [
       { who: 'narration', text: '居委会来人核查家庭成分。你第一次见到那些表格——上面写着祖父的旧职、父亲的履历、家庭的社会关系。你看着办事员的笔在"出身"一栏里写下那几个字，像盖章一样，没有一丝犹豫。' },
@@ -211,7 +211,7 @@ const SCENES = [
   {
     chapter: '第五幕 · 阁楼',
     tag: '杭州阁楼 · 一九六〇年代',
-    img: './assets/bg/scenes6-2.png',
+    img: './assets/bg/scenes6-2.webp',
     alt: '烧掉通知书',
     lines: [
       { who: 'narration', text: '回到家，你把自己关在阁楼里，把那封通知书摊在桌上看了很久。母亲在门外站了一会儿，没有敲门，后来你听见她轻手轻脚地走开了。' },
@@ -221,7 +221,7 @@ const SCENES = [
   {
     chapter: '第六幕 · 巷口',
     tag: '巷口 · 一九六〇年代',
-    img: './assets/bg/scenes7-1.png',
+    img: './assets/bg/scenes7-1.webp',
     alt: '巷口 · 王婶通告',
     lines: [
       { who: 'narration', text: '又过了两年。你不再做小买卖了，长成了大人，开始找临时的零工——码头卸货、建筑工地运砖、印刷厂搬纸。每一份工都干不长，不是因为你吃不了苦，是因为"成分"两个字总是追着你不放。招工的人一看表格，就摆摆手："再等等吧。"' },
@@ -234,7 +234,7 @@ const SCENES = [
   {
     chapter: '第六幕 · 去',
     tag: '巷口 · 一九六〇年代',
-    img: './assets/bg/scenes7-2.png',
+    img: './assets/bg/scenes7-2.webp',
     alt: '母亲看通告',
     lines: [
       { who: 'narration', text: '母亲正坐在窗边批改作业，你把通告递给她。她低头看完，把通告折好，什么也没说。你看着她，只说了一个字：' },
@@ -244,7 +244,7 @@ const SCENES = [
   {
     chapter: '第七幕 · 马目农场',
     tag: '舟山 · 马目农场 · 大门',
-    img: './assets/bg/scenes7-3.png',
+    img: './assets/bg/scenes7-3.webp',
     alt: '马目农场大门',
     lines: [
       { who: 'guide', text: '到了啊。这就是马目农场——从前关犯人的地方。你们这批人，往后就住这儿了。' },
@@ -261,7 +261,7 @@ const SCENES = [
   {
     chapter: '第七幕 · 宿舍之夜',
     tag: '舟山 · 马目农场 · 宿舍',
-    img: './assets/bg/scenes7-5.png',
+    img: './assets/bg/scenes7-5.webp',
     alt: '农场宿舍',
     lines: [
       { who: 'guide', text: '跟我进来吧。先带你们去宿舍——棚子，不是房子。砖不够用，顶上铺的是油毡。漏雨是常事，自己拿桶接着就行。' },
@@ -279,9 +279,9 @@ const SCENES = [
         choice: {
           prompt: '（你怎么回答？）',
           options: [
-          { key: 'A', label: '义无反顾', text: '别的路都堵死了，这条路，我认了。', effects: { resilience: 10, ahai_bond: 5 } , sound: './assets/bgm/test5(short).wav' },
+          { key: 'A', label: '义无反顾', text: '别的路都堵死了，这条路，我认了。', effects: { resilience: 10, ahai_bond: 5 } , sound: './assets/bgm/test5(short).mp3' },
           { key: 'B', label: '犹豫但是报名', text: '至少……这是一条能走通的路。', effects: { resilience: 5 } , sound: '#' },
-          { key: 'C', label: '抱怨着报名', text: '凭什么我们这种出身，只能捡剩下的路走？', effects: { resilience: 5, father_bond: 5 } , sound: './assets/bgm/test4(short).wav' }
+          { key: 'C', label: '抱怨着报名', text: '凭什么我们这种出身，只能捡剩下的路走？', effects: { resilience: 5, father_bond: 5 } , sound: './assets/bgm/test4(short).mp3' }
           ]
         }
       },
@@ -293,7 +293,7 @@ const SCENES = [
   {
     chapter: '第八幕 · 围垦滩涂',
     tag: '马目农场 · 围垦滩涂',
-    img: './assets/bg/scenes7-4.png',
+    img: './assets/bg/scenes7-4.webp',
     alt: '围垦滩涂',
     lines: [
       { who: 'narration', text: '阿海挑着一担土从你身边经过，步子晃晃悠悠。筐里的土洒了一半出来，他停下来喘气，额头上全是汗。' },
@@ -310,7 +310,7 @@ const SCENES = [
   {
     chapter: '第九幕 · 深夜的宿舍',
     tag: '马目农场 · 深夜',
-    img: './assets/bg/scenes7-5.png',
+    img: './assets/bg/scenes7-5.webp',
     alt: '深夜宿舍',
     lines: [
       { who: 'ahai', text: '……你睡了没？' },
@@ -321,9 +321,9 @@ const SCENES = [
         choice: {
           prompt: '（你如何回应，请选择）',
           options: [
-          { key: 'A', label: '鼓励他坚持', text: '再撑一撑。这地方要熬出个人样，得先熬过这一关。', effects: { ahai_bond: 15 }, flags: { ahai_stay: true } , sound: './assets/bgm/test5(short).wav' },
-          { key: 'B', label: '理解并支持他离开', text: '想清楚了就走吧，没人能替你扛这些。', effects: { ahai_bond: 5 }, flags: { ahai_leave: true } , sound: './assets/bgm/test4(short).wav' },
-          { key: 'C', label: '沉默，只递给他一支烟', text: '（什么也没说，只是摸出一支烟，递到阿海面前）', effects: { resilience: 5, ahai_bond: 10 } , sound: './assets/bgm/test4(short).wav' }
+          { key: 'A', label: '鼓励他坚持', text: '再撑一撑。这地方要熬出个人样，得先熬过这一关。', effects: { ahai_bond: 15 }, flags: { ahai_stay: true } , sound: './assets/bgm/test5(short).mp3' },
+          { key: 'B', label: '理解并支持他离开', text: '想清楚了就走吧，没人能替你扛这些。', effects: { ahai_bond: 5 }, flags: { ahai_leave: true } , sound: './assets/bgm/test4(short).mp3' },
+          { key: 'C', label: '沉默，只递给他一支烟', text: '（什么也没说，只是摸出一支烟，递到阿海面前）', effects: { resilience: 5, ahai_bond: 10 } , sound: './assets/bgm/test4(short).mp3' }
           ],
           after: {
             A: [
@@ -348,7 +348,7 @@ const SCENES = [
   {
     chapter: '第十幕 · 马目农场的第二年',
     tag: '马目农场 · 第二年',
-    img: './assets/bg/scenes7-6.png',
+    img: './assets/bg/scenes7-6.webp',
     alt: '修坝挖沟',
     lines: [
       { who: 'narration', text: '那一年，你几乎是拼了命地干活。修坝、挖沟、挑土——别人干一分，你干三分。不是赌气，是你渐渐想明白了一个道理：在这片看不见头的地方，力气是唯一不会骗你的东西。' },
@@ -363,7 +363,7 @@ const SCENES = [
   {
     chapter: '第十一幕 · 绍兴茶场',
     tag: '绍兴 · 茶场 · 初到',
-    img: './assets/bg/scenes7-7.png',
+    img: './assets/bg/scenes7-7.webp',
     alt: '绍兴茶场',
     lines: [
       { who: 'narration', text: '绍兴的茶场，比马目多了一样东西——绿色。满山满坡的茶园，春天的时候，绿得晃眼。' },
@@ -376,7 +376,7 @@ const SCENES = [
   {
     chapter: '第十二幕 · 田头',
     tag: '绍兴茶场 · 田头',
-    img: './assets/bg/scenes7-8.png',
+    img: './assets/bg/scenes7-8.webp',
     alt: '稻田收割',
     lines: [
       { who: 'captain', text: '这批稻子，今天必须割完。割不完，晚饭别想吃。' },
@@ -384,9 +384,9 @@ const SCENES = [
         choice: {
           prompt: '（你如何应对，请选择）',
           options: [
-          { key: 'A', label: '硬扛，不抱怨', text: '割就割。饭晚点吃，没什么大不了。', effects: { resilience: 15 } , sound: './assets/bgm/test5(short).wav' },
-          { key: 'B', label: '据理力争', text: '队长，这个量，一个人从天亮干到天黑也割不完。活儿不是不能干——可总得让人分得清，是真有急事，还是存心磨人。加两个人手，我保证明天前交差。', effects: { resilience: 5, negotiation_skill: 10 } , sound: './assets/bgm/test4(short).wav' },
-          { key: 'C', label: '心里应付了事', text: '……行吧。（嘴上应着，心里却打定了主意，割个差不多就算）', effects: { resilience: -5 } , sound: './assets/bgm/test4(short).wav' }
+          { key: 'A', label: '硬扛，不抱怨', text: '割就割。饭晚点吃，没什么大不了。', effects: { resilience: 15 } , sound: './assets/bgm/test5(short).mp3' },
+          { key: 'B', label: '据理力争', text: '队长，这个量，一个人从天亮干到天黑也割不完。活儿不是不能干——可总得让人分得清，是真有急事，还是存心磨人。加两个人手，我保证明天前交差。', effects: { resilience: 5, negotiation_skill: 10 } , sound: './assets/bgm/test4(short).mp3' },
+          { key: 'C', label: '心里应付了事', text: '……行吧。（嘴上应着，心里却打定了主意，割个差不多就算）', effects: { resilience: -5 } , sound: './assets/bgm/test4(short).mp3' }
           ],
           after: {
             A: [
@@ -407,7 +407,7 @@ const SCENES = [
   {
     chapter: '第十三幕 · 傍晚的田埂',
     tag: '绍兴茶场 · 傍晚',
-    img: './assets/bg/scenes7-9.png',
+    img: './assets/bg/scenes7-9.webp',
     alt: '赵伯抽烟',
     lines: [
       { who: 'narration', text: '有一阵子，你整个人像被抽空了一样。不是累——是说不清道不明的一种空。话懒得说，活提不起劲，连天亮了天黑了你都觉得没差。' },
@@ -421,7 +421,7 @@ const SCENES = [
   {
     chapter: '第十四幕 · 晌午 · 一碗热水',
     tag: '绍兴茶场 · 晌午',
-    img: './assets/bg/scenes7-10.png',
+    img: './assets/bg/scenes7-10.webp',
     alt: '秀兰送水',
     lines: [
       { who: 'narration', text: '秀兰是这茶场里另一个话不多的人。可她的不多话，跟你的不多话不一样——你不说话，是习惯；她不多话，是把话都做进了活里。' },
@@ -435,7 +435,7 @@ const SCENES = [
   {
     chapter: '第十四幕 · 晌午 · 秧苗',
     tag: '绍兴茶场 · 晌午',
-    img: './assets/bg/scenes7-11.png',
+    img: './assets/bg/scenes7-11.webp',
     alt: '梯田插秧',
     lines: [
       { who: 'xiulan', text: '（一边插秧，一边像随口那么一提）我家里，本来给我说了一门亲事。下乡这一耽搁……也不知道那家人，还等不等。' },
@@ -447,7 +447,7 @@ const SCENES = [
   {
     chapter: '第十五幕 · 一九七七年',
     tag: '绍兴茶场 · 一九七七年',
-    img: './assets/bg/scenes7-12.png',
+    img: './assets/bg/scenes7-12.webp',
     alt: '新打家具',
     lines: [
       { who: 'narration', text: '一晃，你在这茶场已经待了十几年。1977年，你32岁。三个弟弟先后回了杭州，安了家，成了业。只有你，还留在这片茶山上，看不到头。' },
@@ -461,7 +461,7 @@ const SCENES = [
   {
     chapter: '第十六幕 · 回城通告',
     tag: '绍兴茶场 · 一九七八年',
-    img: './assets/bg/scenes7-13.png',
+    img: './assets/bg/scenes7-13.webp',
     alt: '场部通告',
     lines: [
       { who: 'narration', text: '你没想到，转机会在第二年，突然降临。' },
@@ -472,7 +472,7 @@ const SCENES = [
   {
     chapter: '第十六幕 · 道别',
     tag: '绍兴茶场 · 一九七八年',
-    img: './assets/bg/scenes8-1.png',
+    img: './assets/bg/scenes8-1.webp',
     alt: '离开茶场',
     lines: [
       { who: 'narration', text: '办手续那天，你去向赵伯道别。赵伯还是蹲在老地方卷旱烟，听完，只点了点头。' },
@@ -489,7 +489,7 @@ const SCENES = [
   {
     chapter: '第十七幕 · 杭州老街',
     tag: '杭州 · 一九七八年',
-    img: './assets/bg/scenes8-2.png',
+    img: './assets/bg/scenes8-2.webp',
     alt: '杭州雨巷',
     lines: [
       { who: 'narration', text: '1978年，你33岁，回到了杭州。母亲在校门口等你——她老了，可走路还是那么快，风风火火的，像是还在跟时间赛跑。' },
