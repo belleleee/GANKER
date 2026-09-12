@@ -58,7 +58,7 @@
   <div class="pro-toast" id="toast"></div>
 
   <!-- 背景音乐-->
-  <audio id="bgm" src="./ assets/bgm/test2.flac" loop preload="none"></audio>
+  <audio id="bgm" src="./assets/bgm/test2.flac" loop preload="none"></audio>
 
 <script>
 /* =====================================================================
@@ -601,6 +601,9 @@ function setEndHint(){
   if(scene === SCENES.length - 1){
     hintEl.textContent = '序章 · 完 —— 下一篇：返城创业 · 承包谈判';
     hintEl.classList.add('done');
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'farm-resume-complete' }, '*');
+    }
   } else {
     hintEl.textContent = '▼ 进入下一幕';
     hintEl.classList.remove('done');
