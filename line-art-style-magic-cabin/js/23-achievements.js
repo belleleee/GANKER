@@ -771,6 +771,22 @@ const ACHIEVEMENTS = [
         title: '走街串巷',
         desc: '累计送完 10 单代销订单——这就是当年三轮车摆摊的手艺',
         check: () => getAchievementStats().deliveryCount >= 10
+    },
+    {
+        id: 'ending_good',
+        category: 'story',
+        icon: '📜',
+        title: '这块牌子还是你的',
+        desc: '达能之争一条条读完合同，守住了自己一手创办的牌子',
+        check: () => typeof mainStoryState !== 'undefined' && mainStoryState.endingId === 'good'
+    },
+    {
+        id: 'ending_bad',
+        category: 'story',
+        icon: '🥀',
+        title: '替别人做的嫁衣',
+        desc: '合同签得太快，没能守住牌子——但故事到这里没有结束',
+        check: () => typeof mainStoryState !== 'undefined' && mainStoryState.endingId === 'bad'
     }
 ];
 
