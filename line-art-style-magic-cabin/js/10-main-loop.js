@@ -47,6 +47,9 @@
                 if (typeof updateWeatherFarming === 'function') {
                     updateWeatherFarming();
                 }
+                if (typeof updateDeliveryOrders === 'function') {
+                    updateDeliveryOrders(dt, time);
+                }
                 
                 FILL.uniforms.uTime.value = time;
                 FILL.uniforms.uFireStrength.value = fireP;

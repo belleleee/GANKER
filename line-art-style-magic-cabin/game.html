@@ -151,37 +151,6 @@
         </div>
     </section>
 
-    <section id="storyPanel" class="storyPanel" hidden>
-        <div class="storyCard" role="dialog" aria-modal="true" aria-labelledby="storyTitle">
-            <button id="closeStoryBtn" class="storyClose" type="button" aria-label="关闭">×</button>
-            <p class="storyKicker">创业笔记 · 手写体日志</p>
-            <h2 id="storyTitle">宗庆后的创业故事</h2>
-            <p id="storyChapterLabel" class="storyChapterLabel">第 1 / 7 章</p>
-
-            <div id="storyStage" class="storyStage">
-                <div class="storySpeaker" id="storySpeaker">旁白</div>
-                <p id="storyText" class="storyText">……</p>
-            </div>
-
-            <div id="storyNextRow" class="storyRow">
-                <button id="storyNextBtn" type="button">继续 ▸</button>
-            </div>
-
-            <div id="storyInvestRow" class="storyInvestBox" hidden>
-                <p id="storyInvestDesc" class="storyInvestDesc"></p>
-                <div class="storyInvestActions">
-                    <button id="storyInvestBtn" type="button">投资</button>
-                    <button id="storySkipBtn" type="button" class="storySkipBtn">先不投，继续看</button>
-                </div>
-            </div>
-
-            <div id="storyDoneRow" class="storyRow" hidden>
-                <p id="storyDoneText" class="storyDoneText"></p>
-                <button id="storyCloseDoneBtn" type="button">合上笔记</button>
-            </div>
-        </div>
-    </section>
-
     <section id="farmResumePanel" class="farmResumePanel" hidden>
         <div class="farmResumeShell" role="dialog" aria-modal="true" aria-labelledby="farmResumeTitle">
             <div class="farmResumeTopbar">
@@ -196,7 +165,7 @@
     </section>
 
     <div id="questBanner" class="questBanner" hidden>
-        <div id="questArrow" class="questArrow">▲</div>
+        <button id="questArrow" class="questArrow" type="button" aria-label="收起主线目标" aria-expanded="true">▲</button>
         <div class="questInfo">
             <p class="questKicker">主线目标</p>
             <p id="questText" class="questTextLine">去看看院子里那片茶场</p>
@@ -212,6 +181,20 @@
         </div>
     </div>
 
+    <div id="deliveryBanner" class="questBanner deliveryBanner" hidden>
+        <button id="deliveryArrow" class="questArrow" type="button" aria-label="送货方向">▲</button>
+        <div class="questInfo">
+            <p class="questKicker">送货</p>
+            <p id="deliveryBannerText" class="questTextLine">送作物给森林里的客户</p>
+            <p id="deliveryBannerDistance" class="questDistanceLine">0 米</p>
+        </div>
+    </div>
+
+    <div id="deliveryBoard" class="deliveryBoard" hidden>
+        <div class="deliveryBoardTitle">📦 代销订单</div>
+        <div id="deliveryBoardList"></div>
+    </div>
+
     <section id="achievementsPanel" class="achievementsPanel" hidden>
         <div class="achievementsCard" role="dialog" aria-modal="true" aria-labelledby="achievementsTitle">
             <button id="closeAchievementsBtn" class="achievementsClose" type="button" aria-label="关闭">×</button>
@@ -224,7 +207,7 @@
 
     <section id="mainStoryPanel" class="mainStoryPanel" hidden>
         <div class="mainStoryCard" role="dialog" aria-modal="true" aria-labelledby="mainStoryTitle">
-            <p class="mainStoryKicker">主线 · 占位剧情</p>
+            <p class="mainStoryKicker">主线 · 发家之路</p>
             <h2 id="mainStoryTitle">第一章</h2>
             <div id="mainStoryBody" class="mainStoryBody"></div>
             <button id="mainStoryNextBtn" type="button">继续</button>
@@ -249,6 +232,16 @@
             <p class="cropKicker">播种</p>
             <h2 id="cropPanelTitle">今天种点什么？</h2>
             <div id="cropPanelBody" class="cropPanelBody"></div>
+        </div>
+    </section>
+
+    <section id="farmWorkerPanel" class="farmWorkerPanel" hidden>
+        <div class="farmWorkerCard" role="dialog" aria-modal="true" aria-labelledby="farmWorkerTitle">
+            <button id="closeFarmWorkerBtn" class="farmWorkerClose" type="button" aria-label="关闭">×</button>
+            <p class="farmWorkerKicker">农场员工</p>
+            <h2 id="farmWorkerTitle">今天优先种什么？</h2>
+            <p id="farmWorkerStatus" class="farmWorkerStatus"></p>
+            <div id="farmWorkerCropOptions" class="farmWorkerCropOptions"></div>
         </div>
     </section>
 
@@ -297,11 +290,11 @@
     <script src="js/10-main-loop.js"></script>
     <script src="js/14-store.js"></script>
     <script src="js/16-newspaper.js"></script>
-    <script src="js/17-zong-story.js"></script>
     <script src="js/18-well.js"></script>
     <script src="js/19-teafarm.js"></script>
     <script src="js/20-coin-shop.js"></script>
     <script src="js/21-investment-house.js"></script>
+    <script src="js/29-cafe-entrance.js"></script>
     <script src="js/22-main-story.js"></script>
     <script src="js/23-achievements.js"></script>
     <script src="js/24-wealth-events.js"></script>
@@ -309,6 +302,7 @@
     <script src="js/26-land-tenure.js"></script>
     <script src="js/27-weather-farming.js"></script>
     <script src="js/28-tool-progression.js"></script>
+    <script src="js/30-delivery-orders.js"></script>
     <script src="js/15-app-shell.js"></script>
 </body>
 
