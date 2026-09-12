@@ -98,17 +98,17 @@
 
 .questBanner {
     position: fixed;
-    top: 16px;
-    left: 50%;
-    transform: translateX(-50%);
+    top: 196px;
+    left: 18px;
+    width: min(330px, calc(100vw - 36px));
     z-index: 15;
     display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 8px 18px 8px 14px;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 16px 14px 14px;
     background: rgba(20, 16, 10, .55);
     border: 1px solid rgba(255, 224, 160, .35);
-    border-radius: 999px;
+    border-radius: 8px;
     color: #fbf3df;
     backdrop-filter: blur(4px);
     pointer-events: none;
@@ -119,8 +119,59 @@
     display: none
 }
 
+.questBanner.collapsed {
+    width: auto;
+    gap: 0;
+    padding: 8px;
+    border-radius: 999px;
+}
+
+.questBanner.collapsed .questInfo {
+    display: none;
+}
+
+.questBanner.collapsed .questArrow {
+    margin-top: 0;
+}
+
 .guideBanner {
+    top: 16px;
+    left: 50%;
+    width: auto;
     max-width: min(560px, 86vw);
+    transform: translateX(-50%) scale(1);
+    align-items: center;
+    gap: 10px;
+    padding: 10px 22px 10px 16px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, rgba(120, 78, 26, .82), rgba(60, 40, 14, .82));
+    border: 1.5px solid rgba(255, 216, 115, .75);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .35), 0 0 22px rgba(255, 200, 100, .28);
+    animation: guideBannerPop .32s cubic-bezier(.2, 1.4, .4, 1);
+}
+
+.guideBanner .questKicker {
+    color: #ffd873;
+}
+
+.guideBanner .questKicker::before {
+    content: '🗨️ ';
+}
+
+.guideBanner .questTextLine {
+    font-size: 15px;
+}
+
+@keyframes guideBannerPop {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-8px) scale(.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0) scale(1);
+    }
 }
 
 .guideBannerSkip {
@@ -135,17 +186,38 @@
 }
 
 .questArrow {
+    appearance: none;
+    flex: 0 0 34px;
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    margin-top: 4px;
+    border: 1px solid rgba(255, 216, 115, .4);
+    border-radius: 50%;
+    background: rgba(255, 216, 115, .12);
+    padding: 0;
     font-size: 18px;
+    font-family: inherit;
     line-height: 1;
     color: #ffd873;
     text-shadow: 0 0 8px rgba(255, 216, 115, .7);
     transition: transform .2s ease;
-    display: inline-block;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+.questArrow:hover,
+.questArrow:focus-visible {
+    border-color: rgba(255, 216, 115, .75);
+    background: rgba(255, 216, 115, .2);
+    outline: none;
 }
 
 .questInfo {
     display: flex;
     flex-direction: column;
+    min-width: 0;
     line-height: 1.3;
 }
 
@@ -161,6 +233,7 @@
     margin: 0;
     font-size: 14px;
     font-weight: 700;
+    overflow-wrap: anywhere;
 }
 
 .questDistanceLine {
