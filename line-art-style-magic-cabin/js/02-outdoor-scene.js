@@ -19,18 +19,27 @@
             const INVESTMENT_ROOM_CX = -12;
             const INVESTMENT_ROOM_CZ = 8.5;
             const INVESTMENT_ROOM_CLEAR_R = 5.8;
+            const CAFE_HOUSE_CX = 16.25;
+            const CAFE_HOUSE_CZ = -10.0;
+            const CAFE_HOUSE_CLEAR_R = 3.2;
             window.COIN_SHOP_CX = COIN_SHOP_CX;
             window.COIN_SHOP_CZ = COIN_SHOP_CZ;
             window.COIN_SHOP_CLEAR_R = COIN_SHOP_CLEAR_R;
             window.INVESTMENT_ROOM_CX = INVESTMENT_ROOM_CX;
             window.INVESTMENT_ROOM_CZ = INVESTMENT_ROOM_CZ;
             window.INVESTMENT_ROOM_CLEAR_R = INVESTMENT_ROOM_CLEAR_R;
+            window.CAFE_HOUSE_CX = CAFE_HOUSE_CX;
+            window.CAFE_HOUSE_CZ = CAFE_HOUSE_CZ;
+            window.CAFE_HOUSE_CLEAR_R = CAFE_HOUSE_CLEAR_R;
 
             function coinShopClearing(x, z, pad) {
                 return Math.hypot(x - COIN_SHOP_CX, z - COIN_SHOP_CZ) < COIN_SHOP_CLEAR_R + (pad || 0);
             }
             function investmentRoomClearing(x, z, pad) {
                 return Math.hypot(x - INVESTMENT_ROOM_CX, z - INVESTMENT_ROOM_CZ) < INVESTMENT_ROOM_CLEAR_R + (pad || 0);
+            }
+            function cafeHouseClearing(x, z, pad) {
+                return Math.hypot(x - CAFE_HOUSE_CX, z - CAFE_HOUSE_CZ) < CAFE_HOUSE_CLEAR_R + (pad || 0);
             }
 
             const STUMPS = [[7.6, -5.8], [-8.2, 3.6], [-6.5, -8.5], [-16.2, 5.2], [-19.6, 6.4], [-21.0, 10.1]];
@@ -41,6 +50,7 @@
                 if (x > 2.5 && x < 3.7 && z > 5.7 && z < 6.9) return false;
                 if (coinShopClearing(x, z, 0.4)) return false;
                 if (investmentRoomClearing(x, z, 0.4)) return false;
+                if (cafeHouseClearing(x, z, 0.4)) return false;
                 for (const st of STUMPS) if (Math.hypot(x - st[0], z - st[1]) < 0.6) return false;
                 return true;
             }
@@ -63,6 +73,7 @@
                         if (Math.abs(tx) < 2.4 && tz > 14) continue;
                         if (coinShopClearing(tx, tz, 0.2)) continue;
                         if (investmentRoomClearing(tx, tz, 0.2)) continue;
+                        if (cafeHouseClearing(tx, tz, 0.2)) continue;
                         const s = 1.2 + ((rr - 20.8) / 13.7) * 0.5 + Math.random() * 0.75;
                         const ry = Math.random() * Math.PI * 2;
                         addStatic(TREE_TRUNK, tx, 0.65 * s, tz, 0, ry, 0, s, s, s);

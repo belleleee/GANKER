@@ -17,8 +17,11 @@ const WEALTH_EVENT_MAX_SHRINK = 0.6;
 
 let wealthEventState = {
     charityTotalDonated: 0,
+    charityDonations: 0,
+    charityMaxSingle: 0,
     financingWins: 0,
     financingLosses: 0,
+    adHits: 0,
     marketNews: []
 };
 
@@ -95,6 +98,7 @@ function triggerAdEvent() {
     const coins = currentCoinsSafe();
     const cut = Math.max(20, Math.round(coins * (0.04 + Math.random() * 0.05)));
     if (typeof window.spendCabinCoins === 'function') window.spendCabinCoins(cut, false);
+    wealthEventState.adHits++;
     pushMarketNews(true, 0.04 + Math.random() * 0.03, '街头骗术横行，市场情绪转向谨慎');
     openWealthEventPanel(
         '突发广告',
@@ -172,6 +176,8 @@ function donateCharity(amount) {
         return;
     }
     wealthEventState.charityTotalDonated += amount;
+    wealthEventState.charityDonations++;
+    wealthEventState.charityMaxSingle = Math.max(wealthEventState.charityMaxSingle || 0, amount);
     pushMarketNews(false, 0.02 + Math.random() * 0.02, '慈善捐赠传递暖意，市场情绪略有提振');
     if (typeof saveGameState === 'function') saveGameState(false);
     showHintOverride('捐出 ' + amount + ' 金币 · 累计捐款 ' + wealthEventState.charityTotalDonated + ' 金币');
@@ -197,8 +203,11 @@ function updateWealthEvents(dt) {
 function captureWealthEventsState() {
     return {
         charityTotalDonated: wealthEventState.charityTotalDonated,
+        charityDonations: wealthEventState.charityDonations,
+        charityMaxSingle: wealthEventState.charityMaxSingle,
         financingWins: wealthEventState.financingWins,
         financingLosses: wealthEventState.financingLosses,
+        adHits: wealthEventState.adHits,
         marketNews: wealthEventState.marketNews
     };
 }
@@ -206,8 +215,11 @@ function captureWealthEventsState() {
 function applyWealthEventsState(raw) {
     wealthEventState = {
         charityTotalDonated: Math.max(0, Math.trunc(Number(raw && raw.charityTotalDonated) || 0)),
+        charityDonations: Math.max(0, Math.trunc(Number(raw && raw.charityDonations) || 0)),
+        charityMaxSingle: Math.max(0, Math.trunc(Number(raw && raw.charityMaxSingle) || 0)),
         financingWins: Math.max(0, Math.trunc(Number(raw && raw.financingWins) || 0)),
         financingLosses: Math.max(0, Math.trunc(Number(raw && raw.financingLosses) || 0)),
+        adHits: Math.max(0, Math.trunc(Number(raw && raw.adHits) || 0)),
         marketNews: Array.isArray(raw && raw.marketNews) ? raw.marketNews.slice(-5) : []
     };
 }
@@ -224,4 +236,14 @@ window.applyWealthEventsState = applyWealthEventsState;
 window.getCharityTotalDonated = function () { return wealthEventState.charityTotalDonated; };
 window.getFinancingStats = function () {
     return { wins: wealthEventState.financingWins, losses: wealthEventState.financingLosses };
+};
+window.getWealthEventStats = function () {
+    return {
+        charityTotalDonated: wealthEventState.charityTotalDonated,
+        charityDonations: wealthEventState.charityDonations,
+        charityMaxSingle: wealthEventState.charityMaxSingle,
+        financingWins: wealthEventState.financingWins,
+        financingLosses: wealthEventState.financingLosses,
+        adHits: wealthEventState.adHits
+    };
 };

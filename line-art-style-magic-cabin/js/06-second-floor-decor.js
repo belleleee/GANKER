@@ -444,8 +444,6 @@
                     g.add(tm);
                 }
                 scene.add(g);
-                if (window.prepareStoreReturn) window.prepareStoreReturn();
-                window.location.href = './line-art-cafe/index.html';
                 return g;
             }
 
@@ -573,7 +571,7 @@
                 }
             }
 
-            hatG.userData.aimLabel = '摸一摸魔法帽子 · 变出糖果，通向咖啡馆打工';
+            hatG.userData.aimLabel = '摸一摸魔法帽子 · 变出糖果';
             regMagic(hatG, () => {
                 if (hatState.phase !== 'idle') return;
                 hatState.phase = 'rising';

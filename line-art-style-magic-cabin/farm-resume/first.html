@@ -175,6 +175,22 @@
     border-color: rgba(111,143,114,.55);
     background: rgba(111,143,114,.08);
   }
+  .speaker.guide,
+  .speaker.captain{
+    color: #b8a36f;
+    border-color: rgba(184,163,111,.52);
+    background: rgba(184,163,111,.08);
+  }
+  .speaker.ahai{
+    color: #9dc6b8;
+    border-color: rgba(157,198,184,.52);
+    background: rgba(157,198,184,.08);
+  }
+  .speaker.you{
+    color: #d8c58b;
+    border-color: rgba(216,197,139,.56);
+    background: rgba(216,197,139,.09);
+  }
   .line{
     font-size: clamp(1.02rem, 1.5vw, 1.32rem);
     line-height: 2.05;
@@ -304,9 +320,85 @@
         { who:'narration', text:'你没完全听懂他们在说什么。但你记住了母亲那时的表情——她没叹气，也没掉眼泪，只是把作业本翻了一页，继续批改。' },
         { who:'narration', text:'很多年后你才明白，那是一种叫作“撑”的神情。' }
       ]
+    },
+    {
+      title: '巷口 · 小摊',
+      tag: '杭州巷口 · 少年时期',
+      img: './image4.png',
+      alt: '杭州巷口',
+      lines: [
+        { who:'narration', text:'七八岁的时候，别家的孩子还在巷子里拍洋片、滚铁环，你已经守着铁锅，把生米炒成喷香的炒米。' },
+        { who:'narration', text:'一毛钱一包，用旧报纸卷成漏斗状，装满，递出去。冬天风从巷口灌进来，你手背上的冻疮裂开，铁铲却不能停。' },
+        { who:'narration', text:'你没有问过“为什么”。穷在那个年代不是什么秘密，是常态。能帮家里多挣一分钱，就是一分钱。' }
+      ]
+    },
+    {
+      title: '师范学校门口',
+      tag: '杭州 · 一九六〇年代',
+      img: './image3.png',
+      alt: '通知书',
+      lines: [
+        { who:'narration', text:'初中毕业那年，你偷偷报考了一所不收学费的师范学校。通知书寄到的时候，你站在邮筒前看了三遍，才敢拆开。' },
+        { who:'narration', text:'录取了。你以为终于有一条路，可以不靠家里就能走下去。可高兴只持续了三天。' },
+        { who:'narration', text:'成分核查的人来了。那几个字被写进表格，也像一扇门，在你面前合上。你没有争辩，只记住了：往后，别再指望任何一张纸改变命。' }
+      ]
+    },
+    {
+      title: '马目农场',
+      tag: '舟山 · 马目农场',
+      img: './image1.png',
+      alt: '农场大门',
+      lines: [
+        { who:'guide', text:'到了啊。这就是马目农场。从前关犯人的地方。你们这批人，往后就住这儿了。' },
+        { who:'narration', text:'没有电，没有自来水，宿舍屋顶铺着油毡，漏雨是常事。可这里至少有一件事是公平的：干了活，就有工分。' },
+        { who:'ahai', text:'哥们儿，咱这是来当知青，还是来腌咸菜啊？' },
+        { who:'you', text:'来都来了，说这些没用。' }
+      ]
+    },
+    {
+      title: '深夜 · 宿舍',
+      tag: '马目农场 · 深夜',
+      img: './image5.png',
+      alt: '农场宿舍',
+      lines: [
+        { who:'ahai', text:'我撑不住了。我想跟家里说，我要回去。哪怕回去挨骂，也比在这儿看不到头强。' },
+        { who:'you', text:'再撑一撑。这地方要熬出个人样，得先熬过这一关。' },
+        { who:'narration', text:'那晚之后，阿海再没提过“回去”两个字。多年以后，当他愿意跟着你蹬三轮时，你偶尔还会想起这个晚上。' }
+      ]
+    },
+    {
+      title: '绍兴茶场',
+      tag: '绍兴 · 茶场',
+      img: './image4.png',
+      alt: '绍兴茶场',
+      lines: [
+        { who:'narration', text:'后来，你被转到绍兴茶场。春天采茶，夏天锄草，秋天割稻，冬天垦荒。一晃，就是好几年。' },
+        { who:'captain', text:'没人看着你的时候，最能看出一个人的成色。' },
+        { who:'narration', text:'你把这句话记了很久。它不漂亮，却管用。能把一件事做到底的人，差不了。' }
+      ]
+    },
+    {
+      title: '回城 · 申请',
+      tag: '杭州 · 一九七八年以后',
+      img: './image2.png',
+      alt: '回城申请',
+      lines: [
+        { who:'narration', text:'1978年，你回到杭州，接过母亲的班，进了校办工厂。日子重新开始，可你知道，自己不能只等一份死工资。' },
+        { who:'you', text:'我想来经营这片农场。不是为了轻松，是想把能做的事做起来，替家里多分担一点。' },
+        { who:'narration', text:'这就是第一份简历。它没有漂亮履历，只有一双做过很多活的手，和一颗愿意把日子撑起来的心。' }
+      ]
     }
   ];
-  const WHO_NAME = { narration:'旁　白', mother:'母　亲', father:'父　亲', grandfather:'祖　父' };
+  const WHO_NAME = {
+    narration:'旁　白',
+    mother:'母　亲',
+    father:'父　亲',
+    grandfather:'祖　父',
+    guide:'农场接引员',
+    ahai:'阿　海',
+    you:'申请人',
+    captain:'队长老陈'
+  };
 
   const lineEl = document.getElementById('line');
   const hintEl = document.getElementById('hint');

@@ -3,7 +3,6 @@
 @import url("modules/game-menu.css");
 @import url("modules/game-hud-editors.css");
 @import url("modules/newspaper.css");
-@import url("modules/story.css");
 @import url("modules/farm-resume.css");
 @import url("modules/main-story.css");
 @import url("modules/achievements.css");
@@ -12,3 +11,4 @@
 @import url("modules/land.css");
 @import url("modules/crop-picker.css");
 @import url("modules/weather-farming.css");
+@import url("modules/delivery.css");

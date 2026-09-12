@@ -145,6 +145,9 @@
 
     function enterInvestmentRoom() {
         const go = () => {
+            if (typeof window.noteAchievementEvent === 'function') {
+                window.noteAchievementEvent('enterInvestmentRoom');
+            }
             if (typeof window.prepareStoreReturn === 'function') window.prepareStoreReturn();
             else if (typeof saveGameState === 'function') saveGameState(false);
             window.location.href = 'investment-room/index.html';

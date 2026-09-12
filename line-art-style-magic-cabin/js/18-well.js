@@ -1469,6 +1469,9 @@ function buildWell(
         state.filled = false;
         state.autoDrawing = true;
         wellG.userData.aimLabel = '正在打水';
+        if (typeof window.noteAchievementEvent === 'function') {
+            window.noteAchievementEvent('wellDraw');
+        }
 
         showHintOverride('水桶放下去了，等它提上来就能装满水壶');
     }

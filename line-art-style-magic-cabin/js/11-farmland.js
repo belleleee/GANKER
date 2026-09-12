@@ -25,6 +25,7 @@ const farmHireState = {
     resumePrompted: false,
     resumeViewed: false,
     candidateUnlocked: false,
+    dailyCropPlan: 'auto',
     worker: null,
     body: null,
     toolRoot: null,
@@ -74,6 +75,9 @@ function plantFarmCropAs(state, cropId, silent) {
     state.crop = createTurnip(state.x, 0.02, state.z, null, crop.id);
     state.watered = false;
     applyFarmPlotState(state, 'chim');
+    if (typeof window.noteAchievementEvent === 'function') {
+        window.noteAchievementEvent('farmPlant', { cropId: crop.id });
+    }
     if (!silent) showHintOverride(crop.name + '种子已经种下，背包种子 -1，装备水壶继续浇水');
     return true;
 }
@@ -91,6 +95,34 @@ function pickAutoPlantCrop() {
     });
     return bestCount > 0 ? best : 'turnip';
 }
+
+function isFarmCropId(cropId) {
+    return typeof CROP_TYPES !== 'undefined' && !!CROP_TYPES[cropId];
+}
+
+function getFarmCropName(cropId) {
+    if (cropId === 'auto') return '自己判断';
+    return isFarmCropId(cropId) ? CROP_TYPES[cropId].name : '自己判断';
+}
+
+function farmWorkerPlanText() {
+    const plan = currentFarmWorkerCropPlan();
+    return plan === 'auto' ? '自己判断' : '种' + getFarmCropName(plan);
+}
+
+function currentFarmWorkerCropPlan() {
+    return isFarmCropId(farmHireState.dailyCropPlan) ? farmHireState.dailyCropPlan : 'auto';
+}
+
+function pickFarmWorkerPlantCrop() {
+    const plan = currentFarmWorkerCropPlan();
+    if (plan !== 'auto' && typeof window.getBackpackItemCount === 'function') {
+        const crop = CROP_TYPES[plan];
+        if (window.getBackpackItemCount(crop.seedItem) > 0) return plan;
+    }
+    return pickAutoPlantCrop();
+}
+
 function plantFarmCrop(state, silent) {
     return plantFarmCropAs(state, pickAutoPlantCrop(), silent);
 }
@@ -100,6 +132,9 @@ function growFarmCrop(state, silent) {
     state.watered = true;
     setTurnipStage(state.crop, cropData.stage + 1);
     applyFarmPlotState(state, cropData.stage >= 3 ? 'magic' : 'chim');
+    if (typeof window.noteAchievementEvent === 'function') {
+        window.noteAchievementEvent('farmWater');
+    }
     if (!silent) showHintOverride(cropData.stage >= 3 ? '作物成熟了，装备镰刀收获' : '作物长高了一点');
     return true;
 }
@@ -114,6 +149,9 @@ function harvestFarmCrop(state, silent) {
     if (window.addCropToStorage) window.addCropToStorage(cropDef.storageKey, 1);
     const multiplier = typeof cropWeatherMultiplier === 'function' ? cropWeatherMultiplier(cropId) : 1;
     const coins = Math.max(1, Math.round(cropDef.harvestCoins * multiplier));
+    if (typeof window.noteAchievementEvent === 'function') {
+        window.noteAchievementEvent('farmHarvest', { cropId, multiplier });
+    }
     if (window.addCabinCoins) {
         if (silent) window.addCabinCoins(coins, false);
         else window.addCabinCoins(coins, '收获' + cropDef.name + (multiplier > 1 ? '（天气加成）' : multiplier < 1 ? '（天气减产）' : ''));
@@ -184,6 +222,9 @@ function onFarmPlotClick(state) {
             state.tilled = true;
             state.watered = false;
             applyFarmPlotState(state, 'ui');
+            if (typeof window.noteAchievementEvent === 'function') {
+                window.noteAchievementEvent('farmTill');
+            }
             showHintOverride('土地已经翻好，空手点击可以播种');
         })) SND.play('toggle'); // 锄头正在挥动中
     } else if (!state.crop) {
@@ -420,7 +461,7 @@ function currentFarmDay() {
 
 function farmHireLabel() {
     if (farmHireState.striking) return '农工罢工中 · 补发工资';
-    if (farmHireState.hired) return '农工工作中';
+    if (farmHireState.hired) return '和农工对话 · ' + farmWorkerPlanText();
     if (farmHireState.playerHarvests < FARM_RESUME_HARVEST_TARGET) {
         return '收割萝卜 ' + farmHireState.playerHarvests + '/' + FARM_RESUME_HARVEST_TARGET + ' 后开放招聘';
     }
@@ -438,7 +479,7 @@ function farmHireSignTitle() {
 
 function farmHireSignSubtext() {
     if (farmHireState.striking) return '日薪 ' + FARM_WORKER_DAILY_WAGE + ' 金币';
-    if (farmHireState.hired) return '日薪 ' + FARM_WORKER_DAILY_WAGE + ' 金币';
+    if (farmHireState.hired) return '计划：' + farmWorkerPlanText();
     if (farmHireState.playerHarvests < FARM_RESUME_HARVEST_TARGET) {
         return '收割 ' + farmHireState.playerHarvests + '/' + FARM_RESUME_HARVEST_TARGET;
     }
@@ -454,6 +495,101 @@ function updateFarmHireLabel() {
 
 function saveFarmHireStateNow() {
     if (typeof saveGameState === 'function') saveGameState(false);
+}
+
+const farmWorkerPanel = document.getElementById('farmWorkerPanel');
+const farmWorkerStatus = document.getElementById('farmWorkerStatus');
+const farmWorkerCropOptions = document.getElementById('farmWorkerCropOptions');
+const closeFarmWorkerBtn = document.getElementById('closeFarmWorkerBtn');
+
+function farmWorkerSeedCount(cropId) {
+    if (!isFarmCropId(cropId) || typeof window.getBackpackItemCount !== 'function') return 0;
+    return window.getBackpackItemCount(CROP_TYPES[cropId].seedItem);
+}
+
+function farmWorkerCropNote(cropId) {
+    if (cropId === 'auto') return '员工会优先种背包里最多的种子，指定作物缺种子时也会临时这样处理。';
+    const weatherNote = typeof cropWeatherNote === 'function' ? cropWeatherNote(cropId) : '';
+    return weatherNote || '员工会优先寻找这种种子来播种。';
+}
+
+function renderFarmWorkerPanel() {
+    if (!farmWorkerPanel || !farmWorkerCropOptions) return;
+    const plan = currentFarmWorkerCropPlan();
+    const chosenText = plan === 'auto'
+        ? '当前指令：让员工自己判断。'
+        : '当前指令：优先种' + getFarmCropName(plan) + '。';
+    if (farmWorkerStatus) {
+        farmWorkerStatus.textContent = chosenText + ' 每天工作时会按这个安排播种；如果指定作物没有种子，会自动改种其他有种子的作物。';
+    }
+
+    const options = ['auto'].concat(typeof CROP_ORDER !== 'undefined' ? CROP_ORDER : ['turnip']);
+    farmWorkerCropOptions.innerHTML = options.map(cropId => {
+        const active = cropId === plan ? ' isActive' : '';
+        if (cropId === 'auto') {
+            return '<button type="button" class="farmWorkerCropOption' + active + '" data-crop="auto">' +
+                '<span class="farmWorkerCropIcon">◎</span>' +
+                '<span class="farmWorkerCropName">自己判断</span>' +
+                '<span class="farmWorkerCropCount">推荐</span>' +
+                '<span class="farmWorkerCropNote">' + farmWorkerCropNote('auto') + '</span>' +
+                '</button>';
+        }
+        const crop = CROP_TYPES[cropId];
+        return '<button type="button" class="farmWorkerCropOption' + active + '" data-crop="' + cropId + '">' +
+            '<span class="farmWorkerCropIcon">' + crop.icon + '</span>' +
+            '<span class="farmWorkerCropName">优先种' + crop.name + '</span>' +
+            '<span class="farmWorkerCropCount">种子 ×' + farmWorkerSeedCount(cropId) + '</span>' +
+            '<span class="farmWorkerCropNote">' + farmWorkerCropNote(cropId) + '</span>' +
+            '</button>';
+    }).join('');
+}
+
+function openFarmWorkerPanel() {
+    if (!farmWorkerPanel) {
+        showHintOverride('农场员工：现在计划种' + getFarmCropName(currentFarmWorkerCropPlan()));
+        return;
+    }
+    renderFarmWorkerPanel();
+    farmWorkerPanel.hidden = false;
+    if (typeof window.clearPlayerInputState === 'function') window.clearPlayerInputState();
+    if (document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
+    window.APP_SHELL_BLOCK_GAME = true;
+    window.APP_GAME_MODAL_OPEN = true;
+    if (typeof SND !== 'undefined') SND.play('ui');
+}
+
+function closeFarmWorkerPanel() {
+    if (!farmWorkerPanel) return;
+    farmWorkerPanel.hidden = true;
+    if (typeof window.clearPlayerInputState === 'function') window.clearPlayerInputState();
+    window.APP_SHELL_BLOCK_GAME = false;
+    window.APP_GAME_MODAL_OPEN = false;
+}
+
+function setupFarmWorkerPanel() {
+    if (closeFarmWorkerBtn) closeFarmWorkerBtn.addEventListener('click', closeFarmWorkerPanel);
+    if (farmWorkerPanel) {
+        farmWorkerPanel.addEventListener('click', event => {
+            if (event.target === farmWorkerPanel) closeFarmWorkerPanel();
+        });
+    }
+    if (farmWorkerCropOptions) {
+        farmWorkerCropOptions.addEventListener('click', event => {
+            const btn = event.target.closest('.farmWorkerCropOption');
+            if (!btn) return;
+            const cropId = btn.dataset.crop || 'auto';
+            farmHireState.dailyCropPlan = isFarmCropId(cropId) ? cropId : 'auto';
+            renderFarmWorkerPanel();
+            updateFarmHireLabel();
+            saveFarmHireStateNow();
+            if (typeof SND !== 'undefined') SND.play('ui');
+            showHintOverride('已告诉农场员工：' + (farmHireState.dailyCropPlan === 'auto' ? '自己判断今天种什么' : '优先种' + getFarmCropName(farmHireState.dailyCropPlan)));
+        });
+    }
+    addEventListener('keydown', event => {
+        if (!farmWorkerPanel || farmWorkerPanel.hidden) return;
+        if (event.key === 'Escape') closeFarmWorkerPanel();
+    });
 }
 
 function noteFarmPlayerHarvest() {
@@ -481,24 +617,11 @@ function workerPlantFarmCrop(state) {
         return false;
     }
 
-    state.crop =
-        createTurnip(
-            state.x,
-            0.02,
-            state.z,
-            null,
-            pickAutoPlantCrop()
-        );
-
-    state.watered =
-        false;
-
-    applyFarmPlotState(
+    return plantFarmCropAs(
         state,
-        'chim'
+        pickFarmWorkerPlantCrop(),
+        true
     );
-
-    return true;
 }
 
 function pickFarmWorkerCandidate(
@@ -708,7 +831,7 @@ function hireFarmWorker() {
     }
 
     updateFarmHireLabel();
-    showHintOverride('农场经营者已在工作 · 每日结算日薪 ' + FARM_WORKER_DAILY_WAGE);
+    openFarmWorkerPanel();
 }
 
 function makeWorkerToolPart(geo, mat) {
@@ -1051,7 +1174,8 @@ function captureFarmHireState() {
         playerHarvests: farmHireState.playerHarvests,
         resumePrompted: farmHireState.resumePrompted,
         resumeViewed: farmHireState.resumeViewed,
-        candidateUnlocked: farmHireState.candidateUnlocked
+        candidateUnlocked: farmHireState.candidateUnlocked,
+        dailyCropPlan: currentFarmWorkerCropPlan()
     };
 }
 
@@ -1077,6 +1201,7 @@ function applyFarmHireState(save) {
         farmHireState.resumeViewed ||
         (save && save.candidateUnlocked)
     );
+    farmHireState.dailyCropPlan = isFarmCropId(save && save.dailyCropPlan) ? save.dailyCropPlan : 'auto';
     farmHireState.action = null;
     farmHireState.targetPlot = null;
     farmHireState.phase = farmHireState.hired && !farmHireState.striking ? 'seek' : 'idle';
@@ -1085,6 +1210,7 @@ function applyFarmHireState(save) {
 }
 
 setupFarmResumePanel();
+setupFarmWorkerPanel();
 buildFarmWorkerContract();
 
 /* ==========================================================
