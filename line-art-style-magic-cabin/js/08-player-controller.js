@@ -189,7 +189,7 @@
                 if (viewMode === 'fixed') camYaw = fixYaw + Math.PI;
                 const typing = document.activeElement === signInput || document.activeElement === noteInput || document.activeElement === picInput; let ix = 0, iz = 0;
                 if (!typing) { if (keys['KeyW'] || keys['ArrowUp']) iz += 1; if (keys['KeyS'] || keys['ArrowDown']) iz -= 1; if (keys['KeyA'] || keys['ArrowLeft']) ix -= 1; if (keys['KeyD'] || keys['ArrowRight']) ix += 1; ix += joyX; iz += -joyY; const m = Math.hypot(ix, iz); if (m > 1) { ix /= m; iz /= m; } }
-                const joyFull = Math.hypot(joyX, joyY) > 0.85; const running = !!(keys['ShiftLeft'] || keys['ShiftRight']) || sprintBtnDown || joyFull; const maxSpeed = running ? 3.2 : 1.6;
+                const joyFull = Math.hypot(joyX, joyY) > 0.85; const running = !!(keys['ShiftLeft'] || keys['ShiftRight']) || sprintBtnDown || joyFull; const maxSpeed = running ? 4.6 : 1.6;
                 let tx = 0, tz = 0; if (ix !== 0 || iz !== 0) { const fx = Math.sin(camYaw), fz = Math.cos(camYaw); const rx = -Math.cos(camYaw), rz = Math.sin(camYaw); tx = (fx * iz + rx * ix) * maxSpeed; tz = (fz * iz + rz * ix) * maxSpeed; }
                 player.moveSpeed += (Math.hypot(tx, tz) - player.moveSpeed) * Math.min(1, dt * 10); const spd = player.moveSpeed; const moving = spd > 0.12;
                 if (moving) slime.pulse += dt * (2.6 + spd * 1.3);
