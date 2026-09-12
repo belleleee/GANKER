@@ -63,9 +63,15 @@ function attemptWeatherChange(target) {
     }
     if (typeof spendCabinCoins !== 'function' || !spendCabinCoins(cost, false)) return;
     weatherFarmState.attemptsToday++;
+    if (typeof window.noteAchievementEvent === 'function') {
+        window.noteAchievementEvent('weatherAttempt', { target });
+    }
     const success = Math.random() < WEATHER_ATTEMPT_SUCCESS_CHANCE;
     if (success) {
         setWeather(target);
+        if (typeof window.noteAchievementEvent === 'function') {
+            window.noteAchievementEvent('weatherSuccess', { target });
+        }
         showHintOverride('祈天成功——天说变就变，今天变成了 <b>' + WX_NAME[target] + '</b>（花费 ' + cost + ' 金币）');
     } else {
         showHintOverride('祈天没成，' + cost + ' 金币打了水漂——天不随人愿，今天还是 <b>' + WX_NAME[wx.type] + '</b>');

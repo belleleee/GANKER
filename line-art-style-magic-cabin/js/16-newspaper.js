@@ -79,6 +79,9 @@ function openNewspaper() {
     if (!newspaperPanel) return;
     if (typeof window.clearPlayerInputState === 'function') window.clearPlayerInputState();
     newspaperReadCount++;
+    if (typeof window.noteAchievementEvent === 'function') {
+        window.noteAchievementEvent('newspaperRead');
+    }
     renderNewspaper();
     newspaperPanel.hidden = false;
     window.APP_SHELL_BLOCK_GAME = true;

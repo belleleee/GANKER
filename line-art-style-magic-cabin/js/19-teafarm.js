@@ -186,6 +186,87 @@ function toggleTeaRoastFire() {
     showHintOverride(teaRoastState.lit ? '炒茶灶点着了 · 可以开始翻炒茶叶' : '炒茶灶熄灭了');
 }
 
+function makeTeaWorldInteract(
+    parent,
+    cfg,
+    rootX,
+    rootZ,
+    rootScale
+) {
+    const hit =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                cfg.w,
+                cfg.h,
+                cfg.d
+            ),
+            new THREE.MeshBasicMaterial({
+                color:
+                    0xffffff,
+
+                transparent:
+                    true,
+
+                opacity:
+                    0.01,
+
+                depthWrite:
+                    false
+            })
+        );
+
+    hit.position.set(
+        cfg.x,
+        cfg.y,
+        cfg.z
+    );
+
+    hit.userData.aimLabel =
+        cfg.label;
+
+    parent.add(
+        hit
+    );
+
+    if (
+        typeof regMagic ===
+        'function'
+    ) {
+        regMagic(
+            hit,
+            cfg.act
+        );
+    }
+
+    if (
+        typeof interactables !==
+        'undefined'
+    ) {
+        interactables.push({
+            x:
+                rootX +
+                cfg.x *
+                rootScale,
+
+            z:
+                rootZ +
+                cfg.z *
+                rootScale,
+
+            r:
+                cfg.r,
+
+            label:
+                cfg.label,
+
+            act:
+                cfg.act
+        });
+    }
+
+    return hit;
+}
+
 function updateTeaRoastStation(dt, time) {
     const target = teaRoastState.lit ? 1 : 0;
     teaRoastState.firePower += (target - teaRoastState.firePower) * Math.min(1, dt * 7);
@@ -2270,16 +2351,6 @@ function buildTeaProcessingHutV2(
     roastStove.userData.aimLabel =
         '点火 / 熄灭炒茶灶';
 
-    if (
-        typeof regMagic ===
-        'function'
-    ) {
-        regMagic(
-            roastStove,
-            toggleTeaRoastFire
-        );
-    }
-
     const stoneCount =
         10;
 
@@ -2585,16 +2656,6 @@ function buildTeaProcessingHutV2(
 
     teaRoastState.panLeaves =
         panLeaves;
-
-    if (
-        typeof regMagic ===
-        'function'
-    ) {
-        regMagic(
-            roastStove,
-            toggleTeaRoastFire
-        );
-    }
 
     for (
         const item of [
@@ -3538,112 +3599,183 @@ function buildTeaProcessingHutV2(
             toggleTeaHutDoor
     });
 
-    interactables.push({
-        x:
-            x -
-            0.92 *
-            g.scale.x,
+    makeTeaWorldInteract(
+        g,
+        {
+            x:
+                -0.68,
 
-        z:
-            z -
-            0.12 *
-            g.scale.z,
+            y:
+                0.76,
 
-        r:
-            1.65,
+            z:
+                -0.30,
 
-        label:
-            '晒茶青（消耗生茶青 ×' + TEA_PROCESS_BATCH + '）',
+            w:
+                1.36,
 
-        act:
-            sieveTeaLeaves
-    });
+            h:
+                0.72,
 
-    interactables.push({
-        x:
-            x -
-            0.10 *
-            g.scale.x,
+            d:
+                0.92,
 
-        z:
-            z +
-            0.08 *
-            g.scale.z,
+            r:
+                1.34,
 
-        r:
-            1.15,
+            label:
+                '晒茶青（消耗生茶青 ×' + TEA_PROCESS_BATCH + '）',
 
-        label:
-            '点亮 / 熄灭茶屋吊灯',
+            act:
+                sieveTeaLeaves
+        },
+        x,
+        z,
+        g.scale.x
+    );
 
-        act:
-            toggleTeaHutLamp
-    });
+    makeTeaWorldInteract(
+        g,
+        {
+            x:
+                -0.12,
 
-    interactables.push({
-        x:
-            x +
-            (
+            y:
+                1.10,
+
+            z:
+                0.08,
+
+            w:
+                0.72,
+
+            h:
+                1.10,
+
+            d:
+                0.72,
+
+            r:
+                0.62,
+
+            label:
+                '点亮 / 熄灭茶屋吊灯',
+
+            act:
+                toggleTeaHutLamp
+        },
+        x,
+        z,
+        g.scale.x
+    );
+
+    makeTeaWorldInteract(
+        g,
+        {
+            x:
                 roastStationLocal.x -
-                0.36
-            ) *
-            g.scale.x,
+                0.42,
 
-        z:
-            z +
-            roastStationLocal.z *
-            g.scale.z,
+            y:
+                0.42,
 
-        r:
-            0.58,
+            z:
+                roastStationLocal.z +
+                0.20,
 
-        label:
-            '点火 / 熄灭炒茶灶',
+            w:
+                0.44,
 
-        act:
-            toggleTeaRoastFire
-    });
+            h:
+                0.58,
 
-    interactables.push({
-        x:
-            x +
-            (
+            d:
+                0.54,
+
+            r:
+                0.56,
+
+            label:
+                '点火 / 熄灭炒茶灶',
+
+            act:
+                toggleTeaRoastFire
+        },
+        x,
+        z,
+        g.scale.x
+    );
+
+    makeTeaWorldInteract(
+        g,
+        {
+            x:
                 roastStationLocal.x +
-                0.28
-            ) *
-            g.scale.x,
+                0.12,
 
-        z:
-            z +
-            roastStationLocal.z *
-            g.scale.z,
+            y:
+                0.72,
 
-        r:
-            0.72,
+            z:
+                roastStationLocal.z,
 
-        label:
-            '炒茶叶（消耗晒干茶青 ×' + TEA_PROCESS_BATCH + '）',
+            w:
+                0.82,
 
-        act:
-            roastTeaLeaves
-    });
+            h:
+                0.42,
 
-    interactables.push({
-        x:
-            x - 0.16 * g.scale.x,
+            d:
+                0.82,
 
-        z:
-            z + 0.34 * g.scale.z,
+            r:
+                0.86,
 
-        r:
-            1.00,
+            label:
+                '炒茶叶（消耗晒干茶青 ×' + TEA_PROCESS_BATCH + '）',
 
-        label:
-            '打包卖茶（消耗炒制茶叶 ×' + TEA_PROCESS_BATCH + '）',
+            act:
+                roastTeaLeaves
+        },
+        x,
+        z,
+        g.scale.x
+    );
 
-        act:
-            packageTeaLeaves
-    });
+    makeTeaWorldInteract(
+        g,
+        {
+            x:
+                -0.14,
+
+            y:
+                0.76,
+
+            z:
+                0.72,
+
+            w:
+                1.30,
+
+            h:
+                0.66,
+
+            d:
+                0.54,
+
+            r:
+                0.82,
+
+            label:
+                '打包卖茶（消耗炒制茶叶 ×' + TEA_PROCESS_BATCH + '）',
+
+            act:
+                packageTeaLeaves
+        },
+        x,
+        z,
+        g.scale.x
+    );
 
     /* ======================================================
        室内家具碰撞：晒茶筛 / 炒茶灶 / 工作台

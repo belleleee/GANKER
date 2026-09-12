@@ -85,3 +85,130 @@
     font-size: 12px;
     color: #7a5a2a;
 }
+
+.farmWorkerPanel {
+    position: fixed;
+    inset: 0;
+    z-index: 27;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(20, 24, 12, .46);
+    backdrop-filter: blur(4px);
+}
+
+.farmWorkerPanel[hidden] {
+    display: none;
+}
+
+.farmWorkerCard {
+    position: relative;
+    width: min(560px, 94vw);
+    max-height: 84vh;
+    overflow: auto;
+    padding: 24px 26px 22px;
+    color: #2f3a22;
+    background:
+        linear-gradient(90deg, rgba(142, 113, 72, .12) 0 2px, transparent 2px 100%),
+        linear-gradient(180deg, #f8f3df 0%, #edf3d6 100%);
+    border: 2px solid rgba(126, 105, 73, .72);
+    border-radius: 10px;
+    box-shadow: 0 22px 64px rgba(10, 20, 6, .35);
+    font-family: 'Segoe Print', Georgia, 'Times New Roman', serif;
+}
+
+.farmWorkerClose {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    color: #5a4932;
+    background: rgba(255, 255, 255, .55);
+    border: 1px solid rgba(126, 105, 73, .62);
+    border-radius: 8px;
+    font: 34px/1 Georgia, serif;
+    cursor: pointer;
+}
+
+.farmWorkerClose:hover {
+    background: rgba(255, 255, 255, .82);
+}
+
+.farmWorkerKicker {
+    margin: 0 48px 0 0;
+    letter-spacing: .28em;
+    text-transform: uppercase;
+    color: #5b7e47;
+    font: 700 12px/1.3 monospace;
+}
+
+#farmWorkerTitle {
+    margin: 7px 48px 10px 0;
+    font-size: clamp(21px, 4.8vw, 30px);
+}
+
+.farmWorkerStatus {
+    margin: 0 0 14px;
+    color: #637154;
+    font-size: 15px;
+    line-height: 1.55;
+}
+
+.farmWorkerCropOptions {
+    display: grid;
+    gap: 10px;
+}
+
+.farmWorkerCropOption {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 4px 12px;
+    min-height: 74px;
+    padding: 12px 14px;
+    color: #334126;
+    background: rgba(255, 255, 255, .54);
+    border: 1px solid rgba(102, 132, 75, .44);
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+}
+
+.farmWorkerCropOption:hover {
+    background: rgba(255, 255, 255, .82);
+}
+
+.farmWorkerCropOption.isActive {
+    border-color: #4f7e48;
+    background: rgba(214, 235, 185, .82);
+    box-shadow: inset 0 0 0 2px rgba(79, 126, 72, .18);
+}
+
+.farmWorkerCropIcon {
+    grid-row: span 2;
+    width: 38px;
+    text-align: center;
+    font-size: 26px;
+}
+
+.farmWorkerCropName {
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.farmWorkerCropCount {
+    justify-self: end;
+    color: #56704a;
+    font: 700 13px/1.2 monospace;
+}
+
+.farmWorkerCropNote {
+    grid-column: 2 / span 2;
+    color: #7a5a2a;
+    font-size: 13px;
+    line-height: 1.45;
+}
