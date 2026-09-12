@@ -181,9 +181,12 @@ const CROP_STORAGE_KEYS = ['turnip', 'cabbage', 'rice', 'potato'];
 
 function renderStorage(bump) {
     if (!storageHud) return;
-    const total = CROP_STORAGE_KEYS.reduce((sum, key) => sum + (cropStorage[key] || 0), 0);
+    const breakdown = CROP_STORAGE_KEYS.map(key => {
+        const crop = typeof CROP_TYPES !== 'undefined' && CROP_TYPES[key] ? CROP_TYPES[key] : null;
+        return (crop ? crop.icon : key) + (cropStorage[key] || 0);
+    }).join(' ');
     storageHud.textContent =
-        '仓库 作物 ' + total + ' · 信物 ' + cropStorage.starRelic;
+        '仓库 ' + breakdown + ' · 信物 ' + cropStorage.starRelic;
     if (!bump) return;
     storageHud.classList.remove('bump');
     void storageHud.offsetWidth;
@@ -216,8 +219,12 @@ const SEED_LABELS = { turnipSeed: '萝卜种子', cabbageSeed: '白菜种子', r
 
 function renderBackpack(bump) {
     if (!backpackHud) return;
-    const total = BACKPACK_SEED_KEYS.reduce((sum, key) => sum + (cabinBackpack[key] || 0), 0);
-    backpackHud.textContent = '背包 种子 ' + total;
+    const breakdown = CROP_STORAGE_KEYS.map(key => {
+        const crop = typeof CROP_TYPES !== 'undefined' && CROP_TYPES[key] ? CROP_TYPES[key] : null;
+        if (!crop) return '';
+        return crop.icon + (cabinBackpack[crop.seedItem] || 0);
+    }).filter(Boolean).join(' ');
+    backpackHud.textContent = '种子 ' + breakdown;
     if (!bump) return;
     backpackHud.classList.remove('bump');
     void backpackHud.offsetWidth;
@@ -256,6 +263,9 @@ function buySeed(cropId, amount) {
     const cost = crop.seedPrice * count;
     if (!spendCabinCoins(cost, null)) return false;
     addBackpackItem(crop.seedItem, count);
+    if (typeof window.noteAchievementEvent === 'function') {
+        window.noteAchievementEvent('seedBuy', { cropId, amount: count });
+    }
     showHintOverride('购入' + crop.name + '种子 +' + count + ' · 花费 ' + cost + ' 金币 · 背包 ' + cabinBackpack[crop.seedItem]);
     return true;
 }
@@ -422,6 +432,9 @@ function claimCafeRevenue() {
         localStorage.removeItem(APP_CAFE_REVENUE_KEY);
     } catch (err) { }
     cafeTotalRevenue = Math.min(999999, cafeTotalRevenue + amount);
+    if (typeof window.noteAchievementEvent === 'function') {
+        window.noteAchievementEvent('enterCafe');
+    }
     addCabinCoins(amount, '咖啡馆营业收入');
     saveGameState(false);
     return amount;
@@ -644,7 +657,6 @@ function captureSaveState() {
         },
         teaFarm: typeof captureTeaFarmState === 'function' ? captureTeaFarmState() : null,
         newspaper: typeof captureNewspaperState === 'function' ? captureNewspaperState() : null,
-        zongStory: typeof captureZongStoryState === 'function' ? captureZongStoryState() : null,
         mainStory: typeof captureMainStoryState === 'function' ? captureMainStoryState() : null,
         achievements: typeof captureAchievementState === 'function' ? captureAchievementState() : null,
         wealthEvents: typeof captureWealthEventsState === 'function' ? captureWealthEventsState() : null,
@@ -826,9 +838,6 @@ function applySaveState(save) {
     }
     if (typeof applyNewspaperState === 'function') {
         applyNewspaperState(save.newspaper);
-    }
-    if (typeof applyZongStoryState === 'function') {
-        applyZongStoryState(save.zongStory);
     }
     if (typeof applyMainStoryState === 'function') {
         applyMainStoryState(save.mainStory);

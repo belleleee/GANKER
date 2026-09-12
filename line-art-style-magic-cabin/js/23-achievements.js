@@ -2,9 +2,10 @@
 
 /* ================================================================
    成就系统
-   周期性地检查各个系统的已有数据（金币、萝卜、茶叶、主线进度、
-   创业笔记、抛硬币小游戏和股市小屋各自的存档），达成条件就解锁。
-   不需要在每个操作点手动埋点，新增成就只要在下面加一条 check 即可。
+   周期性地检查各个系统的已有数据（金币、作物、茶叶、主线进度、
+   抛硬币小游戏和股市小屋各自的存档），达成条件就解锁。
+   对于"做过几次"这类无法从现有状态反推的事件，则通过 noteAchievementEvent
+   轻量记录进成就统计里，随成就存档一起保存。
    ================================================================ */
 
 function peekCoinGameSave() {
@@ -31,6 +32,99 @@ function peekInvestmentRoomSave() {
     }
 }
 
+function peekCropCount(id) {
+    return typeof cropStorage !== 'undefined' ? Math.max(0, Number(cropStorage[id]) || 0) : 0;
+}
+
+function totalStoredCrops() {
+    return peekCropCount('turnip') + peekCropCount('cabbage') + peekCropCount('rice') + peekCropCount('potato');
+}
+
+const ACHIEVEMENT_STAT_DEFAULTS = {
+    totalHarvests: 0,
+    badWeatherHarvests: 0,
+    goodWeatherHarvests: 0,
+    tillCount: 0,
+    plantCount: 0,
+    waterCount: 0,
+    seedBuys: 0,
+    weatherAttempts: 0,
+    weatherSuccesses: 0,
+    interactions: 0,
+    magicInteractions: 0,
+    newspaperReads: 0,
+    wellDraws: 0,
+    cafeEntries: 0,
+    coinShopEntries: 0,
+    investmentEntries: 0,
+    deliveryCount: 0
+};
+
+function makeAchievementStats(raw) {
+    const stats = Object.assign({}, ACHIEVEMENT_STAT_DEFAULTS);
+    if (raw && typeof raw === 'object') {
+        Object.keys(ACHIEVEMENT_STAT_DEFAULTS).forEach(key => {
+            stats[key] = Math.max(0, Math.trunc(Number(raw[key]) || 0));
+        });
+    }
+    const byCrop = raw && raw.harvestByCrop && typeof raw.harvestByCrop === 'object' ? raw.harvestByCrop : {};
+    stats.harvestByCrop = {
+        turnip: Math.max(0, Math.trunc(Number(byCrop.turnip) || 0)),
+        cabbage: Math.max(0, Math.trunc(Number(byCrop.cabbage) || 0)),
+        rice: Math.max(0, Math.trunc(Number(byCrop.rice) || 0)),
+        potato: Math.max(0, Math.trunc(Number(byCrop.potato) || 0))
+    };
+    return stats;
+}
+
+function getAchievementStats() {
+    if (!achievementState.stats) achievementState.stats = makeAchievementStats(null);
+    return achievementState.stats;
+}
+
+function noteAchievementEvent(type, detail) {
+    const stats = getAchievementStats();
+    const data = detail || {};
+    let recorded = true;
+    if (type === 'farmHarvest') {
+        const cropId = ['turnip', 'cabbage', 'rice', 'potato'].indexOf(data.cropId) >= 0 ? data.cropId : 'turnip';
+        stats.totalHarvests++;
+        stats.harvestByCrop[cropId] = (stats.harvestByCrop[cropId] || 0) + 1;
+        if (Number(data.multiplier) < 1) stats.badWeatherHarvests++;
+        if (Number(data.multiplier) > 1) stats.goodWeatherHarvests++;
+    } else if (type === 'farmTill') {
+        stats.tillCount++;
+    } else if (type === 'farmPlant') {
+        stats.plantCount++;
+    } else if (type === 'farmWater') {
+        stats.waterCount++;
+    } else if (type === 'seedBuy') {
+        stats.seedBuys += Math.max(1, Math.trunc(Number(data.amount) || 1));
+    } else if (type === 'weatherAttempt') {
+        stats.weatherAttempts++;
+    } else if (type === 'weatherSuccess') {
+        stats.weatherSuccesses++;
+    } else if (type === 'interaction') {
+        stats.interactions++;
+        if (data && data.magic) stats.magicInteractions++;
+    } else if (type === 'newspaperRead') {
+        stats.newspaperReads++;
+    } else if (type === 'wellDraw') {
+        stats.wellDraws++;
+    } else if (type === 'enterCafe') {
+        stats.cafeEntries++;
+    } else if (type === 'enterCoinShop') {
+        stats.coinShopEntries++;
+    } else if (type === 'enterInvestmentRoom') {
+        stats.investmentEntries++;
+    } else if (type === 'deliveryDone') {
+        stats.deliveryCount++;
+    } else {
+        recorded = false;
+    }
+    if (recorded) achievementStatsDirty = true;
+}
+
 const ACHIEVEMENT_CATEGORIES = [
     { id: 'farm', label: '农场', color: '#6fa84f' },
     { id: 'wealth', label: '财富', color: '#c8962c' },
@@ -38,9 +132,10 @@ const ACHIEVEMENT_CATEGORIES = [
     { id: 'story', label: '主线', color: '#9c6bd8' },
     { id: 'coin', label: '钱滚钱', color: '#d87b3f' },
     { id: 'invest', label: '股市', color: '#3f7fd8' },
-    { id: 'zong', label: '创业笔记', color: '#b8542f' },
     { id: 'explore', label: '探索小屋', color: '#5b8fa8' },
-    { id: 'charity', label: '慈善', color: '#5ba872' }
+    { id: 'interaction', label: '交互', color: '#8a7bd8' },
+    { id: 'charity', label: '慈善', color: '#5ba872' },
+    { id: 'delivery', label: '代销', color: '#c86b4a' }
 ];
 
 const ACHIEVEMENTS = [
@@ -61,6 +156,94 @@ const ACHIEVEMENTS = [
         check: () => typeof cropStorage !== 'undefined' && cropStorage.turnip >= 50
     },
     {
+        id: 'first_cabbage',
+        category: 'farm',
+        icon: '🥬',
+        title: '第一棵白菜',
+        desc: '收获第一棵白菜',
+        check: () => peekCropCount('cabbage') >= 1
+    },
+    {
+        id: 'first_rice',
+        category: 'farm',
+        icon: '🌾',
+        title: '第一束水稻',
+        desc: '收获第一束水稻',
+        check: () => peekCropCount('rice') >= 1
+    },
+    {
+        id: 'first_potato',
+        category: 'farm',
+        icon: '🥔',
+        title: '第一颗土豆',
+        desc: '收获第一颗土豆',
+        check: () => peekCropCount('potato') >= 1
+    },
+    {
+        id: 'cabbage_farmer',
+        category: 'farm',
+        icon: '🥬',
+        title: '白菜成垛',
+        desc: '仓库里存下 50 棵白菜',
+        check: () => peekCropCount('cabbage') >= 50
+    },
+    {
+        id: 'rice_farmer',
+        category: 'farm',
+        icon: '🌾',
+        title: '稻浪初起',
+        desc: '仓库里存下 50 束水稻',
+        check: () => peekCropCount('rice') >= 50
+    },
+    {
+        id: 'potato_farmer',
+        category: 'farm',
+        icon: '🥔',
+        title: '土豆地窖',
+        desc: '仓库里存下 50 颗土豆',
+        check: () => peekCropCount('potato') >= 50
+    },
+    {
+        id: 'four_crop_farmer',
+        category: 'farm',
+        icon: '🧺',
+        title: '四季菜篮',
+        desc: '萝卜、白菜、水稻、土豆都至少收获过一次',
+        check: () => ['turnip', 'cabbage', 'rice', 'potato'].every(id => peekCropCount(id) >= 1)
+    },
+    {
+        id: 'weather_misread',
+        category: 'farm',
+        icon: '🌧️',
+        title: '看天吃饭',
+        desc: '在不适合的天气里收获作物，导致一次减产',
+        check: () => getAchievementStats().badWeatherHarvests >= 1
+    },
+    {
+        id: 'weather_lessons',
+        category: 'farm',
+        icon: '☔',
+        title: '天不帮忙',
+        desc: '累计经历 5 次天气减产',
+        check: () => getAchievementStats().badWeatherHarvests >= 5
+    },
+    {
+        id: 'weather_reader',
+        category: 'farm',
+        icon: '☀️',
+        title: '会看天色',
+        desc: '累计吃到 5 次天气加成',
+        check: () => getAchievementStats().goodWeatherHarvests >= 5
+    },
+    {
+        id: 'grain_keeper',
+        category: 'farm',
+        icon: '🏚️',
+        title: '满仓不是梦',
+        desc: '仓库里的四类作物合计达到 300',
+        check: () => totalStoredCrops() >= 300
+    },
+    {
         id: 'first_gold',
         category: 'wealth',
         icon: '🪙',
@@ -77,6 +260,22 @@ const ACHIEVEMENTS = [
         check: () => typeof cabinCoins === 'number' && cabinCoins >= 1000
     },
     {
+        id: 'comfortable_cash',
+        category: 'wealth',
+        icon: '💵',
+        title: '手头宽裕',
+        desc: '金币达到 5000',
+        check: () => typeof cabinCoins === 'number' && cabinCoins >= 5000
+    },
+    {
+        id: 'ten_thousand_coins',
+        category: 'wealth',
+        icon: '🏛️',
+        title: '万元户',
+        desc: '金币达到 10000',
+        check: () => typeof cabinCoins === 'number' && cabinCoins >= 10000
+    },
+    {
         id: 'tea_master',
         category: 'tea',
         icon: '🍵',
@@ -89,7 +288,7 @@ const ACHIEVEMENTS = [
         category: 'story',
         icon: '📖',
         title: '主线 · 序章',
-        desc: '读完第一章占位剧情，解锁茶场',
+        desc: '读完第一章主线，解锁茶场',
         check: () => typeof window.isMainStoryFeatureUnlocked === 'function' && window.isMainStoryFeatureUnlocked('tea')
     },
     {
@@ -129,22 +328,6 @@ const ACHIEVEMENTS = [
             const save = peekInvestmentRoomSave();
             return !!save && save.holdings && Object.keys(save.holdings).length > 0;
         }
-    },
-    {
-        id: 'zong_book_finished',
-        category: 'zong',
-        icon: '📔',
-        title: '创业笔记 · 合卷',
-        desc: '读完《创业笔记》全部章节',
-        check: () => typeof zongChapterIndex !== 'undefined' && typeof ZONG_CHAPTERS !== 'undefined' && zongChapterIndex >= ZONG_CHAPTERS.length
-    },
-    {
-        id: 'zong_investor',
-        category: 'zong',
-        icon: '🤝',
-        title: '创业笔记 · 老搭档',
-        desc: '在《创业笔记》里投资 3 次',
-        check: () => typeof zongStats !== 'undefined' && zongStats.investCount >= 3
     },
     {
         id: 'farm_hire',
@@ -266,6 +449,113 @@ const ACHIEVEMENTS = [
         check: () => typeof fireLit !== 'undefined' && fireLit && lampLit && lanternLit && catAwake && bookOn
     },
     {
+        id: 'first_interaction',
+        category: 'interaction',
+        icon: '👆',
+        title: '伸手摸摸',
+        desc: '完成第一次场景交互',
+        check: () => getAchievementStats().interactions >= 1
+    },
+    {
+        id: 'interaction_habit',
+        category: 'interaction',
+        icon: '🖐️',
+        title: '到处试试',
+        desc: '累计完成 20 次场景交互',
+        check: () => getAchievementStats().interactions >= 20
+    },
+    {
+        id: 'interaction_collector',
+        category: 'interaction',
+        icon: '✨',
+        title: '什么都要碰一下',
+        desc: '累计完成 100 次场景交互',
+        check: () => getAchievementStats().interactions >= 100
+    },
+    {
+        id: 'magic_touch',
+        category: 'interaction',
+        icon: '🪄',
+        title: '魔法手感',
+        desc: '累计触发 20 次魔法物件交互',
+        check: () => getAchievementStats().magicInteractions >= 20
+    },
+    {
+        id: 'well_keeper',
+        category: 'interaction',
+        icon: '💧',
+        title: '井边熟客',
+        desc: '在水井打过 5 次水',
+        check: () => getAchievementStats().wellDraws >= 5
+    },
+    {
+        id: 'newspaper_reader',
+        category: 'interaction',
+        icon: '📰',
+        title: '读报的人',
+        desc: '阅读过魔女小屋报刊',
+        check: () => getAchievementStats().newspaperReads >= 1
+    },
+    {
+        id: 'seed_shopper',
+        category: 'interaction',
+        icon: '🛒',
+        title: '种子采购员',
+        desc: '累计购买 20 包种子',
+        check: () => getAchievementStats().seedBuys >= 20
+    },
+    {
+        id: 'weather_prayer',
+        category: 'interaction',
+        icon: '🌦️',
+        title: '和天气谈判',
+        desc: '第一次花钱祈天',
+        check: () => getAchievementStats().weatherAttempts >= 1
+    },
+    {
+        id: 'weather_bargain',
+        category: 'interaction',
+        icon: '🌤️',
+        title: '天遂人愿',
+        desc: '祈天成功 3 次',
+        check: () => getAchievementStats().weatherSuccesses >= 3
+    },
+    {
+        id: 'tool_cycle',
+        category: 'interaction',
+        icon: '🧰',
+        title: '工具轮班',
+        desc: '完成过翻地、播种、浇水、收获四种农活',
+        check: () => {
+            const s = getAchievementStats();
+            return s.tillCount >= 1 && s.plantCount >= 1 && s.waterCount >= 1 && s.totalHarvests >= 1;
+        }
+    },
+    {
+        id: 'went_to_work',
+        category: 'interaction',
+        icon: '☕',
+        title: '去咖啡馆看看',
+        desc: '从主场景进入过线稿咖啡馆',
+        check: () => getAchievementStats().cafeEntries >= 1
+    },
+    {
+        id: 'risk_room_visit',
+        category: 'interaction',
+        icon: '🎲',
+        title: '走进风险屋',
+        desc: '从主场景进入过钱滚钱商店',
+        check: () => getAchievementStats().coinShopEntries >= 1
+    },
+    {
+        id: 'market_room_visit',
+        category: 'interaction',
+        icon: '📊',
+        title: '第一次看盘',
+        desc: '从主场景进入过股市小屋',
+        check: () => getAchievementStats().investmentEntries >= 1
+    },
+    {
         id: 'steady_farmer',
         category: 'wealth',
         icon: '🌾',
@@ -347,6 +637,22 @@ const ACHIEVEMENTS = [
         check: () => typeof window.getFinancingStats === 'function' && window.getFinancingStats().losses >= 3
     },
     {
+        id: 'ad_taxed',
+        category: 'wealth',
+        icon: '📣',
+        title: '被广告收割',
+        desc: '被突发广告事件扣过一次金币',
+        check: () => typeof window.getWealthEventStats === 'function' && window.getWealthEventStats().adHits >= 1
+    },
+    {
+        id: 'ad_resistant',
+        category: 'wealth',
+        icon: '🧾',
+        title: '营销成本',
+        desc: '累计遇到 5 次突发广告事件',
+        check: () => typeof window.getWealthEventStats === 'function' && window.getWealthEventStats().adHits >= 5
+    },
+    {
         id: 'lucky_pitch',
         category: 'wealth',
         icon: '🍀',
@@ -387,6 +693,30 @@ const ACHIEVEMENTS = [
         check: () => typeof window.getCharityTotalDonated === 'function' && window.getCharityTotalDonated() >= 500
     },
     {
+        id: 'charity_first_choice',
+        category: 'charity',
+        icon: '🤲',
+        title: '第一次伸手相助',
+        desc: '完成第一次慈善捐款',
+        check: () => typeof window.getWealthEventStats === 'function' && window.getWealthEventStats().charityDonations >= 1
+    },
+    {
+        id: 'charity_three_times',
+        category: 'charity',
+        icon: '🌱',
+        title: '善意会重复',
+        desc: '累计完成 3 次慈善捐款',
+        check: () => typeof window.getWealthEventStats === 'function' && window.getWealthEventStats().charityDonations >= 3
+    },
+    {
+        id: 'charity_big_gift',
+        category: 'charity',
+        icon: '🎁',
+        title: '大额捐赠',
+        desc: '单次捐款达到 500 金币',
+        check: () => typeof window.getWealthEventStats === 'function' && window.getWealthEventStats().charityMaxSingle >= 500
+    },
+    {
         id: 'cafe_first_shift',
         category: 'wealth',
         icon: '☕',
@@ -425,10 +755,27 @@ const ACHIEVEMENTS = [
         title: '大慈善家',
         desc: '累计捐款达到 2000 金币——赚钱是本事，舍得给出去，是另一种本事',
         check: () => typeof window.getCharityTotalDonated === 'function' && window.getCharityTotalDonated() >= 2000
+    },
+    {
+        id: 'first_delivery',
+        category: 'delivery',
+        icon: '📦',
+        title: '第一单生意',
+        desc: '接下并送完第一单代销订单',
+        check: () => getAchievementStats().deliveryCount >= 1
+    },
+    {
+        id: 'delivery_regular',
+        category: 'delivery',
+        icon: '🚲',
+        title: '走街串巷',
+        desc: '累计送完 10 单代销订单——这就是当年三轮车摆摊的手艺',
+        check: () => getAchievementStats().deliveryCount >= 10
     }
 ];
 
-let achievementState = { unlocked: {} };
+let achievementState = { unlocked: {}, stats: makeAchievementStats(null) };
+let achievementStatsDirty = false;
 let achievementPollTimer = 0;
 
 const achievementsPanel = document.getElementById('achievementsPanel');
@@ -495,9 +842,10 @@ function pollAchievements() {
             if (typeof SND !== 'undefined') SND.play('chim');
         }
     });
-    if (changed) {
+    if (changed || achievementStatsDirty) {
         refreshAchievementsBadge();
         if (achievementsPanel && !achievementsPanel.hidden) renderAchievementsPanel();
+        achievementStatsDirty = false;
         if (typeof saveGameState === 'function') saveGameState(false);
     }
 }
@@ -529,7 +877,10 @@ function closeAchievementsPanel() {
 }
 
 function captureAchievementState() {
-    return { unlocked: Object.assign({}, achievementState.unlocked) };
+    return {
+        unlocked: Object.assign({}, achievementState.unlocked),
+        stats: makeAchievementStats(achievementState.stats)
+    };
 }
 
 function applyAchievementState(raw) {
@@ -539,7 +890,8 @@ function applyAchievementState(raw) {
             if (raw.unlocked[a.id]) unlocked[a.id] = true;
         });
     }
-    achievementState = { unlocked };
+    achievementState = { unlocked, stats: makeAchievementStats(raw && raw.stats) };
+    achievementStatsDirty = false;
     refreshAchievementsBadge();
 }
 
@@ -560,3 +912,4 @@ refreshAchievementsBadge();
 window.updateAchievements = updateAchievements;
 window.captureAchievementState = captureAchievementState;
 window.applyAchievementState = applyAchievementState;
+window.noteAchievementEvent = noteAchievementEvent;
