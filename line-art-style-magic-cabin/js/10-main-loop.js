@@ -50,6 +50,9 @@
                 if (typeof updateDeliveryOrders === 'function') {
                     updateDeliveryOrders(dt, time);
                 }
+                if (typeof pollGamblingRisk === 'function') {
+                    pollGamblingRisk();
+                }
                 
                 FILL.uniforms.uTime.value = time;
                 FILL.uniforms.uFireStrength.value = fireP;

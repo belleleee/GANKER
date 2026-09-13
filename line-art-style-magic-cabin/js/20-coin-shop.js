@@ -142,6 +142,12 @@
     }
 
     function enterCoinShop() {
+        if (typeof window.isCoinShopLocked === 'function' && window.isCoinShopLocked()) {
+            const days = typeof window.coinShopLockDaysLeft === 'function' ? window.coinShopLockDaysLeft() : 0;
+            showHintOverride('冷静期还没过——再等 ' + days + ' 天，钱滚钱商店才会重新开门');
+            if (typeof SND !== 'undefined') SND.play('toggle');
+            return;
+        }
         const go = () => {
             if (typeof window.noteAchievementEvent === 'function') {
                 window.noteAchievementEvent('enterCoinShop');

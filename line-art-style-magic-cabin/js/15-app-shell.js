@@ -664,7 +664,8 @@ function captureSaveState() {
         weatherFarm: typeof captureWeatherFarmState === 'function' ? captureWeatherFarmState() : null,
         cafeTotalRevenue: cafeTotalRevenue,
         toolUnlock: typeof captureToolUnlockState === 'function' ? captureToolUnlockState() : null,
-        prologue: typeof capturePrologueState === 'function' ? capturePrologueState() : null
+        prologue: typeof capturePrologueState === 'function' ? capturePrologueState() : null,
+        gamblingRisk: typeof captureGamblingRiskState === 'function' ? captureGamblingRiskState() : null
     };
 }
 
@@ -857,6 +858,9 @@ function applySaveState(save) {
     }
     if (typeof applyPrologueState === 'function') {
         applyPrologueState(save.prologue);
+    }
+    if (typeof applyGamblingRiskState === 'function') {
+        applyGamblingRiskState(save.gamblingRisk);
     }
     cafeTotalRevenue = Math.max(0, Math.trunc(Number(save.cafeTotalRevenue) || 0));
 }
