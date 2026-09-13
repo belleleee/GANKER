@@ -1,0 +1,447 @@
+/* ================================================================
+   序章 · 1945—1978
+   原本是独立的 prologue/first.html 页面，现在拆开融入主游戏，
+   作为一个全屏叙事面板（跟 mainStoryPanel、onboardingPanel 同一量级）。
+   下面这套 .pro-* 样式和像素描边风格，是从原页面的 style.css /
+   level_one_pixel.css 里挑出来的，原文件里剩下的都是另一个已废弃的
+   "闯关地图"原型，跟序章无关，没有一并搬过来。
+   ================================================================ */
+
+:root {
+    --px-ink: #17242d;
+    --px-panel: #1f3a36;
+    --px-panel-2: #2f5548;
+    --px-cream: #fff0bf;
+    --px-gold: #e6b85a;
+    --px-orange: #c7623e;
+    --px-shadow: rgba(9, 18, 22, .55);
+}
+
+.prologuePanel {
+    --pro-gold: #c9a76a;
+    --pro-ink: #f2efe8;
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    overflow: hidden;
+    background: #0a0808;
+    font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong", "SimSun", serif;
+    color: var(--pro-ink);
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+.prologuePanel[hidden] {
+    display: none;
+}
+
+.prologuePanel * {
+    box-sizing: border-box;
+}
+
+.prologuePanel img {
+    max-width: 100%;
+}
+
+/* ---- 跳过按钮 ---- */
+.prologueSkip {
+    position: fixed;
+    top: 2.4%;
+    right: 3%;
+    z-index: 26;
+    padding: .5em 1em;
+    border: 1px solid rgba(201, 167, 106, .5);
+    background: rgba(8, 8, 10, .6);
+    color: var(--pro-gold);
+    font: 700 12px/1.4 monospace;
+    letter-spacing: .12em;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+.prologueSkip:hover {
+    background: rgba(201, 167, 106, .18);
+}
+
+/* ---- 背景层 ---- */
+.pro-bg {
+    position: fixed;
+    top: 8%;
+    left: 0;
+    width: 100%;
+    height: 66.5%;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+    box-shadow: inset 0 0 90px rgba(0, 0, 0, .55);
+    border-top: 1px solid rgba(255, 255, 255, .05);
+    border-bottom: 1px solid rgba(255, 255, 255, .05);
+    transition: opacity .55s ease;
+}
+
+.pro-bg-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 32%;
+    opacity: 0;
+    filter: grayscale(1) contrast(1.06) brightness(.92);
+    animation: proFade 2.2s ease-in forwards, proKenburns 30s ease-out forwards;
+}
+
+.pro-vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 120% 90% at 50% 40%, transparent 52%, rgba(0, 0, 0, .6) 100%);
+}
+
+.pro-bottom-fade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, .28) 0%, transparent 22%, transparent 60%, rgba(0, 0, 0, .8) 100%);
+}
+
+.pro-grain {
+    position: absolute;
+    inset: 0;
+    opacity: .07;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='160' height='160' filter='url(%23n)' opacity='0.9'/></svg>");
+    animation: proGrain .7s steps(3) infinite;
+}
+
+/* ---- 场景角标 ---- */
+.pro-scene-tag {
+    position: fixed;
+    top: 2.6%;
+    right: 3.2%;
+    z-index: 20;
+    font-size: clamp(.72rem, 1vw, .95rem);
+    letter-spacing: .42em;
+    text-indent: .42em;
+    color: rgba(242, 239, 232, .62);
+    pointer-events: none;
+    cursor: default;
+}
+
+.pro-scene-tag.anim {
+    animation: proTagIn 3s ease .4s both;
+}
+
+/* ---- 对话框 ---- */
+.pro-dialog {
+    position: fixed;
+    left: 3%;
+    right: 3%;
+    bottom: 2.8%;
+    z-index: 10;
+    background: rgba(13, 24, 26, .94);
+    border: 4px solid var(--px-gold);
+    padding: 1.6rem 2.4rem 1.7rem;
+    min-height: 21vh;
+    display: flex;
+    align-items: center;
+    box-shadow: 10px 10px 0 var(--px-shadow), inset 0 1px 0 rgba(255, 255, 255, .05);
+    animation: proDialogIn 1s ease .5s both;
+}
+
+.pro-dialog-bar {
+    flex: 0 0 3px;
+    align-self: stretch;
+    margin-right: 1.6rem;
+    background: linear-gradient(to bottom, transparent, var(--px-gold) 18%, var(--px-gold) 82%, transparent);
+}
+
+.pro-dialog-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.pro-speaker {
+    display: inline-block;
+    font-family: "Courier New", "Songti SC", monospace;
+    font-size: clamp(.7rem, .95vw, .88rem);
+    letter-spacing: .34em;
+    text-indent: .34em;
+    color: var(--pro-gold);
+    border: 3px solid rgba(230, 184, 90, .6);
+    padding: .28em 1em .28em .66em;
+    margin-bottom: .85rem;
+    background: rgba(230, 184, 90, .1);
+}
+
+/* 角色配色 */
+.prologuePanel .pro-speaker.mother { color: #d68d6f; border-color: rgba(214, 141, 111, .5); background: rgba(214, 141, 111, .08); }
+.prologuePanel .pro-speaker.father { color: #8fa9bd; border-color: rgba(143, 169, 189, .5); background: rgba(143, 169, 189, .08); }
+.prologuePanel .pro-speaker.grandfather { color: #6f8f72; border-color: rgba(111, 143, 114, .55); background: rgba(111, 143, 114, .08); }
+.prologuePanel .pro-speaker.you { color: #e0aa54; border-color: rgba(224, 170, 84, .5); background: rgba(224, 170, 84, .08); }
+.prologuePanel .pro-speaker.ahai { color: #8fc7b0; border-color: rgba(143, 199, 176, .5); background: rgba(143, 199, 176, .08); }
+.prologuePanel .pro-speaker.captain { color: #b9a585; border-color: rgba(185, 165, 133, .5); background: rgba(185, 165, 133, .08); }
+.prologuePanel .pro-speaker.guide { color: #c49a6c; border-color: rgba(196, 154, 108, .5); background: rgba(196, 154, 108, .08); }
+.prologuePanel .pro-speaker.tallboy { color: #9aa7b5; border-color: rgba(154, 167, 181, .5); background: rgba(154, 167, 181, .08); }
+.prologuePanel .pro-speaker.zhaobo { color: #a3b28a; border-color: rgba(163, 178, 138, .5); background: rgba(163, 178, 138, .08); }
+.prologuePanel .pro-speaker.xiulan { color: #d9a3a0; border-color: rgba(217, 163, 160, .5); background: rgba(217, 163, 160, .08); }
+.prologuePanel .pro-speaker.messenger { color: #a8b8c2; border-color: rgba(168, 184, 194, .5); background: rgba(168, 184, 194, .08); }
+
+.pro-line {
+    font-size: clamp(1.02rem, 1.5vw, 1.32rem);
+    line-height: 2.05;
+    letter-spacing: .06em;
+    min-height: 4.1em;
+    text-align: justify;
+    text-justify: inter-ideograph;
+    padding-right: 2.6rem;
+}
+
+.pro-line.action {
+    color: rgba(242, 239, 232, .7);
+    font-style: italic;
+    letter-spacing: .03em;
+}
+
+.pro-line .caret {
+    display: inline-block;
+    width: .55em;
+    height: 1.05em;
+    margin-left: .12em;
+    vertical-align: -.18em;
+    background: var(--px-gold);
+    animation: proBlink .75s steps(1) infinite;
+}
+
+.pro-hint {
+    position: absolute;
+    right: 1.6rem;
+    bottom: .9rem;
+    font-size: .78rem;
+    letter-spacing: .2em;
+    color: rgba(242, 239, 232, .65);
+    animation: proHintPulse 1.6s ease-in-out infinite;
+}
+
+.pro-hint.done {
+    animation: none;
+    color: rgba(201, 167, 106, .85);
+}
+
+/* ---- 音乐开关 ---- */
+.pro-music {
+    position: fixed;
+    top: 2.4%;
+    left: 3%;
+    z-index: 25;
+    width: 46px;
+    height: 46px;
+    display: grid;
+    place-items: center;
+    border: 4px solid var(--px-gold);
+    background: rgba(15, 35, 42, .92);
+    box-shadow: 5px 5px 0 var(--px-shadow);
+    color: var(--px-gold);
+    cursor: pointer;
+    transition: color .25s, background .25s;
+    pointer-events: auto;
+}
+
+.pro-music:hover {
+    background: var(--px-panel-2);
+}
+
+.pro-music.is-on {
+    background: var(--px-panel-2);
+    color: var(--px-cream);
+}
+
+.pro-music svg {
+    width: 22px;
+    height: 22px;
+}
+
+.pro-music .ico-on {
+    display: none;
+}
+
+.pro-music.is-on .ico-on {
+    display: block;
+}
+
+.pro-music.is-on .ico-off {
+    display: none;
+}
+
+/* ---- 数值面板 ---- */
+.pro-hud {
+    position: fixed;
+    left: 3%;
+    top: 11%;
+    z-index: 25;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(-6px);
+    transition: opacity .4s, transform .4s;
+    font-family: "Courier New", "Songti SC", monospace;
+}
+
+.prologuePanel.has-stats .pro-hud {
+    opacity: 1;
+    transform: none;
+}
+
+.pro-hud-title {
+    font-size: .68rem;
+    letter-spacing: .3em;
+    text-indent: .3em;
+    color: var(--px-cream);
+    border: 3px solid var(--px-gold);
+    background: rgba(15, 35, 42, .94);
+    padding: 3px 7px;
+    box-shadow: 4px 4px 0 var(--px-shadow);
+}
+
+.pro-hud-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 4px 9px;
+    font-size: .72rem;
+    letter-spacing: .06em;
+    border: 3px solid var(--px-ink);
+    background: rgba(31, 58, 54, .92);
+    color: var(--px-cream);
+    box-shadow: 4px 4px 0 var(--px-shadow);
+}
+
+.pro-hud-row span {
+    color: rgba(242, 239, 232, .72);
+}
+
+.pro-hud-row b {
+    color: var(--px-gold);
+    font-weight: 700;
+}
+
+/* ---- 选择面板 ---- */
+.pro-choices {
+    position: fixed;
+    left: 3%;
+    right: 3%;
+    bottom: 2.8%;
+    z-index: 40;
+    padding: 1.2rem 1.5rem 1.4rem;
+    border: 5px solid var(--px-gold);
+    background: rgba(13, 29, 34, .95);
+    box-shadow: 10px 10px 0 var(--px-shadow);
+    animation: proChoiceIn .3s ease both;
+}
+
+.pro-choices[hidden] {
+    display: none;
+}
+
+.pro-choices-title {
+    margin-bottom: .9rem;
+    font-size: .85rem;
+    letter-spacing: .28em;
+    text-indent: .28em;
+    color: rgba(201, 167, 106, .92);
+    font-family: "Courier New", "Songti SC", monospace;
+}
+
+.pro-choices-list {
+    display: grid;
+    gap: 10px;
+}
+
+.pro-choice {
+    display: block;
+    width: 100%;
+    text-align: left;
+    border: 4px solid var(--px-ink);
+    background: var(--px-panel);
+    color: var(--px-cream);
+    box-shadow: 6px 6px 0 var(--px-shadow);
+    font-family: "Courier New", "Songti SC", monospace;
+    padding: .8rem 1.1rem;
+    font-size: clamp(.92rem, 1.3vw, 1.08rem);
+    letter-spacing: .05em;
+    cursor: pointer;
+    pointer-events: auto;
+    transition: transform .18s, background .18s, color .18s;
+}
+
+.pro-choice:hover,
+.pro-choice:focus {
+    background: var(--px-orange);
+    color: #fff3cf;
+    transform: translate(-2px, -2px);
+    box-shadow: 8px 8px 0 var(--px-shadow);
+    outline: none;
+}
+
+/* ---- toast ---- */
+.pro-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 27%;
+    z-index: 50;
+    transform: translateX(-50%) translateY(6px);
+    padding: .5rem 1.1rem;
+    font-size: .8rem;
+    letter-spacing: .08em;
+    color: var(--pro-gold);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s, transform .3s;
+    border: 3px solid var(--px-gold);
+    background: var(--px-panel);
+    font-family: "Courier New", "Songti SC", monospace;
+}
+
+.pro-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+@media (max-width: 720px) {
+    .pro-dialog { padding: 1.1rem 1.2rem 1.3rem; min-height: 24vh; }
+    .pro-dialog-bar { margin-right: 1rem; }
+    .pro-line { font-size: 1rem; line-height: 1.95; min-height: 4.6em; padding-right: 1.8rem; }
+    .pro-hint { right: 1rem; bottom: .7rem; }
+    .pro-scene-tag { top: 2.2%; right: 3.6%; }
+    .pro-music { top: 1.8%; left: 2.6%; }
+    .pro-hud { left: 2.6%; top: 10%; }
+    .pro-hud-title { font-size: .72rem; }
+    .pro-hud-row { font-size: .78rem; }
+    .pro-choices { padding: 1rem 1.1rem 1.2rem; }
+    .pro-toast { bottom: 30%; }
+}
+
+@keyframes proFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes proKenburns { from { transform: scale(1.02); } to { transform: scale(1.09); } }
+@keyframes proGrain {
+    0% { transform: translate(0, 0); }
+    33% { transform: translate(-3%, 2%); }
+    66% { transform: translate(2%, -2%); }
+    100% { transform: translate(0, 0); }
+}
+@keyframes proTagIn {
+    from { opacity: 0; letter-spacing: .6em; }
+    to { opacity: 1; letter-spacing: .42em; }
+}
+@keyframes proDialogIn {
+    from { opacity: 0; transform: translateY(26px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes proBlink { 50% { opacity: 0; } }
+@keyframes proHintPulse { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+@keyframes proChoiceIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+}

@@ -7,6 +7,8 @@
         content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>线稿风格魔女小屋 - 游戏</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@400;700&display=swap">
 </head>
 
 <body>
@@ -151,17 +153,49 @@
         </div>
     </section>
 
-    <section id="farmResumePanel" class="farmResumePanel" hidden>
-        <div class="farmResumeShell" role="dialog" aria-modal="true" aria-labelledby="farmResumeTitle">
-            <div class="farmResumeTopbar">
-                <div>
-                    <p>序章</p>
-                    <h2 id="farmResumeTitle">1945—1978</h2>
-                </div>
-                <button id="closeFarmResumeBtn" type="button" aria-label="关闭">×</button>
-            </div>
-            <iframe id="farmResumeFrame" title="序章 · 1945—1978"></iframe>
+    <section id="prologuePanel" class="prologuePanel" hidden role="dialog" aria-modal="true" aria-label="序章 · 1945—1978">
+        <button id="prologueSkipBtn" class="prologueSkip" type="button">跳过序章</button>
+
+        <div class="pro-bg" id="prologueBgStack">
+            <img class="pro-bg-img" id="prologueBg" src="" alt="" />
+            <div class="pro-vignette"></div>
+            <div class="pro-bottom-fade"></div>
+            <div class="pro-grain"></div>
         </div>
+
+        <div class="pro-scene-tag anim" id="prologueSceneTag">宿迁 · 一九四五年秋</div>
+
+        <button class="pro-music" id="prologueMusicBtn" type="button" aria-label="背景音乐开关" title="背景音乐">
+            <svg class="ico-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 18V5l11-2v13" /><circle cx="9" cy="18" r="3" /><circle cx="20" cy="16" r="3" />
+            </svg>
+            <svg class="ico-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 18V5l11-2v13" /><circle cx="9" cy="18" r="3" /><circle cx="20" cy="16" r="3" /><line x1="3" y1="4" x2="21" y2="20" />
+            </svg>
+        </button>
+
+        <div class="pro-hud" id="prologueHud">
+            <div class="pro-hud-title">心　性</div>
+            <div id="prologueHudStats"></div>
+        </div>
+
+        <div class="pro-dialog">
+            <div class="pro-dialog-bar"></div>
+            <div class="pro-dialog-main">
+                <div class="pro-speaker" id="prologueSpeaker">旁　白</div>
+                <p class="pro-line" id="prologueLine"></p>
+            </div>
+            <div class="pro-hint" id="prologueHint">▼ 点击继续</div>
+        </div>
+
+        <div class="pro-choices" id="prologueChoicesBox" hidden>
+            <div class="pro-choices-title" id="prologueChoicesTitle"></div>
+            <div class="pro-choices-list" id="prologueChoicesList"></div>
+        </div>
+
+        <div class="pro-toast" id="prologueToast"></div>
+
+        <audio id="prologueBgm" src="prologue/assets/bgm/test2.mp3" loop preload="none"></audio>
     </section>
 
     <div id="questBanner" class="questBanner" hidden>
@@ -313,6 +347,7 @@
     <script src="js/27-weather-farming.js"></script>
     <script src="js/28-tool-progression.js"></script>
     <script src="js/30-delivery-orders.js"></script>
+    <script src="js/31-prologue.js"></script>
     <script src="js/15-app-shell.js"></script>
 </body>
 

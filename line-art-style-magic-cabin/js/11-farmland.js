@@ -746,24 +746,19 @@ function payFarmWorker(reason) {
 }
 
 function openFarmResumeStory() {
-    const panel = document.getElementById('farmResumePanel');
-    const frame = document.getElementById('farmResumeFrame');
-    if (!panel || !frame) {
+    if (typeof window.openPrologue !== 'function') {
         showHintOverride('第一份简历已经放在桌上：先阅读序章剧情');
         return;
     }
     if (typeof window.clearPlayerInputState === 'function') window.clearPlayerInputState();
     if (document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
     window.APP_SHELL_BLOCK_GAME = true;
-    frame.src = 'prologue/first.html';
-    panel.hidden = false;
+    window.openPrologue();
 }
 
 function closeFarmResumeStory() {
-    const panel = document.getElementById('farmResumePanel');
-    const frame = document.getElementById('farmResumeFrame');
+    const panel = document.getElementById('prologuePanel');
     if (panel) panel.hidden = true;
-    if (frame) frame.src = 'about:blank';
     if (typeof window.clearPlayerInputState === 'function') window.clearPlayerInputState();
     window.APP_SHELL_BLOCK_GAME = false;
 }
@@ -777,15 +772,6 @@ function completeFarmResumeStory() {
     SND.play('chim');
     showHintOverride('简历读完了：申请人想来经营农场，帮助家里减轻负担');
     saveFarmHireStateNow();
-}
-
-function setupFarmResumePanel() {
-    const closeBtn = document.getElementById('closeFarmResumeBtn');
-    if (closeBtn) closeBtn.addEventListener('click', closeFarmResumeStory);
-    window.addEventListener('message', event => {
-        if (!event.data || event.data.type !== 'farm-resume-complete') return;
-        completeFarmResumeStory();
-    });
 }
 
 function hireFarmWorker() {
@@ -1209,7 +1195,6 @@ function applyFarmHireState(save) {
     updateFarmHireLabel();
 }
 
-setupFarmResumePanel();
 setupFarmWorkerPanel();
 buildFarmWorkerContract();
 
