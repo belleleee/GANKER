@@ -94,9 +94,16 @@ function closeWealthEventPanel() {
     if (typeof saveGameState === 'function') saveGameState(false);
 }
 
+/* 捐款不该只是嘴上说"传递暖意"——攒起来的口碑，真的能让骗子对你
+   下手轻一点，也让靠谱的融资机会更容易谈成。goodwill 封顶在累计
+   捐满 2000（正好是"大慈善家"成就的门槛）时拉满。 */
+function charityGoodwill() {
+    return Math.min(1, (wealthEventState.charityTotalDonated || 0) / 2000);
+}
+
 function triggerAdEvent() {
     const coins = currentCoinsSafe();
-    const cut = Math.max(20, Math.round(coins * (0.04 + Math.random() * 0.05)));
+    const cut = Math.max(20, Math.round(coins * (0.04 + Math.random() * 0.05) * (1 - charityGoodwill() * 0.3)));
     if (typeof window.spendCabinCoins === 'function') window.spendCabinCoins(cut, false);
     wealthEventState.adHits++;
     pushMarketNews(true, 0.04 + Math.random() * 0.03, '街头骗术横行，市场情绪转向谨慎');
@@ -136,7 +143,7 @@ function resolveFinancing(stake) {
         showHintOverride('金币不够，这笔投资谈不成。');
         return;
     }
-    const win = Math.random() < 0.10;
+    const win = Math.random() < (0.10 + charityGoodwill() * 0.10);
     if (win) {
         const reward = stake * 3;
         if (typeof window.addCabinCoins === 'function') window.addCabinCoins(reward, false);
@@ -180,7 +187,9 @@ function donateCharity(amount) {
     wealthEventState.charityMaxSingle = Math.max(wealthEventState.charityMaxSingle || 0, amount);
     pushMarketNews(false, 0.02 + Math.random() * 0.02, '慈善捐赠传递暖意，市场情绪略有提振');
     if (typeof saveGameState === 'function') saveGameState(false);
-    showHintOverride('捐出 ' + amount + ' 金币 · 累计捐款 ' + wealthEventState.charityTotalDonated + ' 金币');
+    const goodwillPct = Math.round(charityGoodwill() * 100);
+    showHintOverride('捐出 ' + amount + ' 金币 · 累计捐款 ' + wealthEventState.charityTotalDonated +
+        ' 金币 · 口碑 ' + goodwillPct + '%（骗局少坑你一点，融资机会更容易谈成）');
 }
 
 function pickWealthEvent() {
@@ -234,6 +243,7 @@ window.updateWealthEvents = updateWealthEvents;
 window.captureWealthEventsState = captureWealthEventsState;
 window.applyWealthEventsState = applyWealthEventsState;
 window.getCharityTotalDonated = function () { return wealthEventState.charityTotalDonated; };
+window.getCharityGoodwill = charityGoodwill;
 window.getFinancingStats = function () {
     return { wins: wealthEventState.financingWins, losses: wealthEventState.financingLosses };
 };

@@ -331,6 +331,11 @@ const MOMENT_INTROS = [
         }
     },
     {
+        id: 'charity_goodwill_full',
+        text: '这些年攒下的口碑到头了——街坊四邻都知道你舍得帮衬，骗子找上门也占不到便宜，正经生意找你合作也更容易成。这才是当年那句"日子是过出来的"的意思。',
+        check: () => typeof window.getCharityGoodwill === 'function' && window.getCharityGoodwill() >= 1
+    },
+    {
         id: 'first_stock_loss',
         text: '股市第一次亏了钱。涨跌本就是常态，亏钱不可怕——可怕的是亏了之后不去想清楚为什么亏。',
         check: () => {
