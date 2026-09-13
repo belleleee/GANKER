@@ -320,6 +320,11 @@ function updateTeaRoastStation(dt, time) {
     }
 }
 
+function teaFinishedSellPrice() {
+    const hasFactory = typeof mainStoryState !== 'undefined' && mainStoryState.flags && mainStoryState.flags.factoryBonus;
+    return hasFactory ? Math.round(TEA_FINISHED_SELL_PRICE * 1.35) : TEA_FINISHED_SELL_PRICE;
+}
+
 function packageTeaLeaves() {
     if (teaProcessState.roasted < TEA_PROCESS_BATCH) {
         SND.play('toggle');
@@ -328,11 +333,12 @@ function packageTeaLeaves() {
     }
     teaProcessState.roasted -= TEA_PROCESS_BATCH;
     teaProcessState.finished += 1;
+    const sellPrice = teaFinishedSellPrice();
     if (typeof window.addCabinCoins === 'function') {
-        window.addCabinCoins(TEA_FINISHED_SELL_PRICE, '卖出一批成品茶');
+        window.addCabinCoins(sellPrice, '卖出一批成品茶');
     }
     SND.play('ui');
-    showHintOverride('分拣装袋完成 · 卖出一批成品茶 +' + TEA_FINISHED_SELL_PRICE + ' 金币（累计装过 ' + teaProcessState.finished + ' 批）');
+    showHintOverride('分拣装袋完成 · 卖出一批成品茶 +' + sellPrice + ' 金币（累计装过 ' + teaProcessState.finished + ' 批）');
     if (typeof saveGameState === 'function') saveGameState(false);
 }
 

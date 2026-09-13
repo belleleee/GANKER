@@ -7,12 +7,24 @@
    把仓库里囤的作物送过去换钱——这是仓库里那堆作物第一次真正被花掉。
    ================================================================ */
 
-const DELIVERY_MAX_OPEN = 3;
+const DELIVERY_MAX_OPEN_BASE = 3;
 const DELIVERY_SPAWN_MIN_GAP = 35;
 const DELIVERY_SPAWN_MAX_GAP = 70;
 const DELIVERY_EXPIRE_SECONDS = 260;
-const DELIVERY_REWARD_MULT = 1.6;
+const DELIVERY_REWARD_MULT_BASE = 1.6;
 const DELIVERY_INTERACT_RADIUS = 1.6;
+
+/* 广告豪赌押中"黄金时段"、非常可乐选对"乡镇联销体"，会真正改变这套
+   送货玩法的数值——不是加一句夸奖，是账本上能看见的差别。 */
+function deliveryMainStoryFlag(key) {
+    return typeof mainStoryState !== 'undefined' && !!(mainStoryState.flags && mainStoryState.flags[key]);
+}
+function deliveryRewardMult() {
+    return deliveryMainStoryFlag('adGambleWon') ? DELIVERY_REWARD_MULT_BASE * 1.25 : DELIVERY_REWARD_MULT_BASE;
+}
+function deliveryMaxOpen() {
+    return deliveryMainStoryFlag('ruralNetwork') ? DELIVERY_MAX_OPEN_BASE + 1 : DELIVERY_MAX_OPEN_BASE;
+}
 
 const DELIVERY_CUSTOMER_COLORS = [0xf4a6a0, 0x9fd0f0, 0xc8ecA0, 0xf3d98a, 0xd6a6f0, 0xa0e8d8];
 
@@ -92,7 +104,7 @@ function deliveryCropDef(cropId) {
 }
 
 function spawnDeliveryOrder() {
-    if (deliveryOrders.length >= DELIVERY_MAX_OPEN) return;
+    if (deliveryOrders.length >= deliveryMaxOpen()) return;
     if (typeof CROP_ORDER === 'undefined' || !CROP_ORDER.length) return;
     const spot = pickDeliverySpot();
     if (!spot) return;
@@ -100,7 +112,7 @@ function spawnDeliveryOrder() {
     const crop = deliveryCropDef(cropId);
     if (!crop) return;
     const qty = 1 + Math.floor(Math.random() * 3);
-    const reward = Math.max(10, Math.round(crop.harvestCoins * qty * DELIVERY_REWARD_MULT));
+    const reward = Math.max(10, Math.round(crop.harvestCoins * qty * deliveryRewardMult()));
     const color = DELIVERY_CUSTOMER_COLORS[Math.floor(Math.random() * DELIVERY_CUSTOMER_COLORS.length)];
     const mesh = buildDeliveryCustomer(color);
     const groundY = typeof groundAt === 'function' ? groundAt(spot.x, spot.z, 0) : 0;
