@@ -21,6 +21,8 @@ const farmHireState = {
     hired: false,
     striking: false,
     lastPaidDay: 0,
+    loyaltyStreak: 0,
+    trustPenaltyUntilDay: -1,
     playerHarvests: 0,
     resumePrompted: false,
     resumeViewed: false,
@@ -732,15 +734,35 @@ function getFarmWorkerAction(plot) {
     return null;
 }
 
+/* 诚信这件事，不该只停在"兼并国企不裁员"那句台词里——
+   工资按时发，工人干活会越来越卖力（loyaltyStreak 攒速度加成）；
+   工资拖到罢工，就算后来补上了，信任也不是补发的那一秒就恢复的，
+   会有几天"缓过来"的低效期（trustPenaltyUntilDay）。 */
+function farmWorkerSpeedFactor() {
+    let factor = 1 + Math.min(0.3, Math.floor((farmHireState.loyaltyStreak || 0) / 5) * 0.05);
+    if (farmHireState.trustPenaltyUntilDay >= 0 && currentFarmDay() < farmHireState.trustPenaltyUntilDay) {
+        factor *= 0.7;
+    }
+    return factor;
+}
+
 function payFarmWorker(reason) {
     if (!window.spendCabinCoins) {
         showHintOverride('金币系统还没准备好，暂时不能支付工资');
         return false;
     }
+    const wasStriking = farmHireState.striking;
     if (!window.spendCabinCoins(FARM_WORKER_DAILY_WAGE, null)) return false;
     farmHireState.lastPaidDay = currentFarmDay();
     farmHireState.striking = false;
-    if (reason) showHintOverride(reason + ' · 日薪 -' + FARM_WORKER_DAILY_WAGE);
+    if (wasStriking) {
+        farmHireState.trustPenaltyUntilDay = currentFarmDay() + 3;
+        farmHireState.loyaltyStreak = 0;
+        showHintOverride((reason || '补发工资') + ' · 日薪 -' + FARM_WORKER_DAILY_WAGE + '（罢工过一次，往后几天干活还是没那么利索）');
+    } else {
+        farmHireState.loyaltyStreak = (farmHireState.loyaltyStreak || 0) + 1;
+        if (reason) showHintOverride(reason + ' · 日薪 -' + FARM_WORKER_DAILY_WAGE);
+    }
     saveFarmHireStateNow();
     return true;
 }
@@ -1079,11 +1101,13 @@ function settleFarmWorkerWage() {
 
     if (window.spendCabinCoins && window.spendCabinCoins(FARM_WORKER_DAILY_WAGE, null)) {
         farmHireState.lastPaidDay = day;
+        farmHireState.loyaltyStreak = (farmHireState.loyaltyStreak || 0) + 1;
         saveFarmHireStateNow();
         return;
     }
 
     farmHireState.striking = true;
+    farmHireState.loyaltyStreak = 0;
     farmHireState.phase = 'idle';
     farmHireState.action = null;
     farmHireState.targetPlot = null;
@@ -1122,7 +1146,7 @@ function updateFarmHireSystem(dt, time) {
             const dist = Math.hypot(dx, dz);
             worker.rotation.y = Math.atan2(dx, dz);
             if (dist > 0.34) {
-                const step = Math.min(dist, FARM_WORKER_SPEED * dt);
+                const step = Math.min(dist, FARM_WORKER_SPEED * farmWorkerSpeedFactor() * dt);
                 worker.position.x += dx / dist * step;
                 worker.position.z += dz / dist * step;
                 moving = true;
@@ -1157,6 +1181,8 @@ function captureFarmHireState() {
         hired: farmHireState.hired,
         striking: farmHireState.striking,
         lastPaidDay: farmHireState.lastPaidDay,
+        loyaltyStreak: farmHireState.loyaltyStreak,
+        trustPenaltyUntilDay: farmHireState.trustPenaltyUntilDay,
         playerHarvests: farmHireState.playerHarvests,
         resumePrompted: farmHireState.resumePrompted,
         resumeViewed: farmHireState.resumeViewed,
@@ -1172,6 +1198,9 @@ function applyFarmHireState(save) {
         0,
         Math.trunc(Number(save && save.lastPaidDay) || currentFarmDay())
     );
+    farmHireState.loyaltyStreak = Math.max(0, Math.trunc(Number(save && save.loyaltyStreak) || 0));
+    farmHireState.trustPenaltyUntilDay = Number.isFinite(Number(save && save.trustPenaltyUntilDay))
+        ? Math.trunc(Number(save.trustPenaltyUntilDay)) : -1;
     const savedHarvests = Math.trunc(Number(save && save.playerHarvests) || 0);
     const plotHarvests = farmPlots.reduce((sum, p) => sum + (p.harvested || 0), 0);
     farmHireState.playerHarvests = Math.max(0, savedHarvests, plotHarvests);

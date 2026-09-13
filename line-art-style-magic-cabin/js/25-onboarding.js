@@ -336,6 +336,16 @@ const MOMENT_INTROS = [
         check: () => typeof window.getCharityGoodwill === 'function' && window.getCharityGoodwill() >= 1
     },
     {
+        id: 'farm_worker_trust',
+        text: '工资连着按时发了5天，农场帮手干活明显更卖力了——说到做到，人家是能看出来的。',
+        check: () => typeof farmHireState !== 'undefined' && (farmHireState.loyaltyStreak || 0) >= 5
+    },
+    {
+        id: 'farm_worker_strike_lesson',
+        text: '工资拖欠，工人罢工了。补发之后活儿也不会立刻恢复利索——信任这东西，垮得快，攒得慢。',
+        check: () => typeof farmHireState !== 'undefined' && (farmHireState.trustPenaltyUntilDay || -1) >= 0
+    },
+    {
         id: 'first_stock_loss',
         text: '股市第一次亏了钱。涨跌本就是常态，亏钱不可怕——可怕的是亏了之后不去想清楚为什么亏。',
         check: () => {
