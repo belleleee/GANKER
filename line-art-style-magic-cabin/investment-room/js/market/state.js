@@ -266,7 +266,19 @@ function formatPct(value) {
 
 function getStock(id) {
   const key = STOCKS.some(item => item.id === id) ? id : 'TEA';
-  marketState.stocks[key] = sanitizeStock(marketState.stocks[key], key);
+  const current = marketState.stocks[key];
+  /* 之前每次调用都无条件重新 sanitize 并替换 marketState.stocks[key]，
+     会产生一个新对象。advanceMarketDay() 外层循环拿到的 stock 引用，
+     一旦中途（比如 playerImpact 内部）又调用一次 getStock，就会被换成
+     "没人再指向"的孤儿对象——外层继续往这个孤儿对象上写新价格，写了
+     等于没写，marketState.stocks[key] 其实还是没变过的旧对象，导致
+     股价和K线永远刷新不出来（新闻是直接 push 进数组的，不受影响）。
+     只在对象形状不对时才重新 sanitize，否则原样返回同一个引用，
+     保证同一个 tick 里多次调用拿到的是同一份。 */
+  if (!current || typeof current !== 'object' ||
+      !Number.isFinite(current.price) || !Array.isArray(current.history)) {
+    marketState.stocks[key] = sanitizeStock(current, key);
+  }
   return marketState.stocks[key];
 }
 
