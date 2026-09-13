@@ -20,6 +20,7 @@ const MAIN_STORY_STAGES = [
         questLabel: '去农场找地主租地（付得起就 all-in），翻地种萝卜（没种子先去商店买），种出来后雇一个农场帮手',
         target: { x: 9.0, z: 0.0 },
         reflection: '记住这块地翻起来的手感——往后不管账本变多大，起点都是它。',
+        prologuePartAfter: 1,
         auto: () => typeof farmHireState !== 'undefined' && farmHireState.hired === true &&
             typeof cropStorage !== 'undefined' && cropStorage.turnip >= 1
     },
@@ -37,6 +38,7 @@ const MAIN_STORY_STAGES = [
         coinRequirement: 110,
         lockedHint: '110 个金币还没攒够——小买卖就是这样，急不来，一笔一笔算才靠谱。',
         reflection: '110 个金币不算多，但这是你第一次，靠自己的本事把它凑齐的。',
+        prologuePartAfter: 2,
         auto: () => currentCoins() >= 110
     },
     {
@@ -54,7 +56,8 @@ const MAIN_STORY_STAGES = [
         target: { x: -11.5, z: -9.0 },
         coinRequirement: 250,
         lockedHint: '合同还没谈成——离承诺兑现还差一点，先把手头的钱攒够。',
-        reflection: '话说出去了，就得做到——这是你在竞标桌上学到的第一课。'
+        reflection: '话说出去了，就得做到——这是你在竞标桌上学到的第一课。',
+        prologuePartAfter: 3
     },
     {
         unlocks: 'coin',
@@ -83,7 +86,8 @@ const MAIN_STORY_STAGES = [
                 flag: null
             }
         ],
-        reflection: '进那扇门之前再想一遍：赢了别贪，输了别赌气加倍——这才是过关的本事。'
+        reflection: '进那扇门之前再想一遍：赢了别贪，输了别赌气加倍——这才是过关的本事。',
+        prologuePartAfter: 4
     },
     {
         unlocks: null,
@@ -322,6 +326,9 @@ function advanceMainStoryStage(stage, resultText) {
     if (typeof SND !== 'undefined') SND.play('chim');
     if (stage.reflection && typeof window.showThemeReflection === 'function') {
         window.showThemeReflection(stage.reflection);
+    }
+    if (typeof stage.prologuePartAfter === 'number' && typeof window.openProloguePart === 'function') {
+        setTimeout(() => window.openProloguePart(stage.prologuePartAfter), 2200);
     }
     closeMainStoryStage(true);
 }

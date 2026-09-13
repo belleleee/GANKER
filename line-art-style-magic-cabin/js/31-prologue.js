@@ -391,8 +391,23 @@ const PROLOGUE_SCENES = [
 ];
 
 /* =====================================================================
+ * 序章拆成 5 段，穿插在主线的前几次推进里播放，而不是"查看第一份简历"
+ * 一次性看完 29 幕。第一段仍然挂在"查看第一份简历"这个交互上（看完
+ * 才能雇农场帮手）；后面几段分别接在序章→代销小摊→承包谈判→广告豪赌
+ * 这几次主线推进之后自动播放（见 22-main-story.js 的 prologuePartAfter）。
+ * ===================================================================== */
+const PROLOGUE_PARTS = [
+    { from: 0, to: 9, onDone: 'resume' },                    /* 童年·家道中落 —— 查看第一份简历 */
+    { from: 9, to: 15, onDone: 'flashback' },                /* 成分与抉择 —— 序章推进到代销小摊时 */
+    { from: 15, to: 20, onDone: 'flashback' },               /* 马目农场 —— 代销小摊推进到承包谈判时 */
+    { from: 20, to: 26, onDone: 'flashback' },               /* 绍兴茶场 —— 承包谈判推进到广告豪赌时 */
+    { from: 26, to: 29, onDone: 'flashback', final: true }   /* 回城 —— 广告豪赌推进到兼并国企时 */
+];
+
+/* =====================================================================
  * 引擎（原样搬过来，只是把 DOM 查询换成新的 id，收尾从 postMessage
- * 换成直接调用 completeFarmResumeStory）
+ * 换成直接调用 completeFarmResumeStory；另外原来是整段 29 幕一口气播完，
+ * 现在按 PROLOGUE_PARTS 分段播放，pgScene 是"当前段内"的相对下标）
  * ===================================================================== */
 const prologuePanel = document.getElementById('prologuePanel');
 const prologueLineEl = document.getElementById('prologueLine');
@@ -422,17 +437,22 @@ let pgChoiceIdx = -1;
 let pgMusicOn = false;
 let pgToastTimer = null;
 let pgActive = false;
+let pgPartIdx = 0;
+let pgActiveScenes = [];
 
 const prologueState = {
     stats: { resilience: 0, ahai_bond: 0, negotiation_skill: 0, father_bond: 0 },
     flags: {},
+    partsDone: {},
     completed: false
 };
+
+function pgCurrentPart() { return PROLOGUE_PARTS[pgPartIdx] || PROLOGUE_PARTS[0]; }
 
 function pgGetLines() { return pgStream; }
 
 function pgSetStream() {
-    pgStream = PROLOGUE_SCENES[pgScene].lines.filter(l => !l.if || prologueState.flags[l.if]);
+    pgStream = pgActiveScenes[pgScene].lines.filter(l => !l.if || prologueState.flags[l.if]);
 }
 
 function pgTypeLine(l) {
@@ -477,10 +497,11 @@ function pgSetSpeaker(who) {
 }
 
 function pgSetEndHint() {
-    if (pgScene === PROLOGUE_SCENES.length - 1) {
-        prologueHintEl.textContent = '序章 · 完 —— 下一篇：返城创业 · 承包谈判';
+    if (pgScene === pgActiveScenes.length - 1) {
+        const part = pgCurrentPart();
+        prologueHintEl.textContent = part.final ? '序章 · 完 —— 下一篇：代销小摊' : '（这段回忆先到这儿）';
         prologueHintEl.classList.add('done');
-        pgComplete();
+        pgFinishPart();
     } else {
         prologueHintEl.textContent = '▼ 进入下一幕';
         prologueHintEl.classList.remove('done');
@@ -597,18 +618,18 @@ function pgAdvance() {
 }
 
 function pgPreloadNext() {
-    if (pgScene + 1 < PROLOGUE_SCENES.length) {
+    if (pgScene + 1 < pgActiveScenes.length) {
         const im = new Image();
-        im.src = PROLOGUE_SCENES[pgScene + 1].img;
+        im.src = pgActiveScenes[pgScene + 1].img;
     }
 }
 
 function pgSwitchScene() {
     if (pgSwitching) return;
-    if (pgScene >= PROLOGUE_SCENES.length - 1) return;
+    if (pgScene >= pgActiveScenes.length - 1) return;
     pgSwitching = true;
     pgScene++;
-    const S = PROLOGUE_SCENES[pgScene];
+    const S = pgActiveScenes[pgScene];
     prologueStackEl.style.opacity = '0';
     setTimeout(() => {
         prologueBgEl.src = S.img;
@@ -662,7 +683,7 @@ if (prologueMusicBtn) {
 if (prologueSkipBtn) {
     prologueSkipBtn.addEventListener('click', ev => {
         ev.stopPropagation();
-        pgComplete();
+        pgFinishPart();
     });
 }
 if (prologuePanel) {
@@ -681,47 +702,72 @@ addEventListener('keydown', event => {
     }
     if (k === 'escape') {
         event.preventDefault();
-        pgComplete();
+        pgFinishPart();
     }
 });
 
 /* ---- 打开 / 收尾 ---- */
 
-function openPrologue() {
-    if (!prologuePanel) {
-        if (typeof completeFarmResumeStory === 'function') completeFarmResumeStory();
+function openProloguePart(partIdx) {
+    const part = PROLOGUE_PARTS[partIdx];
+    if (!part || !prologuePanel) {
+        if (partIdx === 0 && typeof completeFarmResumeStory === 'function') completeFarmResumeStory();
         return;
     }
+    if (prologueState.partsDone[partIdx]) return;
     pgActive = true;
+    pgPartIdx = partIdx;
+    pgActiveScenes = PROLOGUE_SCENES.slice(part.from, part.to);
     pgScene = 0; pgIdx = -1; pgTyping = false; pgFinished = false; pgSwitching = false;
     pgPendingChoice = null;
     prologuePanel.classList.remove('has-stats');
     pgSetStream();
-    prologueBgEl.src = PROLOGUE_SCENES[0].img;
-    prologueBgEl.alt = PROLOGUE_SCENES[0].alt;
-    prologueSceneTagEl.textContent = PROLOGUE_SCENES[0].tag;
+    const first = pgActiveScenes[0];
+    prologueBgEl.src = first.img;
+    prologueBgEl.alt = first.alt;
+    prologueSceneTagEl.textContent = first.tag;
     prologueHintEl.textContent = '▼ 点击继续';
     prologueHintEl.classList.remove('done');
     pgRenderHud();
+    if (typeof window.clearPlayerInputState === 'function') window.clearPlayerInputState();
+    if (document.pointerLockElement) document.exitPointerLock();
+    window.APP_SHELL_BLOCK_GAME = true;
+    window.APP_GAME_MODAL_OPEN = true;
     prologuePanel.hidden = false;
     setTimeout(pgAdvance, 1600);
 }
 
-function pgComplete() {
+function openPrologue() {
+    openProloguePart(0);
+}
+
+function pgFinishPart() {
     if (!pgActive) return;
     pgActive = false;
     clearInterval(pgTimer);
     if (prologueBgm) prologueBgm.pause();
-    prologueState.completed = true;
-    if (typeof completeFarmResumeStory === 'function') completeFarmResumeStory();
+    const part = pgCurrentPart();
+    prologueState.partsDone[pgPartIdx] = true;
+    if (part.final) prologueState.completed = true;
+    if (prologuePanel) prologuePanel.hidden = true;
+    if (typeof window.clearPlayerInputState === 'function') window.clearPlayerInputState();
+    window.APP_SHELL_BLOCK_GAME = false;
+    window.APP_GAME_MODAL_OPEN = false;
+    if (part.onDone === 'resume' && typeof completeFarmResumeStory === 'function') {
+        completeFarmResumeStory();
+    } else if (typeof saveGameState === 'function') {
+        saveGameState(false);
+    }
 }
 
 window.openPrologue = openPrologue;
+window.openProloguePart = openProloguePart;
 
 function capturePrologueState() {
     return {
         stats: Object.assign({}, prologueState.stats),
         flags: Object.assign({}, prologueState.flags),
+        partsDone: Object.assign({}, prologueState.partsDone),
         completed: !!prologueState.completed
     };
 }
@@ -735,6 +781,8 @@ function applyPrologueState(raw) {
     if (raw && raw.flags && typeof raw.flags === 'object') {
         prologueState.flags = Object.assign({}, raw.flags);
     }
+    prologueState.partsDone = (raw && raw.partsDone && typeof raw.partsDone === 'object')
+        ? Object.assign({}, raw.partsDone) : {};
     prologueState.completed = !!(raw && raw.completed);
 }
 
