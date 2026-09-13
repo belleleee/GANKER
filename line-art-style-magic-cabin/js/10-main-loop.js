@@ -53,6 +53,9 @@
                 if (typeof pollGamblingRisk === 'function') {
                     pollGamblingRisk();
                 }
+                if (typeof updateWorldMapGuide === 'function') {
+                    updateWorldMapGuide(dt);
+                }
                 
                 FILL.uniforms.uTime.value = time;
                 FILL.uniforms.uFireStrength.value = fireP;

@@ -1,0 +1,143 @@
+.worldMapPanel {
+    position: fixed;
+    inset: 0;
+    z-index: 10020;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+    background: rgba(24, 31, 29, .72);
+    backdrop-filter: blur(4px);
+}
+
+.worldMapPanel[hidden] { display: none; }
+
+.worldMapSheet {
+    width: min(1120px, 100%);
+    max-height: min(88vh, 850px);
+    overflow: auto;
+    background: #f7f5ee;
+    color: #263533;
+    border: 2px solid #5c6e63;
+    border-radius: 6px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .3);
+}
+
+.worldMapHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px 24px 14px;
+    border-bottom: 1px solid #bbc4b7;
+}
+
+.worldMapKicker,
+.worldMapInfoKicker {
+    margin: 0 0 4px;
+    color: #557268;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.worldMapHeader h2 {
+    margin: 0;
+    font-size: clamp(24px, 3vw, 34px);
+    line-height: 1.2;
+    letter-spacing: 0;
+}
+
+.worldMapClose {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    border: 1px solid #7f9186;
+    border-radius: 4px;
+    background: #fffdf7;
+    color: #263533;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.worldMapContent {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 220px;
+    min-height: 0;
+}
+
+.worldMapCanvasWrap {
+    min-width: 0;
+    padding: 14px;
+    background: #e7ede5;
+}
+
+#worldMapSvg {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1491 / 1055;
+    border: 1px solid #a9b9aa;
+    background: #f3efe5;
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+.worldMapImage { pointer-events: none; }
+.worldMapNorth { fill: #334e4c; }
+.worldMapNorthLabel { font-size: 32px; font-weight: 800; }
+.worldMapPlace { cursor: pointer; }
+.worldMapHotspot { fill: rgba(255, 255, 255, 0.01); stroke: rgba(26, 119, 123, 0); stroke-width: 5; }
+.worldMapPlace:hover .worldMapHotspot,
+.worldMapPlace:focus .worldMapHotspot { fill: rgba(255, 255, 255, .18); stroke: rgba(26, 119, 123, .78); }
+.worldMapPlace:focus { outline: none; }
+.worldMapPlaceLabel { fill: #203331; font-size: 24px; font-weight: 800; paint-order: stroke; stroke: #fff8e9; stroke-width: 7; stroke-linejoin: round; }
+.worldMapTargetRoute { stroke: #b95845; stroke-width: 5; stroke-dasharray: 13 13; opacity: .85; }
+.worldMapTargetRoute,
+.worldMapGoalMarker,
+.worldMapPlayerMarker { pointer-events: none; }
+.worldMapGoalMarker[hidden],
+.worldMapTargetRoute[hidden] { display: none; }
+.worldMapGoalMarker circle:first-child { fill: rgba(247, 245, 238, .72); stroke: #b95845; stroke-width: 6; }
+.worldMapGoalMarker circle:last-child { fill: #b95845; }
+.worldMapPlayerMarker path { fill: #1a777b; stroke: #fff; stroke-width: 4; }
+.worldMapPlayerMarker circle { fill: #fff; }
+
+.worldMapInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 24px 20px;
+    border-left: 1px solid #bbc4b7;
+    background: #faf9f3;
+}
+
+.worldMapInfo h3 { margin: 0; font-size: 22px; line-height: 1.3; letter-spacing: 0; }
+.worldMapInfo p { margin: 0; line-height: 1.6; }
+.worldMapInfoDistance { color: #6f5044; font-weight: 700; }
+.worldMapGuideBtn {
+    appearance: none;
+    margin-top: 10px;
+    padding: 9px 14px;
+    border: 1px solid #b98a4f;
+    border-radius: 8px;
+    background: #f3d99a;
+    color: #5a3d1e;
+    font: 700 13px/1.4 inherit;
+    cursor: pointer;
+    text-align: left;
+}
+.worldMapGuideBtn:hover { background: #eecb7f; }
+.worldMapLegend { margin-top: auto; padding-top: 18px; border-top: 1px solid #c9d0c4; display: grid; gap: 5px; font-size: 13px; font-weight: 700; }
+.worldMapLegendPlayer { color: #1a777b; }
+.worldMapLegendGoal { color: #b95845; }
+
+@media (max-width: 760px) {
+    .worldMapPanel { padding: 8px; }
+    .worldMapSheet { max-height: 94vh; }
+    .worldMapHeader { padding: 14px 16px 10px; }
+    .worldMapContent { grid-template-columns: 1fr; }
+    .worldMapCanvasWrap { padding: 7px; overflow-x: auto; }
+    #worldMapSvg { min-width: 720px; }
+    .worldMapInfo { padding: 12px 16px 16px; border-left: 0; border-top: 1px solid #bbc4b7; }
+    .worldMapInfo h3 { font-size: 18px; }
+    .worldMapLegend { margin-top: 4px; padding-top: 8px; display: flex; gap: 18px; }
+}
