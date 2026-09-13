@@ -259,7 +259,12 @@ function updateDeliveryBanner() {
 
 /* ---------------- 主循环：生成、倒计时、飘浮动画 ---------------- */
 
+function isDeliveryUnlocked() {
+    return typeof mainStoryState !== 'undefined' && mainStoryState.stage >= 1;
+}
+
 function updateDeliveryOrders(dt, time) {
+    if (!isDeliveryUnlocked()) return;
     deliverySpawnTimer -= dt || 0;
     if (deliverySpawnTimer <= 0) {
         deliverySpawnTimer = DELIVERY_SPAWN_MIN_GAP + Math.random() * (DELIVERY_SPAWN_MAX_GAP - DELIVERY_SPAWN_MIN_GAP);
