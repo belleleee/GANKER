@@ -282,6 +282,35 @@ const MOMENT_INTROS = [
         id: 'harvest_20',
         text: '收了二十趟地了。当年在茶场，师傅说过一句话：能把一件事做到底的人，差不了。',
         check: () => achievementStat('totalHarvests') >= 20
+    },
+    {
+        id: 'coin_bankrupt_guide',
+        text: '钱滚钱商店里，钱包见底了。这不是世界末日——但记住这个感觉：赢的时候没收手，才会走到这一步。',
+        check: () => {
+            const save = typeof peekCoinGameSave === 'function' ? peekCoinGameSave() : null;
+            return !!save && Number(save.wallet) <= 0 && Number(save.lost) > 0;
+        }
+    },
+    {
+        id: 'coin_greed_guide',
+        text: '钱滚钱商店已经帮你赚到 500 金币了。手气正顺的时候最容易犯的错，就是觉得自己会一直顺下去——见好就收，才是真本事。',
+        check: () => {
+            const save = typeof peekCoinGameSave === 'function' ? peekCoinGameSave() : null;
+            return !!save && Number(save.earned) >= 500;
+        }
+    },
+    {
+        id: 'first_stock_buy',
+        text: '第一次真正买进一支股票。钱变成了别人生意的一部分——涨跌不只是数字，是那门生意本身在起伏，多花点心思看懂它。',
+        check: () => {
+            const save = typeof peekInvestmentRoomSave === 'function' ? peekInvestmentRoomSave() : null;
+            return !!save && save.holdings && Object.keys(save.holdings).length > 0;
+        }
+    },
+    {
+        id: 'first_charity',
+        text: '第一次把赚到的钱捐了出去。赚钱是本事，舍得分一些出去，是另一种本事——这笔账，不用算得那么精。',
+        check: () => typeof window.getCharityTotalDonated === 'function' && window.getCharityTotalDonated() >= 1
     }
 ];
 
