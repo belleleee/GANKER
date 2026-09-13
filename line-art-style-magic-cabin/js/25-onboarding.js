@@ -311,6 +311,32 @@ const MOMENT_INTROS = [
         id: 'first_charity',
         text: '第一次把赚到的钱捐了出去。赚钱是本事，舍得分一些出去，是另一种本事——这笔账，不用算得那么精。',
         check: () => typeof window.getCharityTotalDonated === 'function' && window.getCharityTotalDonated() >= 1
+    },
+    {
+        id: 'first_achievement',
+        text: '解锁了第一个成就。菜单 → 经营 → 成就墙，能看到这一路走过的所有痕迹——不用刻意刷，正常玩就会一点点亮起来。',
+        check: () => typeof unlockedCount === 'function' && unlockedCount() >= 1
+    },
+    {
+        id: 'bad_weather_harvest',
+        text: '这次天气不对，收成打了折扣。种地这件事，从来不是使多大劲就有多大收获——看天吃饭，也是经营的一部分。',
+        check: () => achievementStat('badWeatherHarvests') >= 1
+    },
+    {
+        id: 'coin_lucky_streak',
+        text: '钱滚钱商店手气一直不错，还没输过。多提醒自己一句：运气不是本事，别把这当成常态。',
+        check: () => {
+            const save = typeof peekCoinGameSave === 'function' ? peekCoinGameSave() : null;
+            return !!save && Number(save.earned) >= 200 && Number(save.lost || 0) === 0;
+        }
+    },
+    {
+        id: 'first_stock_loss',
+        text: '股市第一次亏了钱。涨跌本就是常态，亏钱不可怕——可怕的是亏了之后不去想清楚为什么亏。',
+        check: () => {
+            const save = typeof peekInvestmentRoomSave === 'function' ? peekInvestmentRoomSave() : null;
+            return !!save && Number(save.realizedLoss) > 0;
+        }
     }
 ];
 
