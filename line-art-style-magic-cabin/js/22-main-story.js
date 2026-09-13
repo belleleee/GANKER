@@ -17,30 +17,30 @@ const MAIN_STORY_STAGES = [
             { speaker: '你', text: '先把第一份简历看完。如果他真是愿意替家里分担的人，就让他来试试。' }
         ],
         unlockToast: '📖 主线推进：正式开始经营',
-        questLabel: '去农场找地主租地（付得起就 all-in），翻地种萝卜（没种子先去商店买），种出来后雇一个农场帮手',
+        questLabel: '亲手收割 3 次萝卜，读完第一份简历，再雇佣农场帮手',
         target: { x: 9.0, z: 0.0 },
         reflection: '记住这块地翻起来的手感——往后不管账本变多大，起点都是它。',
         prologuePartAfter: 1,
         auto: () => typeof farmHireState !== 'undefined' && farmHireState.hired === true &&
-            typeof cropStorage !== 'undefined' && cropStorage.turnip >= 1
+            farmHireState.playerHarvests >= FARM_RESUME_HARVEST_TARGET && farmHireState.resumeViewed === true
     },
     {
-        unlocks: null,
+        unlocks: 'investment',
         title: '第一部分 · 代销小摊（1987）',
         lines: [
             { speaker: '旁白', text: '厂里供销科的活儿干了九年，你听说上城区有个校办经销部年年亏钱，正打算对外承包。' },
             { speaker: '旁白', text: '想接这摊子，先得有点本钱，也得让人看见你是真能吃苦做买卖的人。你借了辆三轮车，在学校门口支起摊子：汽水、冰棍、毛巾、文具，什么都卖。' },
-            { speaker: '你', text: '先别想太远。眼下就一个目标：攒够 110 个金币，攒够了，就有资格去会一会那位蒋经理。' },
+            { speaker: '你', text: '先完成一笔送货，再攒够 110 个金币。做成第一单生意，才有本钱去股市小屋学着看账。' },
             { speaker: '旁白', text: '（新玩法：森林里开始有客户找上门订货了，右上角能看到订单板——点"接单"，跟着箭头把作物送过去，就能换一笔比直接卖钱更多的收入。仓库里屯的作物，也该真正花出去了。）' }
         ],
-        unlockToast: '📖 主线推进：小摊的本钱攒够了',
-        questLabel: '在商店和农场之间倒腾生意，攒够 110 金币',
-        target: { x: 10, z: -10 },
+        unlockToast: '📖 主线推进：股市小屋解锁了',
+        questLabel: '完成第一笔送货，攒够 110 金币',
+        target: { x: 9.0, z: 0.0 },
         coinRequirement: 110,
-        lockedHint: '110 个金币还没攒够——小买卖就是这样，急不来，一笔一笔算才靠谱。',
+        lockedHint: '先完成一笔送货，并攒够 110 金币。',
         reflection: '110 个金币不算多，但这是你第一次，靠自己的本事把它凑齐的。',
         prologuePartAfter: 2,
-        auto: () => currentCoins() >= 110
+        auto: () => storyStat('deliveryCount') >= 1 && currentCoins() >= 110
     },
     {
         unlocks: 'tea',
@@ -54,12 +54,12 @@ const MAIN_STORY_STAGES = [
             { speaker: '旁白', text: '（新玩法：走进茶场小屋后，屋里有三个操作台——晒茶青、炒茶、包装，挨个做完一整套，生茶青就能变成能卖钱的成品茶。）' }
         ],
         unlockToast: '📖 主线推进：茶场解锁了',
-        questLabel: '去看看院子里那片茶场',
-        target: { x: -11.5, z: -9.0 },
-        coinRequirement: 250,
-        lockedHint: '合同还没谈成——离承诺兑现还差一点，先把手头的钱攒够。',
+        questLabel: '走进股市小屋，学会先看消息再做决定',
+        target: { x: -12.0, z: 8.5 },
+        lockedHint: '先去股市小屋看看新闻和价格，再决定下一门生意怎么做。',
         reflection: '话说出去了，就得做到——这是你在竞标桌上学到的第一课。',
-        prologuePartAfter: 3
+        prologuePartAfter: 3,
+        auto: () => storyStat('investmentEntries') >= 1
     },
     {
         unlocks: 'coin',
@@ -71,26 +71,28 @@ const MAIN_STORY_STAGES = [
             { speaker: '旁白', text: '（新玩法：镇上的钱滚钱商店开门了——走近按 E 进去，里面是猜大小的翻硬币小游戏，赢了翻倍，输了归零，什么时候收手，自己拿主意。）' }
         ],
         unlockToast: '📖 主线推进：钱滚钱商店解锁了',
-        questLabel: '去钱滚钱商店看看',
-        target: { x: -18.0, z: 8.2 },
-        coinRequirement: 900,
-        lockedHint: '茶场的收入还没攒到能承受一次冒险的地步——先把本业做扎实。',
+        questLabel: '采茶、晒茶、炒茶、装袋，卖出第一批成品茶',
+        target: { x: -11.5, z: -9.0 },
+        lockedHint: '先把一批茶叶做成成品，弄明白产品怎么从田里走到市场。',
         choices: [
             {
                 label: '上黄金时段广告（豪赌一把，成本高但覆盖广）',
                 resultText: '你咬牙签下了黄金时段的合同。第二天订单就像雪片一样飞进来，娃哈哈这个名字，一下子传遍了半座城。（名气打出去了：往后森林里的送货订单，报酬会比原来高一截。）',
                 coinBonus: 260,
-                flag: 'adGambleWon'
+                flag: 'adGambleWon',
+                marketEvent: { impact: 0.18, delay: 2, headline: '娃哈哈黄金时段广告带动订单' }
             },
             {
                 label: '上便宜时段（稳妥，但效果有限）',
                 resultText: '你选了便宜时段。订单确实涨了一些，但远没有想象中猛——至少这一步，走得稳当。',
                 coinBonus: 90,
-                flag: null
+                flag: null,
+                marketEvent: { impact: 0.06, delay: 2, headline: '娃哈哈选择低成本广告投放' }
             }
         ],
         reflection: '进那扇门之前再想一遍：赢了别贪，输了别赌气加倍——这才是过关的本事。',
-        prologuePartAfter: 4
+        prologuePartAfter: 4,
+        auto: () => typeof teaProcessState !== 'undefined' && teaProcessState.finished >= 1
     },
     {
         unlocks: null,
@@ -101,24 +103,25 @@ const MAIN_STORY_STAGES = [
             { speaker: '你', text: '不裁人，工资照发，亏了算我自己的——但这个厂，我要真正接过来，不是挂个名。' }
         ],
         unlockToast: '📖 主线推进：罐头厂的事定下来了',
-        questLabel: '想想罐头厂的事该怎么办',
-        target: { x: -18.0, z: 8.2 },
-        coinRequirement: 1500,
-        lockedHint: '手头的钱还不够撑起一次真正的兼并——账上的底气得再攒攒。',
-        auto: () => currentCoins() >= 1500,
+        questLabel: '广告之后再完成一笔送货，看看订单能否撑起扩张',
+        target: { x: 9.0, z: 0.0 },
+        lockedHint: '先完成广告之后的新订单；有偿兼并还需要 400 金币。',
+        auto: () => storyStat('deliveryCount') > storyMilestone('deliveryCount'),
         choices: [
             {
                 label: '有偿兼并（掏 400 金币买断，担子重但产能真正归你）',
                 resultText: '你把身家掏了大半，签下兼并合同。王师傅带头，厂里的老工人没有一个走的——这份信任，比钱更值钱。（产能真正归你了：往后茶场每卖出一批成品茶，收购价都会比别人高一截。）',
                 coinCost: 400,
                 coinBonus: 0,
-                flag: 'factoryBonus'
+                flag: 'factoryBonus',
+                marketEvent: { impact: 0.20, delay: 2, headline: '娃哈哈有偿兼并扩大产能' }
             },
             {
                 label: '联营/租赁（风险小，但产能终究不是自己的）',
                 resultText: '你选了更稳妥的联营方式。厂子转起来了，但设备和产能说到底还是人家的，往后想扩大手脚都施展不开。',
                 coinBonus: 60,
-                flag: null
+                flag: null,
+                marketEvent: { impact: 0.04, delay: 2, headline: '娃哈哈与罐头厂达成联营' }
             }
         ],
         reflection: '不裁人、工资照发——这句话说出口容易，扛下去难。往后几年，会证明这句话值不值钱。'
@@ -132,43 +135,43 @@ const MAIN_STORY_STAGES = [
             { speaker: '你', text: '大城市挤不进去，那就换一条路——这些年跑遍乡镇攒下的联销体，才是我真正的底牌。' }
         ],
         unlockToast: '📖 主线推进：非常可乐的路子定下来了',
-        questLabel: '想想非常可乐该走哪条路',
-        target: { x: -18.0, z: 8.2 },
-        coinRequirement: 2000,
-        lockedHint: '这一步的本钱还没攒够——非常可乐输不起，得等手头再宽裕些。',
-        auto: () => currentCoins() >= 2000,
+        questLabel: '兼并之后再完成一笔送货，摸清自己的渠道',
+        target: { x: 9.0, z: 0.0 },
+        lockedHint: '先把新渠道跑通一笔订单，再决定可乐往哪里卖。',
+        auto: () => storyStat('deliveryCount') > storyMilestone('deliveryCount'),
         choices: [
             {
                 label: '避开大城市，靠乡镇联销体铺货（稳扎稳打，田老板这样的老伙计最先接货）',
                 resultText: '田老板第一个进了货，乡镇的小卖部一家接一家跟上。可口可乐和百事可乐盯着大城市，谁也没顾上这条"农村包围城市"的路。（联销体真正铺开了：森林里同时能接的送货订单多了一单。）',
                 coinBonus: 380,
-                flag: 'ruralNetwork'
+                flag: 'ruralNetwork',
+                marketEvent: { impact: 0.17, delay: 2, headline: '非常可乐在乡镇渠道打开销路' }
             },
             {
                 label: '跟可口可乐、百事可乐正面打广告战（硬碰硬，资本拼不过人家）',
                 resultText: '广告砸出去不少钱，声势没造起来几分，反倒被城里的经销商挤得没了脾气——这条路，走错了方向。',
                 coinCost: 200,
                 coinBonus: 0,
-                flag: null
+                flag: null,
+                marketEvent: { impact: -0.14, delay: 2, headline: '非常可乐广告投入未能打开市场' }
             }
         ],
         reflection: '别人的地盘，别硬闯；自己走出来的路，才是真的底牌。'
     },
     {
-        unlocks: 'investment',
+        unlocks: null,
         title: '第六章 · 看懂更大的账',
         lines: [
             { speaker: '旁白', text: '非常可乐站稳了脚跟，你已经不只是在种地、炒茶、抛硬币了。越来越多的钱开始变成合同、股价、消息和预期。' },
             { speaker: '旁白', text: '市场会给人错觉：上涨时像所有门都打开，下跌时像所有路都堵死。可真正要紧的，是看懂这背后的生意。' },
-            { speaker: '你', text: '去股市小屋看看。买之前先读新闻，赚钱之前先学会判断。' },
-            { speaker: '旁白', text: '（新玩法：股市小屋里能看盘买卖股票，墙上的新闻栏会提示消息面好坏——包括你自己在钱滚钱商店和财富事件里做的选择，都可能变成影响股价的新闻。）' }
+            { speaker: '你', text: '再去股市小屋看看。买之前先读新闻，赚钱之前先学会判断。' },
+            { speaker: '旁白', text: '回头看娃哈哈的走势：广告、兼并和渠道的选择，都已写进了股价。手上的仓位，是你自己做过的另一笔决定。' }
         ],
-        unlockToast: '📖 主线推进：股市小屋解锁了',
-        questLabel: '去股市小屋看看',
+        unlockToast: '📖 主线推进：开始看更大的账',
+        questLabel: '重返股市小屋，看看广告、兼并和渠道怎样影响股价',
         target: { x: -12.0, z: 8.5 },
-        coinRequirement: 2500,
-        lockedHint: '手头的钱还撑不起看盘的资格——股市不是先来后到，是水到渠成。',
-        reflection: '账上的数字越来越大，但记账的规矩不能变：先看懂，再动手。'
+        reflection: '账上的数字越来越大，但记账的规矩不能变：先看懂，再动手。',
+        auto: () => storyStat('investmentEntries') > storyMilestone('investmentEntries')
     },
     {
         unlocks: null,
@@ -179,11 +182,10 @@ const MAIN_STORY_STAGES = [
             { speaker: '王师傅', text: '厂里的账、厂里的人，我们信得过你。这次的字，你自己看着签。' }
         ],
         unlockToast: '📖 主线推进：合同的事，该有个了断了',
-        questLabel: '决定要怎么处理这份合同',
-        target: { x: -12.0, z: 8.5 },
-        coinRequirement: 4000,
-        lockedHint: '这一关不看钱多钱少，是账上的底气——再攒攒，等真正能扛事了再来。',
-        auto: () => currentCoins() >= 4000,
+        questLabel: '读一份新报纸，再决定怎么处理合作合同',
+        target: { x: -3.18, z: -1.95 },
+        lockedHint: '这一关不看钱多钱少：先读一份新报纸，练习分辨字里行间的风险。',
+        auto: () => storyStat('newspaperReads') > storyMilestone('newspaperReads'),
         choices: [
             {
                 label: '仔细核对每一条条款，哪怕慢一点、麻烦一点',
@@ -223,7 +225,16 @@ const ENDINGS = {
     }
 };
 
-let mainStoryState = { stage: 0, flags: {}, endingId: null };
+let mainStoryState = { stage: 0, flags: {}, endingId: null, milestones: {} };
+let pendingMarketEvents = [];
+
+function captureMainStoryMarketEvents() {
+    return pendingMarketEvents.slice();
+}
+
+function applyMainStoryMarketEvents(raw) {
+    pendingMarketEvents = Array.isArray(raw) ? raw.filter(event => event && typeof event.id === 'string').slice(-16) : [];
+}
 let mainStoryPendingProceed = null;
 
 const mainStoryPanel = document.getElementById('mainStoryPanel');
@@ -256,25 +267,42 @@ function stageCoinsMet(stage) {
     return !stage.coinRequirement || currentCoins() >= stage.coinRequirement;
 }
 
+function storyStat(key) {
+    if (typeof getAchievementStats !== 'function') return 0;
+    return Math.max(0, Number(getAchievementStats()[key]) || 0);
+}
+
+function storyMilestone(key) {
+    const saved = mainStoryState.milestones || {};
+    return Math.max(0, Number(saved[key]) || 0);
+}
+
+function mainStoryStageReady(stage) {
+    if (!stageCoinsMet(stage)) return false;
+    if (typeof stage.auto !== 'function') return true;
+    try { return !!stage.auto(); } catch (err) { return false; }
+}
+
 function renderMainStoryCard(stage) {
     mainStoryTitle.textContent = stage.title;
-    const met = stageCoinsMet(stage);
+    const met = mainStoryStageReady(stage);
     let html = stage.lines.map(line =>
         '<p><span class="mainStorySpeaker">' + line.speaker + '</span>' + line.text + '</p>'
     ).join('');
     if (stage.coinRequirement) {
-        html += '<p class="mainStoryCoinNote' + (met ? ' met' : '') + '">💰 需要攒够 ' + stage.coinRequirement +
-            ' 金币才能推进 · 当前 ' + currentCoins() + (met ? ' · 已达成' : '') + '</p>';
-        if (!met && stage.lockedHint) {
-            html += '<p class="mainStoryCoinNote">' + stage.lockedHint + '</p>';
-        }
+        const coinsMet = stageCoinsMet(stage);
+        html += '<p class="mainStoryCoinNote' + (coinsMet ? ' met' : '') + '">需要攒够 ' + stage.coinRequirement +
+            ' 金币 · 当前 ' + currentCoins() + (coinsMet ? ' · 已达成' : '') + '</p>';
+    }
+    if (!met && stage.lockedHint) {
+        html += '<p class="mainStoryCoinNote">' + stage.lockedHint + '</p>';
     }
     mainStoryBody.innerHTML = html;
 
     if (Array.isArray(stage.choices) && mainStoryChoices) {
         mainStoryChoices.hidden = false;
         mainStoryChoices.innerHTML = stage.choices.map((choice, i) =>
-            '<button type="button" class="mainStoryChoiceBtn" data-choice="' + i + '"' + (met ? '' : ' disabled') + '>' +
+            '<button type="button" class="mainStoryChoiceBtn" data-choice="' + i + '"' + (met && (!choice.coinCost || currentCoins() >= choice.coinCost) ? '' : ' disabled') + '>' +
             choice.label + '</button>'
         ).join('');
         if (mainStoryNextBtn) mainStoryNextBtn.hidden = true;
@@ -286,7 +314,7 @@ function renderMainStoryCard(stage) {
         if (mainStoryNextBtn) {
             mainStoryNextBtn.hidden = false;
             mainStoryNextBtn.disabled = !met;
-            mainStoryNextBtn.textContent = met ? '继续' : '金币还不够';
+            mainStoryNextBtn.textContent = met ? '继续' : '尚未完成目标';
         }
     }
 }
@@ -325,6 +353,11 @@ function closeMainStoryStage(unlocked) {
 
 function advanceMainStoryStage(stage, resultText) {
     const idx = mainStoryState.stage;
+    mainStoryState.milestones = {
+        deliveryCount: storyStat('deliveryCount'),
+        investmentEntries: storyStat('investmentEntries'),
+        newspaperReads: storyStat('newspaperReads')
+    };
     mainStoryState.stage = idx + 1;
     if (typeof showHintOverride === 'function') showHintOverride(resultText || stage.unlockToast);
     if (typeof SND !== 'undefined') SND.play('chim');
@@ -345,9 +378,9 @@ function onMainStoryNext() {
         return;
     }
     if (Array.isArray(stage.choices)) return;
-    if (!stageCoinsMet(stage)) {
+    if (!mainStoryStageReady(stage)) {
         if (typeof showHintOverride === 'function') {
-            showHintOverride('金币还不够，需要攒到 ' + stage.coinRequirement + ' 金币（当前 ' + currentCoins() + '）');
+            showHintOverride(stage.lockedHint || '先完成当前主线目标');
         }
         if (typeof SND !== 'undefined') SND.play('toggle');
         return;
@@ -359,15 +392,16 @@ function onMainStoryChoice(choiceIndex) {
     const idx = mainStoryState.stage;
     const stage = MAIN_STORY_STAGES[idx];
     if (!stage || !Array.isArray(stage.choices)) return;
-    if (!stageCoinsMet(stage)) {
+    if (!mainStoryStageReady(stage)) {
         if (typeof showHintOverride === 'function') {
-            showHintOverride('金币还不够，需要攒到 ' + stage.coinRequirement + ' 金币（当前 ' + currentCoins() + '）');
+            showHintOverride(stage.lockedHint || '先完成当前主线目标');
         }
         if (typeof SND !== 'undefined') SND.play('toggle');
         return;
     }
     const choice = stage.choices[choiceIndex];
     if (!choice) return;
+    if (choice.coinCost && currentCoins() < choice.coinCost) return;
     if (choice.coinCost && typeof spendCabinCoins === 'function') {
         if (!spendCabinCoins(choice.coinCost, '兼并/投入')) return;
     }
@@ -375,6 +409,9 @@ function onMainStoryChoice(choiceIndex) {
         window.addCabinCoins(choice.coinBonus, false);
     }
     if (choice.flag) mainStoryState.flags[choice.flag] = true;
+    if (choice.marketEvent) {
+        pendingMarketEvents.push(Object.assign({ id: 'story-' + idx + '-' + choiceIndex, targetStock: 'WAHA' }, choice.marketEvent));
+    }
     if (choice.ending) mainStoryState.endingId = choice.ending;
     advanceMainStoryStage(stage, choice.resultText || stage.unlockToast);
     if (choice.ending) {
@@ -458,22 +495,18 @@ function pollAutoStageAdvance() {
     const stage = MAIN_STORY_STAGES[mainStoryState.stage];
     if (!stage || typeof stage.auto !== 'function') return;
     if (mainStoryPanel && !mainStoryPanel.hidden) return;
+    if (window.APP_GAME_MODAL_OPEN || window.APP_SHELL_BLOCK_GAME) return;
     if (mainStoryAutoCooldown > 0) return;
     if (!window.APP_ONBOARDING_DISMISSED) return;
-    let met = false;
-    try {
-        met = !!stage.auto();
-    } catch (err) {
-        met = false;
-    }
-    if (met) openMainStoryStage(mainStoryState.stage, null);
+    if (mainStoryStageReady(stage)) openMainStoryStage(mainStoryState.stage, null);
 }
 
 function captureMainStoryState() {
     return {
         stage: mainStoryState.stage,
         flags: Object.assign({}, mainStoryState.flags),
-        endingId: mainStoryState.endingId || null
+        endingId: mainStoryState.endingId || null,
+        milestones: Object.assign({}, mainStoryState.milestones)
     };
 }
 
@@ -481,7 +514,13 @@ function applyMainStoryState(raw) {
     const stage = Math.max(0, Math.min(MAIN_STORY_STAGES.length, Math.trunc(Number(raw && raw.stage) || 0)));
     const flags = (raw && raw.flags && typeof raw.flags === 'object') ? Object.assign({}, raw.flags) : {};
     const endingId = (raw && (raw.endingId === 'good' || raw.endingId === 'bad')) ? raw.endingId : null;
-    mainStoryState = { stage, flags, endingId };
+    const rawMilestones = raw && raw.milestones && typeof raw.milestones === 'object' ? raw.milestones : {};
+    const milestones = {};
+    ['deliveryCount', 'investmentEntries', 'newspaperReads'].forEach(key => {
+        milestones[key] = Number.isFinite(Number(rawMilestones[key]))
+            ? Math.max(0, Math.trunc(Number(rawMilestones[key]))) : storyStat(key);
+    });
+    mainStoryState = { stage, flags, endingId, milestones };
 }
 
 /* ================================================================
@@ -532,8 +571,23 @@ function currentMainStoryObjective() {
     const stage = MAIN_STORY_STAGES[mainStoryState.stage];
     if (!stage) return null;
     let label = stage.questLabel;
+    if (mainStoryState.stage === 0 && typeof farmHireState !== 'undefined') {
+        if (farmHireState.playerHarvests < FARM_RESUME_HARVEST_TARGET) {
+            label = '亲手收割萝卜 ' + farmHireState.playerHarvests + '/' + FARM_RESUME_HARVEST_TARGET + ' 次，再去农场招聘';
+        } else if (!farmHireState.resumeViewed) {
+            label = '去农场查看第一份简历';
+        } else if (!farmHireState.hired) {
+            label = '去农场雇佣经营者';
+        }
+    } else if (mainStoryState.stage === 1) {
+        const delivered = storyStat('deliveryCount') >= 1;
+        if (!delivered) label = '完成第一笔送货（订单板接单），再攒够 110 金币';
+        else if (currentCoins() < 110) label = '第一笔送货完成，继续攒到 110 金币';
+    } else if (mainStoryState.stage === 4 || mainStoryState.stage === 5) {
+        label += '（' + (storyStat('deliveryCount') > storyMilestone('deliveryCount') ? '已完成' : '还需 1 单') + '）';
+    }
     if (stage.coinRequirement && !stageCoinsMet(stage)) {
-        label += '（攒够 ' + stage.coinRequirement + ' 金币 · 当前 ' + currentCoins() + '）';
+        label += '（当前 ' + currentCoins() + ' 金币）';
     }
     return { label, x: stage.target.x, z: stage.target.z };
 }

@@ -486,8 +486,11 @@ function resumeFromStoreIfNeeded() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('from') !== 'store') return false;
     const coinGameReturn = readCoinGameReturnState();
+    const latestSave = validateSave(readJson(cabinSaveKey(), null));
+    const latestMarketEvents = latestSave && latestSave.pendingMarketEvents;
     const snapshot = validateSave(readJson(APP_STORE_RETURN_KEY, null));
     if (snapshot) applySaveState(snapshot);
+    if (typeof applyMainStoryMarketEvents === 'function') applyMainStoryMarketEvents(latestMarketEvents);
     const restoredCoinGame = applyCoinGameReturnState(coinGameReturn);
     try {
         localStorage.removeItem(APP_STORE_RETURN_KEY);
@@ -658,6 +661,7 @@ function captureSaveState() {
         teaFarm: typeof captureTeaFarmState === 'function' ? captureTeaFarmState() : null,
         newspaper: typeof captureNewspaperState === 'function' ? captureNewspaperState() : null,
         mainStory: typeof captureMainStoryState === 'function' ? captureMainStoryState() : null,
+        pendingMarketEvents: typeof captureMainStoryMarketEvents === 'function' ? captureMainStoryMarketEvents() : [],
         achievements: typeof captureAchievementState === 'function' ? captureAchievementState() : null,
         wealthEvents: typeof captureWealthEventsState === 'function' ? captureWealthEventsState() : null,
         land: typeof captureLandState === 'function' ? captureLandState() : null,
@@ -665,7 +669,8 @@ function captureSaveState() {
         cafeTotalRevenue: cafeTotalRevenue,
         toolUnlock: typeof captureToolUnlockState === 'function' ? captureToolUnlockState() : null,
         prologue: typeof capturePrologueState === 'function' ? capturePrologueState() : null,
-        gamblingRisk: typeof captureGamblingRiskState === 'function' ? captureGamblingRiskState() : null
+        gamblingRisk: typeof captureGamblingRiskState === 'function' ? captureGamblingRiskState() : null,
+        coloring: typeof captureColoringState === 'function' ? captureColoringState() : null
     };
 }
 
@@ -841,11 +846,14 @@ function applySaveState(save) {
     if (typeof applyNewspaperState === 'function') {
         applyNewspaperState(save.newspaper);
     }
+    if (typeof applyAchievementState === 'function') {
+        applyAchievementState(save.achievements);
+    }
     if (typeof applyMainStoryState === 'function') {
         applyMainStoryState(save.mainStory);
     }
-    if (typeof applyAchievementState === 'function') {
-        applyAchievementState(save.achievements);
+    if (typeof applyMainStoryMarketEvents === 'function') {
+        applyMainStoryMarketEvents(save.pendingMarketEvents);
     }
     if (typeof applyWealthEventsState === 'function') {
         applyWealthEventsState(save.wealthEvents);
@@ -861,6 +869,9 @@ function applySaveState(save) {
     }
     if (typeof applyGamblingRiskState === 'function') {
         applyGamblingRiskState(save.gamblingRisk);
+    }
+    if (typeof applyColoringState === 'function') {
+        applyColoringState(save.coloring);
     }
     cafeTotalRevenue = Math.max(0, Math.trunc(Number(save.cafeTotalRevenue) || 0));
 }

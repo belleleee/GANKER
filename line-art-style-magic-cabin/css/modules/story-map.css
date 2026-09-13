@@ -1,0 +1,192 @@
+.storyMapPanel {
+    position: fixed;
+    inset: 0;
+    z-index: 29;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(12, 22, 21, .7);
+    backdrop-filter: blur(5px);
+}
+
+.storyMapPanel[hidden] { display: none; }
+
+.storyMapSheet {
+    width: min(860px, 100%);
+    max-height: min(88vh, 900px);
+    overflow-y: auto;
+    box-sizing: border-box;
+    background: #f5f3eb;
+    border: 2px solid #849387;
+    border-radius: 8px;
+    box-shadow: 0 28px 80px rgba(0, 0, 0, .38);
+    color: #202b29;
+    font-family: 'Noto Sans SC', sans-serif;
+}
+
+.storyMapHeader {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px 26px 16px;
+    background: #e5ebe4;
+    border-bottom: 2px solid #92a59a;
+}
+
+.storyMapKicker {
+    margin: 0 0 3px;
+    color: #38645c;
+    font: 700 12px/1.4 monospace;
+}
+
+#storyMapTitle {
+    margin: 0;
+    font: 700 28px/1.25 'Noto Serif SC', serif;
+}
+
+.storyMapProgress {
+    margin: 5px 0 0;
+    color: #52625d;
+    font-size: 13px;
+}
+
+.storyMapClose {
+    flex: 0 0 38px;
+    width: 38px;
+    height: 38px;
+    border: 1px solid #8b9b90;
+    border-radius: 6px;
+    background: #f8faf5;
+    color: #27332f;
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.storyMapClose:hover,
+.storyMapClose:focus-visible { background: #d6e6da; outline: 2px solid #438674; }
+
+.storyMapRoute {
+    position: relative;
+    padding: 22px 26px 30px;
+    background: repeating-linear-gradient(0deg, transparent 0 47px, rgba(46, 71, 60, .045) 47px 48px);
+}
+
+.storyMapRoute::before {
+    content: '';
+    position: absolute;
+    top: 42px;
+    bottom: 50px;
+    left: 50%;
+    width: 3px;
+    transform: translateX(-50%);
+    background: #98aa9c;
+}
+
+.storyMapStop {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 52px minmax(0, 1fr);
+    align-items: center;
+    min-height: 128px;
+}
+
+.storyMapMarker {
+    z-index: 1;
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: center;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    box-sizing: border-box;
+    border: 2px solid #7a9183;
+    border-radius: 50%;
+    background: #f5f3eb;
+    color: #4d6658;
+    font: 700 15px/1 monospace;
+}
+
+.storyMapStopBody {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+    margin: 8px 10px 8px 0;
+    padding: 12px 16px;
+    border: 1px solid #c6cec3;
+    border-left: 4px solid #8ca594;
+    border-radius: 6px;
+    background: #fffefa;
+}
+
+.storyMapStop--right .storyMapStopBody {
+    grid-column: 3;
+    margin: 8px 0 8px 10px;
+}
+
+.storyMapStatus {
+    color: #597263;
+    font: 700 11px/1.3 monospace;
+}
+
+.storyMapStopTitle {
+    margin: 3px 0 5px;
+    font: 700 17px/1.35 'Noto Serif SC', serif;
+    overflow-wrap: anywhere;
+}
+
+.storyMapNote,
+.storyMapMeta,
+.storyMapDecision,
+.storyMapObjective {
+    margin: 3px 0 0;
+    font-size: 12px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.storyMapNote { color: #505a50; }
+.storyMapMeta { color: #38645c; font-weight: 700; }
+.storyMapDecision { color: #79532c; font-weight: 700; }
+.storyMapObjective { color: #8b4a2c; font-weight: 700; }
+
+.storyMapStop--done .storyMapMarker { background: #3f7864; border-color: #3f7864; color: white; }
+.storyMapStop--current .storyMapMarker { background: #b85b3d; border-color: #b85b3d; color: white; }
+.storyMapStop--current .storyMapStopBody { border-color: #c98b72; border-left-color: #b85b3d; background: #fff9f3; }
+.storyMapStop--current .storyMapStatus { color: #a04730; }
+.storyMapStop--future .storyMapMarker { border-color: #adb5ab; color: #7e8980; }
+.storyMapStop--future .storyMapStopBody { background: #f1f2ee; color: #667069; }
+
+.storyMapQuestBtn {
+    align-self: flex-start;
+    margin-top: 8px;
+    padding: 5px 9px;
+    border: 1px solid rgba(255, 216, 115, .55);
+    border-radius: 4px;
+    background: rgba(255, 216, 115, .14);
+    color: #ffe5a8;
+    font: 700 11px/1.3 'Noto Sans SC', sans-serif;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+.storyMapQuestBtn:hover,
+.storyMapQuestBtn:focus-visible { background: rgba(255, 216, 115, .3); outline: 1px solid #ffe5a8; }
+
+@media (max-width: 640px) {
+    .storyMapPanel { padding: 10px; }
+    .storyMapSheet { max-height: 92dvh; }
+    .storyMapHeader { padding: 16px 18px 12px; }
+    #storyMapTitle { font-size: 23px; }
+    .storyMapRoute { padding: 14px 14px 22px; }
+    .storyMapRoute::before { left: 33px; }
+    .storyMapStop { grid-template-columns: 38px minmax(0, 1fr); min-height: 0; }
+    .storyMapMarker { grid-column: 1; width: 32px; height: 32px; }
+    .storyMapStopBody,
+    .storyMapStop--right .storyMapStopBody { grid-column: 2; margin: 7px 0 7px 8px; padding: 11px 12px; }
+}

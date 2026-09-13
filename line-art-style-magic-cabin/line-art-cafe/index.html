@@ -63,12 +63,7 @@
         </div>
     </div>
 
-    <script src="three.min.js"></script>
-    <script>
-        if (typeof THREE === 'undefined') {
-            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');
-        }
-    </script>
+    <script src="../three.min.js"></script>
     <!-- 以下几个文件按依赖顺序加载，共用同一份全局作用域（不是 ES 模块），
          这样 index.html 仍可直接双击用浏览器打开，无需起本地服务器 -->
     <script src="js/scene.js"></script>

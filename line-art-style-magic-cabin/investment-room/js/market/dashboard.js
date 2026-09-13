@@ -173,6 +173,7 @@ function tradePanelHtml(stock) {
 }
 
 function rumorPanelHtml(stock) {
+  if (stock.id === 'WAHA') return '';
   const canRumor = canSpreadRumor();
   const cost = rumorCost();
   const affordable = state.coins >= cost;
@@ -224,6 +225,14 @@ function holdingsPanelHtml() {
 
 function newsPanelHtml() {
   const rows = marketState.news.slice(-6).reverse().map(news => {
+    if (news.isStoryPending) {
+      return '<div class="dashNewsRow"><b>' + news.title + '</b>' +
+        '<span>WAHA · 预计延迟 ' + news.delay + ' 个交易日</span></div>';
+    }
+    if (news.isStoryEvent) {
+      return '<div class="dashNewsRow dashNewsRow--event"><b>' + news.title + '</b>' +
+        '<span class="' + (news.impact >= 0 ? 'up' : 'down') + '">公司事件 · 已反映在股价</span></div>';
+    }
     if (news.isEvent) {
       return '<div class="dashNewsRow dashNewsRow--event"><b>⚡ ' + news.title + '</b>' +
         '<span class="' + (news.bad ? 'down' : 'up') + '">突发事件 · 立即生效</span></div>';

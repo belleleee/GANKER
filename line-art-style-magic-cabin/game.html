@@ -31,6 +31,7 @@
                     <div class="knob"></div>
                 </div>
             </div>
+            <button class="viewBtn" id="coloringMenuBtn" type="button">画面上色</button>
             <div class="sep"></div>
             <div class="sub">天 气</div>
             <div id="wxChips"></div>
@@ -81,6 +82,10 @@
         </div>
 
         <div class="menuTabPanel" data-menu-panel="biz" hidden>
+            <div class="sub">主 线</div>
+            <button class="viewBtn" id="storyMapMenuBtn" type="button">主线地图</button>
+            <button class="viewBtn" id="worldMapMenuBtn" type="button">场景平面图</button>
+            <div class="sep"></div>
             <div class="sub">金 融</div>
             <div class="viewBtn" id="investmentMenuBtn">投资与收入</div>
             <div class="sep"></div>
@@ -204,6 +209,8 @@
             <p class="questKicker">主线目标</p>
             <p id="questText" class="questTextLine">去看看院子里那片茶场</p>
             <p id="questDistance" class="questDistanceLine">0 米</p>
+            <button id="storyMapQuestBtn" class="storyMapQuestBtn" type="button">查看主线地图</button>
+            <button id="worldMapQuestBtn" class="storyMapQuestBtn" type="button">查看场景地图</button>
         </div>
     </div>
 
@@ -246,6 +253,69 @@
             <div id="mainStoryBody" class="mainStoryBody"></div>
             <div id="mainStoryChoices" class="mainStoryChoices" hidden></div>
             <button id="mainStoryNextBtn" type="button">继续</button>
+        </div>
+    </section>
+
+    <section id="storyMapPanel" class="storyMapPanel" hidden>
+        <div class="storyMapSheet" role="dialog" aria-modal="true" aria-labelledby="storyMapTitle">
+            <header class="storyMapHeader">
+                <div>
+                    <p class="storyMapKicker">发家之路</p>
+                    <h2 id="storyMapTitle">主线地图</h2>
+                    <p id="storyMapProgress" class="storyMapProgress"></p>
+                </div>
+                <button id="closeStoryMapBtn" class="storyMapClose" type="button" aria-label="关闭主线地图">×</button>
+            </header>
+            <div id="storyMapRoute" class="storyMapRoute"></div>
+        </div>
+    </section>
+
+    <section id="worldMapPanel" class="worldMapPanel" hidden>
+        <div class="worldMapSheet" role="dialog" aria-modal="true" aria-labelledby="worldMapTitle">
+            <header class="worldMapHeader">
+                <div>
+                    <p class="worldMapKicker">魔女小屋 · 户外</p>
+                    <h2 id="worldMapTitle">场景平面图</h2>
+                </div>
+                <button id="closeWorldMapBtn" class="worldMapClose" type="button" aria-label="关闭场景地图">×</button>
+            </header>
+            <div class="worldMapContent">
+                <div class="worldMapCanvasWrap">
+                    <svg id="worldMapSvg" viewBox="0 0 1491 1055" role="img" aria-label="游戏场景俯视地图"></svg>
+                </div>
+                <aside class="worldMapInfo" aria-live="polite">
+                    <p class="worldMapInfoKicker" id="worldMapInfoKind">当前位置</p>
+                    <h3 id="worldMapInfoTitle">主屋</h3>
+                    <p id="worldMapInfoBody"></p>
+                    <p id="worldMapInfoDistance" class="worldMapInfoDistance"></p>
+                    <button id="worldMapGuideBtn" class="worldMapGuideBtn" type="button">在地上标出路线</button>
+                    <div class="worldMapLegend"><span class="worldMapLegendPlayer">◆ 你的位置</span><span class="worldMapLegendGoal">◎ 主线目标</span></div>
+                </aside>
+            </div>
+        </div>
+    </section>
+
+    <section id="coloringPanel" class="coloringPanel" hidden aria-label="画面上色工具">
+        <div class="coloringCard">
+            <header class="coloringHeader">
+                <div>
+                    <p class="coloringKicker">Coloring Mode</p>
+                    <h2>画面上色</h2>
+                </div>
+                <button id="closeColoringBtn" class="coloringClose" type="button" aria-label="关闭画面上色">×</button>
+            </header>
+            <div class="coloringBody">
+                <div class="coloringPalette" id="coloringPalette"></div>
+                <label class="coloringCustom">
+                    <span>自选颜色</span>
+                    <input id="coloringCustomInput" type="color" value="#b88761">
+                </label>
+                <div class="coloringActions">
+                    <button id="coloringUndoBtn" type="button">撤销</button>
+                    <button id="coloringResetBtn" type="button">恢复默认</button>
+                </div>
+                <p id="coloringStatus" class="coloringStatus">选择颜色后，点击画面里的物件即可上色。</p>
+            </div>
         </div>
     </section>
 
@@ -308,12 +378,6 @@
     </section>
 
     <script src="three.min.js"></script>
-    <script>
-        /* 本地 three.min.js 优先；当本地three.js缺失时回退 CDN。 */
-        if (typeof THREE === 'undefined') {
-            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');
-        }
-    </script>
     <!-- 以下文件按依赖顺序加载，是普通 <script>（不是 ES 模块），共用同一份全局作用域，
          这样 game.html 仍可直接双击用浏览器打开，无需起本地服务器。
          拆分严格保持原文件的顺序与分节，未挪动任何代码。 -->
@@ -335,11 +399,17 @@
     <script src="js/14-store.js"></script>
     <script src="js/16-newspaper.js"></script>
     <script src="js/18-well.js"></script>
-    <script src="js/19-teafarm.js"></script>
+    <script src="js/tea-farm/01-core-hut.js"></script>
+    <script src="js/tea-farm/02-field-plants.js"></script>
+    <script src="js/tea-farm/03-harvest-workers.js"></script>
+    <script src="js/tea-farm/04-collisions-save.js"></script>
     <script src="js/20-coin-shop.js"></script>
     <script src="js/21-investment-house.js"></script>
     <script src="js/29-cafe-entrance.js"></script>
     <script src="js/22-main-story.js"></script>
+    <script src="js/33-story-map.js"></script>
+    <script src="js/34-world-map.js"></script>
+    <script src="js/35-coloring.js"></script>
     <script src="js/23-achievements.js"></script>
     <script src="js/24-wealth-events.js"></script>
     <script src="js/25-onboarding.js"></script>

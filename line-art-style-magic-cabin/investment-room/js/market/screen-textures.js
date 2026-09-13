@@ -71,7 +71,7 @@ function drawPanelBase(ctx, w, h, title) {
 
 function drawMarketScreen(ctx, w, h) {
   drawPanelBase(ctx, w, h, '市场行情');
-  STOCKS.slice(0, 5).forEach((item, i) => {
+  [STOCKS[STOCKS.length - 1], ...STOCKS.slice(0, 4)].forEach((item, i) => {
     const stock = getStock(item.id);
     const y = 96 + i * 50;
     const diff = stock.price - stock.prev;
@@ -189,7 +189,13 @@ function drawNewsScreen(ctx, w, h) {
     const title = news.isEvent ? '⚡ ' + news.title : (news.isExposeNotice ? '📢 ' + news.title : (news.isPlayerRumor ? '🤫 ' + news.title : news.title));
     readableText(ctx, title, 60, 108 + i * 62, i % 2 ? '#d9f9ff' : '#ffffff', 'bold 24px "Songti SC","STSong",serif');
     ctx.font = 'bold 18px monospace';
-    if (news.isEvent) {
+    if (news.isStoryPending) {
+      readableText(ctx, 'WAHA / 预计延迟' + news.delay + '个交易日', 60, 136 + i * 62,
+        '#d7f7ff', 'bold 18px "Songti SC","STSong",serif');
+    } else if (news.isStoryEvent) {
+      readableText(ctx, 'WAHA / 公司事件 / 已反映在股价', 60, 136 + i * 62,
+        news.impact >= 0 ? '#39ff9c' : '#ff5d75', 'bold 18px "Songti SC","STSong",serif');
+    } else if (news.isEvent) {
       const tone = news.bad ? '#ff5d75' : '#39ff9c';
       readableText(ctx, '突发事件 / 立即生效', 60, 136 + i * 62, tone, 'bold 18px "Songti SC","STSong",serif');
     } else if (news.isExposeNotice) {

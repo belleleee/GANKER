@@ -5,6 +5,9 @@
 @import url("modules/newspaper.css");
 @import url("modules/prologue.css");
 @import url("modules/main-story.css");
+@import url("modules/story-map.css");
+@import url("modules/world-map.css");
+@import url("modules/coloring.css");
 @import url("modules/achievements.css");
 @import url("modules/wealth-event.css");
 @import url("modules/onboarding.css");

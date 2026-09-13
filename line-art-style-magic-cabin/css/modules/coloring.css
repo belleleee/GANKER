@@ -1,0 +1,157 @@
+.coloringPanel {
+    position: fixed;
+    inset: 0;
+    z-index: 42;
+    pointer-events: none;
+}
+
+.coloringCard {
+    position: absolute;
+    left: max(18px, env(safe-area-inset-left));
+    top: 84px;
+    width: min(320px, calc(100vw - 36px));
+    max-height: calc(100vh - 110px);
+    overflow: auto;
+    padding: 16px;
+    border: 2px solid #9f815b;
+    border-radius: 8px;
+    background: rgba(255, 250, 238, 0.95);
+    box-shadow: 0 14px 36px rgba(42, 31, 20, 0.22);
+    color: #2f2a22;
+    pointer-events: auto;
+}
+
+.coloringHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.coloringKicker {
+    margin: 0 0 4px;
+    color: #6d785f;
+    font: 700 12px/1.1 "Noto Sans SC", sans-serif;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.coloringHeader h2 {
+    margin: 0;
+    font-size: 25px;
+    line-height: 1.15;
+}
+
+.coloringClose {
+    width: 38px;
+    height: 38px;
+    border: 2px solid #9f815b;
+    border-radius: 8px;
+    background: #fff8e8;
+    color: #33291f;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.coloringBody {
+    display: grid;
+    gap: 12px;
+}
+
+.coloringPalette {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+}
+
+.coloringSwatch {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    min-width: 0;
+    border: 2px solid #9f815b;
+    border-radius: 8px;
+    background: var(--swatch);
+    cursor: pointer;
+}
+
+.coloringSwatch.isSelected {
+    box-shadow: 0 0 0 3px rgba(45, 120, 93, 0.28);
+    border-color: #2d785d;
+}
+
+.coloringSwatch.isSelected::after {
+    content: "";
+    position: absolute;
+    inset: 8px;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    border-radius: 5px;
+}
+
+.coloringCustom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font: 700 14px/1.2 "Noto Sans SC", sans-serif;
+    color: #5a604f;
+}
+
+.coloringCustom input {
+    width: 54px;
+    height: 36px;
+    padding: 2px;
+    border: 2px solid #9f815b;
+    border-radius: 8px;
+    background: #fffaf0;
+}
+
+.coloringActions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.coloringActions button {
+    min-height: 38px;
+    border: 2px solid #6d8c64;
+    border-radius: 8px;
+    background: #f7f1df;
+    color: #3f5f3b;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.coloringActions button:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.coloringStatus {
+    min-height: 38px;
+    margin: 0;
+    color: #6f5a47;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+body.coloringModeActive canvas {
+    cursor: crosshair;
+}
+
+@media (max-width: 720px) {
+    .coloringCard {
+        left: 12px;
+        right: 12px;
+        top: auto;
+        bottom: calc(12px + env(safe-area-inset-bottom));
+        width: auto;
+        max-height: 42vh;
+    }
+
+    .coloringPalette {
+        grid-template-columns: repeat(8, 1fr);
+    }
+}

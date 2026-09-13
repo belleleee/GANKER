@@ -23,7 +23,8 @@ const STOCKS = [
   { id: 'COIN', name: '硬币商店', start: 52, sector: 'coin' },
   { id: 'LIGHT', name: '灯具作坊', start: 31, sector: 'light' },
   { id: 'CAFE', name: '线稿咖啡馆', start: 26, sector: 'cafe' },
-  { id: 'MAGIC', name: '魔法道具铺', start: 61, sector: 'magic' }
+  { id: 'MAGIC', name: '魔法道具铺', start: 61, sector: 'magic' },
+  { id: 'WAHA', name: '娃哈哈', start: 40, sector: 'company', isPlayerCompany: true }
 ];
 const NEWS_POOL = [
   { title: '茶场订单增长', targetStock: 'TEA', impact: .065, delay: 1 },
@@ -159,12 +160,26 @@ function normalizeMarket(raw) {
   for (const item of STOCKS) {
     const saved = raw && raw.stocks && raw.stocks[item.id];
     stocks[item.id] = sanitizeStock(saved, item.id);
+    const stock = stocks[item.id];
+    if (stock.price === 1) {
+      const collapse = stock.history.findIndex((price, i, history) =>
+        i > 0 && price === 1 && history[i - 1] > 10);
+      if (collapse > 0) {
+        stock.price = stock.history[collapse - 1];
+        stock.prev = stock.price;
+        stock.history = stock.history.slice(0, collapse);
+      }
+    }
   }
   const news = raw && Array.isArray(raw.news) ? raw.news.slice(-8) : [];
   return {
     day: intValue(raw && raw.day, 1, 1, 999999),
     selectedStock: STOCKS.some(item => item.id === (raw && raw.selectedStock)) ? raw.selectedStock : 'TEA',
     news: news.length ? news : [makeNewsEvent(0), makeNewsEvent(1)],
+    storyEvents: raw && Array.isArray(raw.storyEvents)
+      ? raw.storyEvents.filter(event => event && typeof event.id === 'string' &&
+          event.targetStock === 'WAHA' && Number.isFinite(event.impact) &&
+          Number.isInteger(event.dueDay)).slice(-16) : [],
     stocks
   };
 }
@@ -208,7 +223,37 @@ function loadState() {
   state.investment = normalizeInvestment(economy.investment);
   marketState = state.investment.market;
   applyExternalMarketNews();
+  queueStoryMarketEvents();
   saveState();
+}
+
+function queueStoryMarketEvents() {
+  const pending = state.save && Array.isArray(state.save.pendingMarketEvents)
+    ? state.save.pendingMarketEvents : [];
+  if (!pending.length) return;
+  for (const event of pending) {
+    if (!event || event.targetStock !== 'WAHA' || typeof event.id !== 'string' ||
+        !Number.isFinite(event.impact)) continue;
+    if (marketState.storyEvents.some(queued => queued.id === event.id)) continue;
+    marketState.storyEvents.push({
+      id: event.id,
+      targetStock: 'WAHA',
+      headline: String(event.headline || '娃哈哈经营消息').slice(0, 80),
+      impact: Math.max(-.32, Math.min(.32, event.impact)),
+      dueDay: marketState.day + intValue(event.delay, 1, 1, 30)
+    });
+    marketState.news.push({
+      title: String(event.headline || '娃哈哈经营消息').slice(0, 80),
+      targetStock: 'WAHA',
+      isStoryPending: true,
+      storyEventId: event.id,
+      day: marketState.day,
+      delay: intValue(event.delay, 1, 1, 30)
+    });
+  }
+  marketState.storyEvents = marketState.storyEvents.slice(-16);
+  marketState.news = marketState.news.slice(-8);
+  state.save.pendingMarketEvents = [];
 }
 
 /* 小屋那边的广告/融资/慈善弹窗，会把结果当"市场消息"写进同一份存档
@@ -222,7 +267,7 @@ function applyExternalMarketNews() {
   pending.forEach(entry => {
     const bad = !!entry.bad;
     const magnitude = Math.max(0.01, Math.min(0.2, Number(entry.magnitude) || 0.05));
-    for (const item of STOCKS) {
+    for (const item of STOCKS.filter(stock => !stock.isPlayerCompany)) {
       const stock = getStock(item.id);
       const variance = .5 + Math.random() * .5;
       const change = (bad ? -1 : 1) * magnitude * variance;
@@ -385,7 +430,7 @@ function spreadRumor(stockId, bad) {
   state.coins = intValue(state.coins, 100, 0, 999999);
   if (state.coins < cost) return;
   const stock = STOCKS.find(item => item.id === stockId);
-  if (!stock) return;
+  if (!stock || stock.isPlayerCompany) return;
   state.coins -= cost;
   state.investment.lastRumorDay = marketState.day;
   marketState.news.push({
@@ -453,7 +498,8 @@ function baseFluctuation() {
 function newsImpact(stockId, day) {
   let impact = 0;
   for (const news of marketState.news) {
-    if (news.targetStock !== stockId) continue;
+    if (!news || news.targetStock !== stockId || news.isPlayerRumor ||
+        !Number.isFinite(news.impact) || !Number.isFinite(news.credibility)) continue;
     const applyDay = news.day + news.delay;
     if (day === applyDay) {
       impact += news.credibility < .45 ? news.impact * .45 : news.impact * news.credibility;
@@ -490,7 +536,7 @@ function rollMarketEvent() {
   const magnitude = .12 + Math.random() * .14;
   const sectorEvent = Math.random() < .6;
   if (sectorEvent) {
-    const sectors = [...new Set(STOCKS.map(item => item.sector))];
+    const sectors = [...new Set(STOCKS.filter(item => !item.isPlayerCompany).map(item => item.sector))];
     const sector = sectors[Math.floor(Math.random() * sectors.length)];
     const targets = STOCKS.filter(item => item.sector === sector).map(item => item.id);
     return {
@@ -505,7 +551,7 @@ function rollMarketEvent() {
     scope: 'market',
     bad,
     magnitude,
-    targets: STOCKS.map(item => item.id),
+    targets: STOCKS.filter(item => !item.isPlayerCompany).map(item => item.id),
     title: bad ? '全市场恐慌性抛售' : '全市场普涨行情'
   };
 }
@@ -514,6 +560,21 @@ function advanceMarketDay() {
   marketState.day += 1;
   const event = rollMarketEvent();
   const shocks = {};
+  const dueStoryEvents = marketState.storyEvents.filter(item => item.dueDay <= marketState.day);
+  marketState.storyEvents = marketState.storyEvents.filter(item => item.dueDay > marketState.day);
+  for (const storyEvent of dueStoryEvents) {
+    marketState.news = marketState.news.filter(news => news.storyEventId !== storyEvent.id);
+    shocks.WAHA = (shocks.WAHA || 0) + storyEvent.impact;
+    marketState.news.push({
+      title: storyEvent.headline,
+      targetStock: 'WAHA',
+      isStoryEvent: true,
+      impact: storyEvent.impact,
+      delay: 0,
+      day: marketState.day
+    });
+  }
+  marketState.news = marketState.news.slice(-8);
   resolvePlayerRumors(marketState.day, shocks);
   state.investment.reputation = Math.round(state.investment.reputation + (60 - state.investment.reputation) * .02);
   if (event) {
@@ -535,7 +596,8 @@ function advanceMarketDay() {
     const stock = getStock(item.id);
     const prevPrice = stock.price;
     const shock = shocks[item.id] || 0;
-    const change = baseFluctuation() + newsImpact(item.id, marketState.day) + playerImpact(item.id) + shock;
+    const change = item.isPlayerCompany ? shock
+      : baseFluctuation() + newsImpact(item.id, marketState.day) + playerImpact(item.id) + shock;
     stock.prev = prevPrice;
     stock.price = Math.max(1, Math.round(clampPrice(prevPrice * (1 + change), prevPrice, shock ? .32 : .1) * 10) / 10);
     stock.history.push(stock.price);

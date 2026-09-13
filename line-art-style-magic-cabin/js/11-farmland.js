@@ -160,7 +160,7 @@ function harvestFarmCrop(state, silent) {
     } else if (!silent) {
         showHintOverride('收获' + cropDef.name + ' +1，可以继续播种');
     }
-    if (!silent) noteFarmPlayerHarvest();
+    if (!silent) noteFarmPlayerHarvest(cropId);
     return true;
 }
 
@@ -594,11 +594,9 @@ function setupFarmWorkerPanel() {
     });
 }
 
-function noteFarmPlayerHarvest() {
-    farmHireState.playerHarvests = Math.max(
-        farmHireState.playerHarvests + 1,
-        farmPlots.reduce((sum, p) => sum + (p.harvested || 0), 0)
-    );
+function noteFarmPlayerHarvest(cropId) {
+    if (cropId !== 'turnip') return;
+    farmHireState.playerHarvests += 1;
     if (
         farmHireState.playerHarvests >= FARM_RESUME_HARVEST_TARGET &&
         !farmHireState.resumePrompted &&
@@ -1202,8 +1200,7 @@ function applyFarmHireState(save) {
     farmHireState.trustPenaltyUntilDay = Number.isFinite(Number(save && save.trustPenaltyUntilDay))
         ? Math.trunc(Number(save.trustPenaltyUntilDay)) : -1;
     const savedHarvests = Math.trunc(Number(save && save.playerHarvests) || 0);
-    const plotHarvests = farmPlots.reduce((sum, p) => sum + (p.harvested || 0), 0);
-    farmHireState.playerHarvests = Math.max(0, savedHarvests, plotHarvests);
+    farmHireState.playerHarvests = Math.max(0, savedHarvests, farmHireState.hired ? FARM_RESUME_HARVEST_TARGET : 0);
     farmHireState.resumePrompted = !!(
         save &&
         save.resumePrompted
