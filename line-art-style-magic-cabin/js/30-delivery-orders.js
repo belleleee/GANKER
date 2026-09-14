@@ -14,6 +14,21 @@ const DELIVERY_EXPIRE_SECONDS = 260;
 const DELIVERY_REWARD_MULT_BASE = 1.6;
 const DELIVERY_INTERACT_RADIUS = 1.6;
 
+/* ---------------- 批发大单：普通订单的加量版 ----------------
+   普通订单量小（1-3个），赚不出什么存在感。批发大单一次要十几二十个，
+   报酬按倍数放大，但也真的可能让人破产——接了大单又凑不齐货，
+   或者为了凑货把仓库清空，等真正大额的送货订单/财富事件砸下来时
+   却没有周转的余地。解锁门槛跟"广告豪赌"那一章对齐，早期不出现。 */
+const DELIVERY_BULK_CHANCE = 0.22;
+const DELIVERY_BULK_QTY_MIN = 12;
+const DELIVERY_BULK_QTY_RANGE = 14;
+const DELIVERY_BULK_REWARD_MULT = 2.4;
+const DELIVERY_BULK_EXPIRE_SECONDS = 420;
+
+function isBulkDeliveryUnlocked() {
+    return typeof mainStoryState !== 'undefined' && mainStoryState.stage >= 3;
+}
+
 /* 广告豪赌押中"黄金时段"、非常可乐选对"乡镇联销体"，会真正改变这套
    送货玩法的数值——不是加一句夸奖，是账本上能看见的差别。 */
 function deliveryMainStoryFlag(key) {
@@ -81,24 +96,33 @@ function makeDeliveryIconTexture() {
 }
 let deliveryIconTex = null;
 
-function buildDeliveryCustomer(color) {
+function buildDeliveryCustomer(color, bulk) {
     const g = new THREE.Group();
+    const scale = bulk ? 1.5 : 1;
     const bodyMat = LITMAT(color, { transparent: true, opacity: 0.88 });
-    const body = solid(new THREE.SphereGeometry(0.30, 18, 14), bodyMat);
+    const body = solid(new THREE.SphereGeometry(0.30 * scale, 18, 14), bodyMat);
     body.scale.set(1, 0.82, 1);
-    body.position.y = 0.26;
+    body.position.y = 0.26 * scale;
     g.add(body);
+    if (bulk) {
+        const ringMat = new THREE.MeshBasicMaterial({ color: 0xffd873, transparent: true, opacity: 0.85 });
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.30 * scale + 0.08, 0.03, 8, 20), ringMat);
+        ring.rotation.x = Math.PI / 2;
+        ring.position.y = 0.02;
+        g.add(ring);
+    }
     const eyeMat = new THREE.MeshBasicMaterial({ color: 0x2a2018 });
     for (const side of [-1, 1]) {
-        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 6), eyeMat);
-        eye.position.set(side * 0.11, 0.32, 0.24);
+        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.035 * scale, 8, 6), eyeMat);
+        eye.position.set(side * 0.11 * scale, 0.32 * scale, 0.24 * scale);
         g.add(eye);
     }
     if (!deliveryIconTex) deliveryIconTex = makeDeliveryIconTexture();
     const icon = new THREE.Sprite(new THREE.SpriteMaterial({ map: deliveryIconTex, depthTest: false }));
-    icon.scale.set(0.42, 0.42, 1);
-    icon.position.y = 0.85;
+    icon.scale.set(0.42 * scale, 0.42 * scale, 1);
+    icon.position.y = 0.85 * scale;
     icon.userData.bobPhase = Math.random() * Math.PI * 2;
+    icon.userData.bobBase = 0.85 * scale;
     g.add(icon);
     g.userData.icon = icon;
     g.userData.bob = 0;
@@ -117,21 +141,25 @@ function spawnDeliveryOrder() {
     const cropId = CROP_ORDER[Math.floor(Math.random() * CROP_ORDER.length)];
     const crop = deliveryCropDef(cropId);
     if (!crop) return;
-    const qty = 1 + Math.floor(Math.random() * 3);
-    const reward = Math.max(10, Math.round(crop.harvestCoins * qty * deliveryRewardMult()));
-    const color = DELIVERY_CUSTOMER_COLORS[Math.floor(Math.random() * DELIVERY_CUSTOMER_COLORS.length)];
-    const mesh = buildDeliveryCustomer(color);
+    const bulk = isBulkDeliveryUnlocked() && Math.random() < DELIVERY_BULK_CHANCE;
+    const qty = bulk
+        ? DELIVERY_BULK_QTY_MIN + Math.floor(Math.random() * DELIVERY_BULK_QTY_RANGE)
+        : 1 + Math.floor(Math.random() * 3);
+    const rewardMult = deliveryRewardMult() * (bulk ? DELIVERY_BULK_REWARD_MULT : 1);
+    const reward = Math.max(10, Math.round(crop.harvestCoins * qty * rewardMult));
+    const color = bulk ? 0xf3c04a : DELIVERY_CUSTOMER_COLORS[Math.floor(Math.random() * DELIVERY_CUSTOMER_COLORS.length)];
+    const mesh = buildDeliveryCustomer(color, bulk);
     const groundY = typeof groundAt === 'function' ? groundAt(spot.x, spot.z, 0) : 0;
     mesh.position.set(spot.x, groundY, spot.z);
     scene.add(mesh);
 
     const order = {
         id: deliveryOrderSeq++,
-        cropId, qty, reward,
+        cropId, qty, reward, bulk,
         x: spot.x, z: spot.z,
         mesh,
         accepted: false,
-        life: DELIVERY_EXPIRE_SECONDS,
+        life: bulk ? DELIVERY_BULK_EXPIRE_SECONDS : DELIVERY_EXPIRE_SECONDS,
         interactEntry: null
     };
     deliveryOrders.push(order);
@@ -223,7 +251,7 @@ function acceptDeliveryOrder(id, prepay) {
     }
     const entry = {
         x: order.x, z: order.z, r: DELIVERY_INTERACT_RADIUS,
-        label: '送货 · ' + (crop ? crop.name : '作物') + ' ×' + order.qty,
+        label: (order.bulk ? '批发大单 · ' : '送货 · ') + (crop ? crop.name : '作物') + ' ×' + order.qty,
         act: () => tryFulfillDelivery(order)
     };
     order.interactEntry = entry;
@@ -263,7 +291,8 @@ function renderDeliveryBoard() {
     }
     deliveryBoardList.innerHTML = pending.map(o => {
         const crop = deliveryCropDef(o.cropId);
-        return '<div class="deliveryBoardRow">' +
+        return '<div class="deliveryBoardRow' + (o.bulk ? ' bulk' : '') + '">' +
+            (o.bulk ? '<span class="deliveryBoardBulkTag">批发大单</span>' : '') +
             '<span class="deliveryBoardIcon">' + (crop ? crop.icon : '📦') + '</span>' +
             '<span class="deliveryBoardName">' + (crop ? crop.name : '作物') + ' ×' + o.qty + '</span>' +
             '<span class="deliveryBoardTimer' + (o.life < 40 ? ' urgent' : '') + '">' + deliveryFormatTime(o.life) + '</span>' +
@@ -359,7 +388,7 @@ function updateDeliveryOrders(dt, time) {
         if (order.mesh) {
             order.mesh.position.y += 0;
             const icon = order.mesh.userData.icon;
-            if (icon) icon.position.y = 0.85 + Math.sin((time || 0) * 2 + icon.userData.bobPhase) * 0.05;
+            if (icon) icon.position.y = (icon.userData.bobBase || 0.85) + Math.sin((time || 0) * 2 + icon.userData.bobPhase) * 0.05;
             order.mesh.rotation.y += (dt || 0) * 0.6;
         }
         if (order.life <= 0) removeDeliveryOrder(order, true);

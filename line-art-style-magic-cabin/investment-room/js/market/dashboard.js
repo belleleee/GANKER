@@ -12,8 +12,74 @@ function safeStockForTrade(id) {
   return stock;
 }
 
+let marketFeedbackLayer = null;
+let marketFeedbackFlash = null;
+let marketFeedbackMilestone = { gain: 0, loss: 0 };
+
+function ensureMarketFeedbackDom() {
+  if (!marketFeedbackLayer) {
+    marketFeedbackLayer = document.createElement('div');
+    marketFeedbackLayer.className = 'marketFeedbackLayer';
+    document.body.appendChild(marketFeedbackLayer);
+  }
+  if (!marketFeedbackFlash) {
+    marketFeedbackFlash = document.createElement('div');
+    marketFeedbackFlash.className = 'marketFeedbackFlash';
+    document.body.appendChild(marketFeedbackFlash);
+  }
+}
+
+function showMarketFeedback(amount, title, detail, options) {
+  const value = Math.round(Number(amount) || 0);
+  if (!value) return;
+  const opts = options || {};
+  ensureMarketFeedbackDom();
+  const gain = value > 0;
+  const abs = Math.abs(value);
+  const node = document.createElement('div');
+  node.className = 'marketResultToast ' + (gain ? 'gain' : 'loss');
+  node.innerHTML =
+    '<small>' + (title || (gain ? 'PROFIT' : 'LOSS')) + '</small>' +
+    '<strong>' + (gain ? '+' : '-') + abs + '</strong>' +
+    '<p>' + (detail || (gain ? '这次判断带来了现金流。' : '这次判断开始付出代价。')) + '</p>';
+  marketFeedbackLayer.appendChild(node);
+  setTimeout(() => node.remove(), 2500);
+
+  marketFeedbackFlash.className = 'marketFeedbackFlash ' + (gain ? 'gain' : 'loss');
+  marketFeedbackFlash.style.animation = 'none';
+  void marketFeedbackFlash.offsetWidth;
+  marketFeedbackFlash.style.animation = '';
+
+  const monitor = document.querySelector('.screenMonitor');
+  if (monitor) {
+    monitor.classList.remove('marketPulseGain', 'marketPulseLoss');
+    void monitor.offsetWidth;
+    monitor.classList.add(gain ? 'marketPulseGain' : 'marketPulseLoss');
+    setTimeout(() => monitor.classList.remove('marketPulseGain', 'marketPulseLoss'), 800);
+  }
+  const toastLabel = opts.toastLabel || (gain ? '盈利 +' : '亏损 -');
+  if (typeof showToast === 'function') showToast(toastLabel + abs + ' · ' + (detail || ''), 2600);
+
+  if (opts.countMilestone !== false) {
+    const bucket = gain ? 'gain' : 'loss';
+    const before = marketFeedbackMilestone[bucket];
+    marketFeedbackMilestone[bucket] += abs;
+    const crossed500 = before < 500 && marketFeedbackMilestone[bucket] >= 500;
+    const crossed1500 = before < 1500 && marketFeedbackMilestone[bucket] >= 1500;
+    if (crossed1500 || crossed500) {
+      setTimeout(() => showToast(gain
+        ? '累计盈利已经很可观了，别忘了把运气变成规则。'
+        : '累计亏损已经敲响警钟，下一步先想活下来。', 3600), 500);
+    }
+  }
+}
+
 function buyStock(id, count) {
   const stock = safeStockForTrade(id);
+  if (stock.id === 'WAHA' && !companyState().listed) {
+    if (typeof showToast === 'function') showToast('娃哈哈还没上市，先选择发行方案。');
+    return;
+  }
   const qty = Math.max(1, Math.trunc(Number(count)) || 1);
   state.coins = Math.trunc(safeMoney(state.coins, 100));
   const cost = Math.ceil(stock.price * qty);
@@ -28,6 +94,10 @@ function buyStock(id, count) {
   holding.cost += cost;
   stock.pressure += .01 * qty;
   setHolding(id, holding);
+  showMarketFeedback(-cost, '建仓成本', '买入 ' + stock.name + ' ×' + qty + '，现金减少但仓位开始工作。', {
+    countMilestone: false,
+    toastLabel: '现金 -'
+  });
   redrawScreens();
   renderScreenPanel(activeScreen);
   saveState();
@@ -35,6 +105,10 @@ function buyStock(id, count) {
 
 function sellStock(id, count) {
   const stock = safeStockForTrade(id);
+  if (stock.id === 'WAHA' && !companyState().listed) {
+    if (typeof showToast === 'function') showToast('娃哈哈还没上市，不能二级市场卖出。');
+    return;
+  }
   const holding = getHolding(id);
   const qty = Math.min(Math.max(1, Math.trunc(Number(count)) || 1), holding.qty);
   if (!qty) {
@@ -52,6 +126,11 @@ function sellStock(id, count) {
   stock.pressure -= .012 * qty;
   setHolding(id, holding);
   state.coins = Math.min(999999, state.coins + income);
+  showMarketFeedback(profit || income, profit >= 0 ? '卖出兑现' : '卖出止损',
+    stock.name + ' ×' + qty + ' · 回收 ' + income + ' 金币 · 本次' + (profit >= 0 ? '赚 ' + profit : '亏 ' + Math.abs(profit)), {
+      countMilestone: profit !== 0,
+      toastLabel: profit === 0 ? '现金 +' : undefined
+    });
   redrawScreens();
   renderScreenPanel(activeScreen);
   saveState();
@@ -59,6 +138,10 @@ function sellStock(id, count) {
 
 function shortStock(id, count) {
   const stock = safeStockForTrade(id);
+  if (stock.id === 'WAHA') {
+    if (typeof showToast === 'function') showToast('创始人公司不能做空。');
+    return;
+  }
   const qty = Math.max(1, Math.trunc(Number(count)) || 1);
   state.coins = Math.trunc(safeMoney(state.coins, 100));
   const proceeds = Math.floor(stock.price * qty);
@@ -73,6 +156,10 @@ function shortStock(id, count) {
   setShort(id, short);
   state.coins = Math.min(999999, state.coins + proceeds);
   stock.pressure -= .012 * qty;
+  showMarketFeedback(proceeds, '开空回笼现金', '做空 ' + stock.name + ' ×' + qty + '，先拿到现金，风险也一起放大。', {
+    countMilestone: false,
+    toastLabel: '现金 +'
+  });
   redrawScreens();
   renderScreenPanel(activeScreen);
   saveState();
@@ -80,6 +167,10 @@ function shortStock(id, count) {
 
 function coverShort(id, count) {
   const stock = safeStockForTrade(id);
+  if (stock.id === 'WAHA') {
+    if (typeof showToast === 'function') showToast('娃哈哈没有可平的做空仓位。');
+    return;
+  }
   const short = getShort(id);
   const qty = Math.min(Math.max(1, Math.trunc(Number(count)) || 1), short.qty);
   if (!qty) {
@@ -101,19 +192,111 @@ function coverShort(id, count) {
   setShort(id, short);
   state.coins -= cost;
   stock.pressure += .01 * qty;
+  showMarketFeedback(profit || -cost, profit >= 0 ? '空单盈利' : '空单亏损',
+    stock.name + ' ×' + qty + ' · 平仓花费 ' + cost + ' 金币 · 本次' + (profit >= 0 ? '赚 ' + profit : '亏 ' + Math.abs(profit)), {
+      countMilestone: profit !== 0,
+      toastLabel: profit === 0 ? '现金 -' : undefined
+    });
+  redrawScreens();
+  renderScreenPanel(activeScreen);
+  saveState();
+}
+
+const WAHA_IPO_PLANS = {
+  employee: {
+    label: '员工与老经销商',
+    target: '员工与老经销商',
+    publicShares: 1600,
+    price: 34,
+    rep: 8,
+    shock: .04,
+    note: '发行少、定价温和，控制权稳，口碑和声誉更好。'
+  },
+  partner: {
+    label: '乡镇联销伙伴',
+    target: '乡镇联销伙伴',
+    publicShares: 2600,
+    price: 40,
+    rep: 3,
+    shock: .08,
+    note: '融资和渠道兼顾，股权稀释适中。'
+  },
+  public: {
+    label: '公开市场投资者',
+    target: '公开市场投资者',
+    publicShares: 4200,
+    price: 48,
+    rep: -4,
+    shock: .13,
+    note: '融资最多，但创始人控制权稀释明显，市场预期更剧烈。'
+  }
+};
+
+function companyState() {
+  state.investment.company = normalizeCompanyState(state.investment.company);
+  return state.investment.company;
+}
+
+function wahaFounderPct(company) {
+  const c = company || companyState();
+  return Math.round((c.founderShares / Math.max(1, c.totalShares)) * 1000) / 10;
+}
+
+function launchWahaIpo(planId) {
+  const plan = WAHA_IPO_PLANS[planId];
+  if (!plan) return;
+  const company = companyState();
+  if (company.listed) {
+    if (typeof showToast === 'function') showToast('娃哈哈已经上市了，后续只能通过二级市场交易。');
+    return;
+  }
+  const stock = getStock('WAHA');
+  company.totalShares = 10000;
+  company.publicShares = plan.publicShares;
+  company.founderShares = company.totalShares - plan.publicShares;
+  company.offerPrice = plan.price;
+  company.offerTarget = plan.target;
+  company.ipoDay = marketState.day;
+  company.lockupUntilDay = marketState.day + 5;
+  company.treasury += plan.publicShares * plan.price;
+  company.listed = true;
+  stock.prev = stock.price;
+  stock.price = plan.price;
+  stock.history = stock.history.concat([stock.price]).slice(-24);
+  const holding = getHolding('WAHA');
+  holding.qty += plan.publicShares;
+  holding.cost += plan.publicShares * plan.price;
+  setHolding('WAHA', holding);
+  state.investment.reputation = Math.max(0, Math.min(100, state.investment.reputation + plan.rep));
+  marketState.news.push({
+    title: '娃哈哈完成上市：发行给' + plan.target,
+    targetStock: 'WAHA',
+    isStoryEvent: true,
+    impact: plan.shock,
+    delay: 0,
+    day: marketState.day
+  });
+  marketState.news = marketState.news.slice(-8);
+  if (typeof showMarketFeedback === 'function') {
+    showMarketFeedback(plan.publicShares * plan.price, '上市融资',
+      '发行 ' + plan.publicShares + ' 股 · 定价 ' + plan.price + ' · 创始人持股 ' + wahaFounderPct(company) + '%', {
+        toastLabel: '公司融资 +'
+      });
+  }
   redrawScreens();
   renderScreenPanel(activeScreen);
   saveState();
 }
 
 function marketIndexSummary() {
-  const diffs = STOCKS.map(item => {
+  const tradeStocks = STOCKS.filter(item => !item.isPlayerCompany);
+  const diffs = tradeStocks.map(item => {
     const stock = getStock(item.id);
     return (stock.price - stock.prev) / Math.max(1, stock.prev);
   });
   const avg = diffs.reduce((a, b) => a + b, 0) / diffs.length;
-  const totalPrice = STOCKS.reduce((sum, item) => sum + safeMoney(getStock(item.id).price, item.start), 0);
-  const index = 1000 * (1 + totalPrice / (STOCKS.length * 1000));
+  const totalPrice = tradeStocks.reduce((sum, item) => sum + safeMoney(getStock(item.id).price, item.start), 0);
+  const index = 1000 * (1 + totalPrice / (tradeStocks.length * 1000));
   const cls = avg >= 0 ? 'up' : 'down';
   return '<div class="dashIndexCard">' +
     '<small>大盘指数 · SIDX</small>' +
@@ -123,20 +306,28 @@ function marketIndexSummary() {
 }
 
 function sidebarRows() {
-  const rows = STOCKS.map(item => {
+  const rows = STOCKS.filter(item => !item.isPlayerCompany).map(item => {
     const stock = getStock(item.id);
     const diff = stock.price - stock.prev;
     const cls = diff >= 0 ? 'up' : 'down';
-    const selected = item.id === marketState.selectedStock;
+    const selected = activeScreen !== 'company' && item.id === marketState.selectedStock;
     return '<button class="dashStockRow' + (selected ? ' on' : '') + '" data-stock="' + item.id + '">' +
       '<span class="dashStockName">' + item.name + '<small>' + item.id + '</small></span>' +
       '<span class="dashStockPrice">' + stock.price.toFixed(1) + '<small class="' + cls + '">' + formatPct(diff / Math.max(1, stock.prev)) + '</small></span>' +
       '</button>';
   }).join('');
-  return marketIndexSummary() + rows;
+  const waha = getStock('WAHA');
+  const company = companyState();
+  return marketIndexSummary() +
+    '<button class="dashCompanyRow' + (activeScreen === 'company' ? ' on' : '') + '" data-company="WAHA">' +
+    '<span><b>公司上市</b><small>WAHA · ' + (company.listed ? '已上市' : '未上市') + '</small></span>' +
+    '<strong>' + waha.price.toFixed(1) + '</strong>' +
+    '</button>' +
+    rows;
 }
 
 function tradePanelHtml(stock) {
+  if (stock.id === 'WAHA') return wahaCompanyPanelHtml(stock);
   const holding = getHolding(stock.id);
   const short = getShort(stock.id);
   const avg = holding.qty ? Math.round(holding.cost / holding.qty) : 0;
@@ -148,17 +339,26 @@ function tradePanelHtml(stock) {
   const canSell = holding.qty > 0;
   const canShort = shortExposure() + Math.floor(stock.price) <= shortLimit();
   const canCover = short.qty > 0 && state.coins >= Math.ceil(stock.price);
+  const TRADE_TIERS = [1, 5, 20];
+  const buyBtns = TRADE_TIERS.map(n =>
+    '<button data-action="buy" data-stock="' + stock.id + '" data-qty="' + n + '"' + (state.coins >= buyCost * n ? '' : ' disabled') + '>买 ' + n + '</button>'
+  ).join('');
+  const sellBtns = TRADE_TIERS.map(n =>
+    '<button class="ghost" data-action="sell" data-stock="' + stock.id + '" data-qty="' + n + '"' + (holding.qty >= n ? '' : ' disabled') + '>卖 ' + n + '</button>'
+  ).join('') + '<button class="ghost" data-action="sell" data-stock="' + stock.id + '" data-qty="999999"' + (canSell ? '' : ' disabled') + '>清仓</button>';
+  const shortBtns = TRADE_TIERS.map(n =>
+    '<button class="short" data-action="short" data-stock="' + stock.id + '" data-qty="' + n + '"' + (shortExposure() + Math.floor(stock.price) * n <= shortLimit() ? '' : ' disabled') + '>做空 ' + n + '</button>'
+  ).join('');
+  const coverBtns = TRADE_TIERS.map(n =>
+    '<button class="ghost" data-action="cover" data-stock="' + stock.id + '" data-qty="' + n + '"' + (short.qty >= n && state.coins >= buyCost * n ? '' : ' disabled') + '>平仓 ' + n + '</button>'
+  ).join('') + '<button class="ghost" data-action="cover" data-stock="' + stock.id + '" data-qty="999999"' + (canCover ? '' : ' disabled') + '>全平</button>';
   return '<div class="dashTradeHead"><h3>' + stock.name + '</h3><p>' + stock.id + ' · 持有 ' + holding.qty + ' 股' +
     (short.qty ? ' · 空单 ' + short.qty + ' 股' : '') + '</p></div>' +
     (!canBuy ? '<p class="dashRumorHint warn">金币不够，买 1 股需要 ' + buyCost + ' 金币</p>' : '') +
-    '<div class="dashTradeActions">' +
-    '<button data-action="buy" data-stock="' + stock.id + '"' + (canBuy ? '' : ' disabled') + '>买 1</button>' +
-    '<button class="ghost" data-action="sell" data-stock="' + stock.id + '"' + (canSell ? '' : ' disabled') + '>卖 1</button>' +
-    '</div>' +
-    '<div class="dashTradeActions">' +
-    '<button class="short" data-action="short" data-stock="' + stock.id + '"' + (canShort ? '' : ' disabled') + '>做空 1</button>' +
-    '<button class="ghost" data-action="cover" data-stock="' + stock.id + '"' + (canCover ? '' : ' disabled') + '>平仓 1</button>' +
-    '</div>' +
+    '<div class="dashTradeActions dashTradeActionsWrap">' + buyBtns + '</div>' +
+    '<div class="dashTradeActions dashTradeActionsWrap">' + sellBtns + '</div>' +
+    '<div class="dashTradeActions dashTradeActionsWrap">' + shortBtns + '</div>' +
+    '<div class="dashTradeActions dashTradeActionsWrap">' + coverBtns + '</div>' +
     '<div class="dashTradeInfo">' +
     '<div><span>现金</span><strong>' + state.coins + '</strong></div>' +
     '<div><span>持仓成本均价</span><strong>' + avg + '</strong></div>' +
@@ -170,6 +370,68 @@ function tradePanelHtml(stock) {
     '</div>' +
     rumorPanelHtml(stock) +
     '<button class="dashNextDay" data-action="nextDay">下一交易日 · Day ' + (marketState.day + 1) + '</button>';
+}
+
+function wahaCompanyPanelHtml(stock) {
+  const company = companyState();
+  const holding = getHolding('WAHA');
+  if (!company.listed) {
+    return '<div class="dashTradeHead"><h3>上市方案</h3><p>选择这次把多少股、以什么价格卖给谁。</p></div>' +
+      '<div class="wahaIpoBox">' +
+      Object.keys(WAHA_IPO_PLANS).map(id => {
+        const plan = WAHA_IPO_PLANS[id];
+        const founderPct = Math.round(((10000 - plan.publicShares) / 10000) * 1000) / 10;
+        return '<button type="button" class="wahaIpoPlan" data-action="wahaIpo" data-plan="' + id + '" data-stock="WAHA">' +
+          '<b>' + plan.label + '</b>' +
+          '<span>卖出 ' + plan.publicShares + ' 股 · 每股 ' + plan.price + ' · 融资 ' + (plan.publicShares * plan.price) + '</span>' +
+          '<small>上市后你持股 ' + founderPct + '%</small>' +
+          '</button>';
+      }).join('') +
+      '</div>' +
+      '<button class="dashNextDay" data-action="nextDay">下一交易日 · Day ' + (marketState.day + 1) + '</button>';
+  }
+  const founderPct = wahaFounderPct(company);
+  const canSell = holding.qty > 0;
+  const canBuy = state.coins >= Math.ceil(stock.price);
+  return '<div class="dashTradeHead"><h3>公开股交易</h3><p>创始人股保留控制权，公开股可买卖。</p></div>' +
+    '<div class="dashTradeInfo">' +
+    '<div><span>创始人持股</span><strong>' + founderPct + '%</strong></div>' +
+    '<div><span>公开持仓</span><strong>' + holding.qty + ' 股</strong></div>' +
+    '<div><span>公司现金</span><strong>' + company.treasury + '</strong></div>' +
+    '</div>' +
+    '<div class="dashTradeActions">' +
+    '<button data-action="buy" data-stock="WAHA"' + (canBuy ? '' : ' disabled') + '>增持公开股 1</button>' +
+    '<button class="ghost" data-action="sell" data-stock="WAHA"' + (canSell ? '' : ' disabled') + '>卖公开股 1</button>' +
+    '</div>' +
+    '<button class="dashNextDay" data-action="nextDay">下一交易日 · Day ' + (marketState.day + 1) + '</button>';
+}
+
+function wahaCompanyDashboardHtml(stock) {
+  const company = companyState();
+  const founderPct = wahaFounderPct(company);
+  const holding = getHolding('WAHA');
+  const publicPct = Math.round((company.publicShares / Math.max(1, company.totalShares)) * 1000) / 10;
+  const status = company.listed ? '已上市' : '未上市';
+  const controlClass = founderPct >= 67 ? 'strong' : founderPct >= 51 ? 'watch' : 'risk';
+  const nextStep = company.listed
+    ? '后续主线里的广告、兼并、渠道选择，会继续影响 WAHA 股价。'
+    : '先在右侧选择上市方案：决定卖给谁、卖多少股、定什么价格。';
+  return '<div class="wahaDashboard">' +
+    '<section class="wahaHero">' +
+    '<p>FOUNDER COMPANY</p><h3>娃哈哈</h3><span>' + status + ' · 创始人公司</span>' +
+    '</section>' +
+    '<section class="wahaMetrics">' +
+    '<div><small>创始人</small><strong class="' + controlClass + '">' + founderPct + '%</strong></div>' +
+    '<div><small>公开流通</small><strong>' + publicPct + '%</strong></div>' +
+    '<div><small>公司现金</small><strong>' + company.treasury + '</strong></div>' +
+    '<div><small>你的公开股</small><strong>' + holding.qty + '</strong></div>' +
+    '</section>' +
+    '<section class="wahaEquity">' +
+    '<div class="wahaEquityBar"><i style="width:' + founderPct + '%"></i><em style="width:' + publicPct + '%"></em></div>' +
+    '<div class="wahaEquityLegend"><span>创始人股 ' + company.founderShares + '</span><span>公开股 ' + company.publicShares + '</span></div>' +
+    '</section>' +
+    '<p class="wahaNextStep">' + nextStep + '</p>' +
+    '</div>';
 }
 
 function rumorPanelHtml(stock) {
@@ -189,8 +451,9 @@ function rumorPanelHtml(stock) {
 }
 
 function holdingsPanelHtml() {
-  const longRows = STOCKS.filter(item => getHolding(item.id).qty > 0);
-  const shortRows = STOCKS.filter(item => getShort(item.id).qty > 0);
+  const tradeStocks = STOCKS.filter(item => !item.isPlayerCompany);
+  const longRows = tradeStocks.filter(item => getHolding(item.id).qty > 0);
+  const shortRows = tradeStocks.filter(item => getShort(item.id).qty > 0);
   if (!longRows.length && !shortRows.length) return '<h3>我的持仓</h3><p class="dashEmpty">还没有持仓，去买点股票吧。</p>';
   const header = '<div class="dashHoldingRow dashHoldingRow--head">' +
     '<span>标的</span><span>数量</span><span>均价</span><span>现价</span><span>盈亏</span>' +
@@ -343,22 +606,46 @@ function drawLineChart(canvas, stock) {
 
 function renderScreenPanel(key) {
   activeScreen = key || activeScreen;
+  if (marketState.selectedStock === 'WAHA') {
+    activeScreen = 'company';
+    marketState.selectedStock = 'TEA';
+  }
   screenPanel.hidden = false;
   state.coins = Math.trunc(safeMoney(state.coins, 100));
-  const stock = safeStockForTrade(marketState.selectedStock);
+  const isCompanyPage = activeScreen === 'company';
+  const stock = safeStockForTrade(isCompanyPage ? 'WAHA' : marketState.selectedStock);
+  const pnl = investmentPnlSummary();
   dashClock.textContent = 'DAY ' + marketState.day;
   dashRep.textContent = '声誉 ' + reputation();
   dashRep.className = 'dashRep ' + (reputation() >= 60 ? 'up' : reputation() <= 30 ? 'down' : '');
   dashSidebar.innerHTML = sidebarRows();
+  dashBody.classList.toggle('wahaMode', isCompanyPage);
+  dashBody.classList.toggle('companyMode', isCompanyPage);
   const diff = stock.price - stock.prev;
   dashMainHead.innerHTML = '<h3>' + stock.name + '</h3>' +
     '<span class="dashPrice ' + (diff >= 0 ? 'up' : 'down') + '">' + stock.price.toFixed(1) + '</span>' +
-    '<small class="' + (diff >= 0 ? 'up' : 'down') + '">' + formatPct(diff / Math.max(1, stock.prev)) + '</small>';
+    '<small class="' + (diff >= 0 ? 'up' : 'down') + '">' + formatPct(diff / Math.max(1, stock.prev)) + '</small>' +
+    '<span class="dashPnlPulse ' + (pnl.totalPnl >= 0 ? 'up' : 'down') + '">总盈亏 ' + (pnl.totalPnl >= 0 ? '+' : '') + pnl.totalPnl + '</span>';
   dashTrade.innerHTML = tradePanelHtml(stock);
   dashHoldings.innerHTML = holdingsPanelHtml();
   dashNews.innerHTML = newsPanelHtml();
   const canvas = document.getElementById('chartCanvas');
-  if (canvas) drawLineChart(canvas, stock);
+  if (isCompanyPage) {
+    if (canvas) canvas.style.display = 'none';
+    const existing = document.getElementById('wahaCompanyDashboard');
+    if (existing) existing.remove();
+    const panel = document.createElement('div');
+    panel.id = 'wahaCompanyDashboard';
+    panel.innerHTML = wahaCompanyDashboardHtml(stock);
+    document.querySelector('.dashMain')?.appendChild(panel);
+  } else {
+    const existing = document.getElementById('wahaCompanyDashboard');
+    if (existing) existing.remove();
+    if (canvas) {
+      canvas.style.display = '';
+      drawLineChart(canvas, stock);
+    }
+  }
 }
 
 document.getElementById('returnGame').addEventListener('click', () => {

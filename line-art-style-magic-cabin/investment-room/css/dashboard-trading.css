@@ -6,6 +6,8 @@
 .dashTradeHead h3{margin:0 0 2px;font-size:17px;color:#eafcff}
 .dashTradeHead p{margin:0 0 12px;color:#c9f7ff;font-size:12px;text-shadow:0 0 7px rgba(96,244,255,.35)}
 .dashTradeActions{display:flex;gap:8px;margin-bottom:14px}
+.dashTradeActionsWrap{flex-wrap:wrap}
+.dashTradeActionsWrap button{flex:1 1 64px}
 .dashTradeActions button{
   flex:1;border:1px solid #39ff9c;border-radius:6px;padding:10px;
   background:rgba(57,255,156,.12);color:#9dffce;font:700 13px monospace;cursor:pointer;
@@ -34,6 +36,45 @@
   text-shadow:0 0 8px rgba(96,244,255,.5);transition:.15s;
 }
 .dashNextDay:hover{background:rgba(96,244,255,.22);box-shadow:0 0 16px rgba(96,244,255,.35)}
+.wahaIpoBox{display:grid;gap:8px;margin-bottom:14px}
+.wahaIpoPlan{
+  width:100%;border:1px solid rgba(255,214,102,.38);border-radius:6px;padding:10px;
+  background:rgba(255,214,102,.07);
+  color:#eafcff;text-align:left;cursor:pointer;font-family:monospace;
+}
+.wahaIpoPlan:hover{background:rgba(255,214,102,.16);box-shadow:0 0 14px rgba(255,214,102,.18)}
+.wahaIpoPlan b{display:block;margin-bottom:5px;color:#ffd666;font-size:13px;text-shadow:0 0 8px rgba(255,214,102,.42)}
+.wahaIpoPlan span{display:block;color:#c9f7ff;font-size:12px;line-height:1.45}
+.wahaIpoPlan small{display:block;margin-top:4px;color:#8fd3e6;font-size:11px;line-height:1.45}
+.wahaDashboard{display:grid;gap:10px;min-height:0;overflow:auto}
+.wahaHero{
+  border:1px solid rgba(255,214,102,.26);border-radius:8px;padding:14px;
+  background:rgba(255,214,102,.07);
+}
+.wahaHero p{margin:0 0 4px;color:#ffd666;font:800 10px monospace;letter-spacing:.24em;text-shadow:0 0 8px rgba(255,214,102,.45)}
+.wahaHero h3{margin:0;color:#eafcff;font-size:26px;text-shadow:0 0 12px rgba(255,214,102,.20)}
+.wahaHero span{display:block;margin-top:7px;color:#c9f7ff;font-size:13px}
+.wahaMetrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.wahaMetrics div{
+  min-height:64px;border:1px solid rgba(96,244,255,.14);border-radius:7px;padding:9px;
+  background:rgba(6,16,20,.55);
+}
+.wahaMetrics small{display:block;color:#8fd3e6;font-size:11px;margin-bottom:8px}
+.wahaMetrics strong{display:block;color:#eafcff;font-size:19px;text-shadow:0 0 8px rgba(96,244,255,.28)}
+.wahaMetrics strong.strong{color:#39ff9c}
+.wahaMetrics strong.watch{color:#ffd666}
+.wahaMetrics strong.risk{color:#ff5d75}
+.wahaEquity{
+  border:1px solid rgba(96,244,255,.14);border-radius:8px;padding:12px;background:rgba(6,16,20,.42);
+}
+.wahaEquityBar{height:18px;display:flex;overflow:hidden;border:1px solid rgba(96,244,255,.22);border-radius:999px;background:rgba(96,244,255,.06)}
+.wahaEquityBar i{display:block;background:linear-gradient(90deg,#39ff9c,#ffd666)}
+.wahaEquityBar em{display:block;background:linear-gradient(90deg,#5be6ff,#c58bff)}
+.wahaEquityLegend{display:flex;justify-content:space-between;margin-top:8px;color:#c9f7ff;font-size:12px}
+.wahaNextStep{
+  margin:0;border-left:3px solid #ffd666;padding:9px 10px;
+  background:rgba(255,214,102,.06);color:#d7f7ff;font-size:13px;line-height:1.6;
+}
 
 .dashHoldings h3,.dashNews h3{
   margin:0 0 8px;font-size:13px;color:#5be6ff;letter-spacing:.1em;

@@ -16,19 +16,33 @@ dashBody.addEventListener('click', event => {
       renderScreenPanel(activeScreen);
       return;
     }
+    if (button.dataset.action === 'wahaIpo') {
+      launchWahaIpo(button.dataset.plan);
+      return;
+    }
     const stockId = button.dataset.stock;
     if (!stockId) return;
-    if (button.dataset.action === 'buy') buyStock(stockId, 1);
-    if (button.dataset.action === 'sell') sellStock(stockId, 1);
-    if (button.dataset.action === 'short') shortStock(stockId, 1);
-    if (button.dataset.action === 'cover') coverShort(stockId, 1);
+    const qty = Math.max(1, Math.trunc(Number(button.dataset.qty)) || 1);
+    if (button.dataset.action === 'buy') buyStock(stockId, qty);
+    if (button.dataset.action === 'sell') sellStock(stockId, qty);
+    if (button.dataset.action === 'short') shortStock(stockId, qty);
+    if (button.dataset.action === 'cover') coverShort(stockId, qty);
     if (button.dataset.action === 'rumorGood') spreadRumor(stockId, false);
     if (button.dataset.action === 'rumorBad') spreadRumor(stockId, true);
     return;
   }
   const row = event.target.closest('.dashStockRow[data-stock]');
   if (row) {
+    activeScreen = 'market';
     marketState.selectedStock = row.dataset.stock;
+    saveState();
+    redrawScreens();
+    renderScreenPanel(activeScreen);
+    return;
+  }
+  const companyRow = event.target.closest('.dashCompanyRow[data-company]');
+  if (companyRow) {
+    activeScreen = 'company';
     saveState();
     redrawScreens();
     renderScreenPanel(activeScreen);
