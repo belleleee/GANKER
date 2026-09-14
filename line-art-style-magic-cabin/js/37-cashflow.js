@@ -16,7 +16,8 @@ let cashFlowState = {
     events: [],
     seq: 1,
     panelCollapsed: false,
-    lastProcessedDay: -1
+    lastProcessedDay: -1,
+    crisisWarned: false
 };
 
 const cashFlowPanel = document.getElementById('cashFlowPanel');
@@ -58,7 +59,8 @@ function normalizeCashFlowState(raw) {
         events,
         seq: Math.max(maxSeq, Math.trunc(Number(source.seq) || 1)),
         panelCollapsed: source.panelCollapsed === true,
-        lastProcessedDay: Math.trunc(Number(source.lastProcessedDay) || -1)
+        lastProcessedDay: Math.trunc(Number(source.lastProcessedDay) || -1),
+        crisisWarned: source.crisisWarned === true
     };
     renderCashFlowPanel();
 }
@@ -68,6 +70,7 @@ function captureCashFlowState() {
         events: cashFlowState.events.map(event => Object.assign({}, event)),
         seq: cashFlowState.seq,
         panelCollapsed: cashFlowState.panelCollapsed,
+        crisisWarned: cashFlowState.crisisWarned,
         lastProcessedDay: cashFlowState.lastProcessedDay
     };
 }
@@ -155,27 +158,66 @@ function settleCashFlowEvent(event) {
     }
     const cost = Math.abs(event.amount);
     if (typeof window.spendCabinCoins === 'function' && window.spendCabinCoins(cost, '到期付款 · ' + event.label)) {
+        if (event.locked) {
+            event.locked = false;
+            if (typeof showHintOverride === 'function') showHintOverride('拖欠的 ' + event.label + ' 终于补上了');
+        }
         return true;
     }
-    event.locked = true;
+    /* 还不起的账不会凭空消失——不再永久锁死，每天都会再试着扣一次，
+       欠着的当天顺手扣一次"违约"代价（口碑受损），直到真的还清为止。
+       这才是"流动性危机"该有的样子：不是游戏结束，是持续的压力。 */
+    if (!event.locked) {
+        event.locked = true;
+        if (typeof window.addGoodwillPenalty === 'function') {
+            window.addGoodwillPenalty(2, event.label + ' 到期没能付清，信用受损');
+        }
+    }
     if (typeof showHintOverride === 'function') {
-        showHintOverride('现金流告急：' + event.label + ' 到期需要 ' + cost + ' 金币，现金不够。');
+        showHintOverride('现金流告急：' + event.label + ' 到期需要 ' + cost + ' 金币，现金不够——这笔账还欠着，有钱了会自动补上。');
     }
     return false;
 }
 
 function processCashFlowDueEvents() {
     const today = currentCashFlowDay();
+    checkLiquidityCrisis();
     if (cashFlowState.lastProcessedDay === today) return;
     cashFlowState.lastProcessedDay = today;
     let changed = false;
     cashFlowState.events = cashFlowState.events.filter(event => {
-        if (event.dueDay > today || event.locked) return true;
+        if (event.dueDay > today) return true;
         changed = true;
         return !settleCashFlowEvent(event);
     });
     if (changed && typeof saveGameState === 'function') saveGameState(false);
     renderCashFlowPanel();
+}
+
+/* ---------------- 流动性危机预警 ----------------
+   不是"现金 < 0 就算破产"，而是"未来几天最低点会跌到0以下"就提前示警——
+   给玩家留出反应时间，而不是猝死式的结算。同一次危机只提醒一次，
+   等真的缓过来（min回到0以上）才会重新武装警报。 */
+function checkLiquidityCrisis() {
+    const forecast = projectedCashFlow(CASHFLOW_LOOKAHEAD_DAYS);
+    if (forecast.min < 0) {
+        if (!cashFlowState.crisisWarned) {
+            cashFlowState.crisisWarned = true;
+            const hitRow = forecast.rows.find(row => row.balance < 0);
+            const dayLabel = hitRow ? cashFlowDueLabel(hitRow.day) : '这几天内';
+            if (typeof showGuideCard === 'function') {
+                showGuideCard(
+                    '现金流要出问题了——按现在的账，' + dayLabel + ' 手里的钱会跌破0。趁还有几天缓冲，' +
+                    '借点钱、清仓变现，或者收一收开销，别真等到那天现金见底。',
+                    9
+                );
+            } else if (typeof showHintOverride === 'function') {
+                showHintOverride('现金流预警：' + dayLabel + ' 现金会跌破0，提前想想办法');
+            }
+        }
+    } else if (cashFlowState.crisisWarned) {
+        cashFlowState.crisisWarned = false;
+    }
 }
 
 function hasActiveLoan() {
