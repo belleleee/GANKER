@@ -196,18 +196,10 @@ function renderCashFlowPanel() {
     cashFlowPanel.classList.toggle('warn', warn);
     if (cashFlowToggle) cashFlowToggle.setAttribute('aria-expanded', String(!cashFlowState.panelCollapsed));
     cashFlowSummary.textContent = '7天最低 ' + forecast.min + ' · 应收 ' + pendingIn + ' · 应付 ' + pendingOut;
+    /* 原来这里还有一份"今天/明天/Day8…Day12"逐日列表，但没有事件的那几天
+       金额完全不变，一大串重复数字没什么信息量。简化成只列真正会发生变化
+       的收付款项，一眼看完。 */
     cashFlowBody.innerHTML =
-        '<div class="cashFlowRows">' +
-        forecast.rows.map(row => {
-            const cls = row.balance < 0 ? ' danger' : row.balance < 100 ? ' warn' : '';
-            const delta = row.delta ? '<small class="' + (row.delta > 0 ? 'gain' : 'loss') + '">' + (row.delta > 0 ? '+' : '') + row.delta + '</small>' : '<small></small>';
-            return '<div class="cashFlowRow' + cls + '">' +
-                '<span>' + cashFlowDueLabel(row.day) + '</span>' +
-                '<strong>' + row.balance + '</strong>' +
-                delta +
-                '</div>';
-        }).join('') +
-        '</div>' +
         '<div class="cashFlowEvents">' +
         upcoming.slice().sort((a, b) => a.dueDay - b.dueDay).slice(0, 4).map(item =>
             '<div class="cashFlowEvent ' + (item.amount >= 0 ? 'gain' : 'loss') + '">' +
