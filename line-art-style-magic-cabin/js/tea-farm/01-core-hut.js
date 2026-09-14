@@ -58,10 +58,10 @@ const TEA_PICK_DISTANCE = 1.15;
 
 /*
    之前一直是测试期留下的 75 秒，茶树摘完一眨眼又能摘，感觉不像"种茶"更
-   像"点鼠标"。改成 300 秒（5分钟），配合默认 timeScale=60 的日夜节奏，
-   大概相当于游戏内 5 小时才能再采一轮，跟收成该有的等待感对得上。
+   像"点鼠标"。先改成过300秒还是太快，再拉长到 600 秒（10分钟），配合
+   默认 timeScale=60 的日夜节奏，大概相当于游戏内10小时才能再采一轮。
 */
-const TEA_REGROW_SECONDS = 300;
+const TEA_REGROW_SECONDS = 600;
 const TEA_PICK_COINS = 8;
 const TEA_WORKER_DAILY_WAGE = 90;
 const TEA_WEATHER_GOOD = ['fog', 'cloudy'];
