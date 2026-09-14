@@ -57,14 +57,11 @@ const TEA_HUT_COLLISION = {
 const TEA_PICK_DISTANCE = 1.15;
 
 /*
-   测试阶段先设为 45 秒。
-
-   后面正式游戏可以改成：
-   120
-   300
-   或者跟游戏内日期系统绑定。
+   之前一直是测试期留下的 75 秒，茶树摘完一眨眼又能摘，感觉不像"种茶"更
+   像"点鼠标"。改成 300 秒（5分钟），配合默认 timeScale=60 的日夜节奏，
+   大概相当于游戏内 5 小时才能再采一轮，跟收成该有的等待感对得上。
 */
-const TEA_REGROW_SECONDS = 75;
+const TEA_REGROW_SECONDS = 300;
 const TEA_PICK_COINS = 8;
 const TEA_WORKER_DAILY_WAGE = 90;
 const TEA_WEATHER_GOOD = ['fog', 'cloudy'];
@@ -334,6 +331,9 @@ function packageTeaLeaves() {
     teaProcessState.roasted -= TEA_PROCESS_BATCH;
     teaProcessState.finished += 1;
     const sellPrice = teaFinishedSellPrice();
+    if (typeof window.noteDailyEvent === 'function') {
+        window.noteDailyEvent('teaBatch', { sellPrice, finished: teaProcessState.finished });
+    }
     if (typeof window.addCabinCoins === 'function') {
         window.addCabinCoins(sellPrice, '卖出一批成品茶');
     }
@@ -4260,4 +4260,3 @@ function saveTeaHireStateNow() {
         );
     }
 }
-
