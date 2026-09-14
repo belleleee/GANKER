@@ -1,0 +1,153 @@
+.cashFlowPanel {
+    width: min(286px, calc(100vw - 28px));
+    z-index: 6;
+    color: #3f4d38;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    user-select: none;
+}
+
+.cashFlowToggle {
+    width: 100%;
+    min-height: 36px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid rgba(128, 148, 112, .5);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, .92);
+    box-shadow: 0 1px 7px rgba(83, 109, 63, .14);
+    color: #536d3f;
+    padding: 6px 10px;
+    cursor: pointer;
+}
+
+.cashFlowToggle span:first-child {
+    font-size: 12px;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+.cashFlowToggle strong {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #2f5f49;
+    font-size: 11px;
+    text-align: right;
+}
+
+.cashFlowChevron {
+    width: 18px;
+    height: 18px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: rgba(139, 172, 102, .18);
+    color: #5f7b48;
+    transition: transform .18s ease;
+}
+
+.cashFlowPanel:not(.collapsed) .cashFlowChevron {
+    transform: rotate(180deg);
+}
+
+.cashFlowBody {
+    margin-top: 7px;
+    padding: 10px;
+    border: 1px solid rgba(121, 147, 92, .38);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, .91);
+    box-shadow: 0 3px 14px rgba(48, 66, 42, .12);
+}
+
+.cashFlowPanel.collapsed .cashFlowBody {
+    display: none;
+}
+
+.cashFlowPanel.warn .cashFlowToggle {
+    border-color: rgba(203, 151, 65, .72);
+}
+
+.cashFlowPanel.danger .cashFlowToggle {
+    border-color: rgba(188, 83, 67, .76);
+    box-shadow: 0 0 0 2px rgba(188, 83, 67, .12), 0 4px 14px rgba(128, 48, 34, .18);
+}
+
+.cashFlowRows {
+    display: grid;
+    gap: 4px;
+}
+
+.cashFlowRow,
+.cashFlowEvent {
+    display: grid;
+    grid-template-columns: 62px 1fr 58px;
+    align-items: center;
+    gap: 8px;
+    min-height: 25px;
+    border-bottom: 1px dashed rgba(112, 127, 104, .22);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.cashFlowRow strong {
+    color: #263528;
+    text-align: right;
+}
+
+.cashFlowRow small,
+.cashFlowEvent strong {
+    text-align: right;
+    font-size: 11px;
+}
+
+.cashFlowRow.warn strong {
+    color: #a16821;
+}
+
+.cashFlowRow.danger strong {
+    color: #a3362e;
+}
+
+.cashFlowEvent {
+    grid-template-columns: 1fr 64px;
+    padding: 6px 0 0;
+    color: #536d3f;
+}
+
+.cashFlowEvents {
+    margin-top: 8px;
+}
+
+.cashFlowEvent span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cashFlowRow small.gain,
+.cashFlowEvent.gain strong {
+    color: #2f8a5b;
+}
+
+.cashFlowRow small.loss,
+.cashFlowEvent.loss strong {
+    color: #b14a3d;
+}
+
+.cashFlowEmpty {
+    margin: 8px 0 0;
+    color: #7b8772;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+@media (max-width: 720px) {
+    .cashFlowPanel {
+        top: 78px;
+        width: min(250px, calc(100vw - 28px));
+    }
+}

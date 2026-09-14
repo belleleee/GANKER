@@ -122,11 +122,45 @@
         <div class="lbl">🖼️ 编辑画像链接</div><input id="picInput" maxlength="500" placeholder="输入图片链接"><button
             id="picOk">确定</button>
     </div>
-    <div id="clock">10:00 · 晴</div>
-    <div id="coinHud">金币 0</div>
-    <div id="storageHud">仓库 萝卜 0</div>
-    <div id="backpackHud">背包 种子 0</div>
-    <div id="landHud">地契 · 尚未租下</div>
+    <div id="hudStack">
+        <div id="clock">10:00 · 晴</div>
+        <div id="coinHud">金币 0</div>
+        <div id="storageHud">仓库 萝卜 0</div>
+        <div id="backpackHud">背包 种子 0</div>
+        <div id="landHud">地契 · 尚未租下</div>
+        <section id="cashFlowPanel" class="cashFlowPanel" aria-label="现金流预测">
+            <button id="cashFlowToggle" class="cashFlowToggle" type="button" aria-expanded="true">
+                <span>现金流</span>
+                <strong id="cashFlowSummary">7天最低 0 · 应收 0 · 应付 0</strong>
+                <span class="cashFlowChevron">▾</span>
+            </button>
+            <div id="cashFlowBody" class="cashFlowBody"></div>
+        </section>
+        <section id="statsPanel" class="statsPanel collapsed" aria-label="数值面板">
+            <button id="statsPanelToggle" class="statsPanelToggle" type="button" aria-expanded="false">
+                <span>状态数值</span>
+                <strong id="statsPanelSummary">幸运 50 · 声誉 60 · 口碑 0%</strong>
+                <span class="statsPanelChevron">▾</span>
+            </button>
+            <div id="statsPanelBody" class="statsPanelBody">
+                <div class="statsRow">
+                    <span>幸运</span>
+                    <div class="statsBar"><i id="luckStatBar"></i></div>
+                    <strong id="luckStat">50</strong>
+                </div>
+                <div class="statsRow">
+                    <span>声誉</span>
+                    <div class="statsBar reputation"><i id="reputationStatBar"></i></div>
+                    <strong id="reputationStat">60</strong>
+                </div>
+                <div class="statsRow">
+                    <span>口碑</span>
+                    <div class="statsBar goodwill"><i id="goodwillStatBar"></i></div>
+                    <strong id="goodwillStat">0%</strong>
+                </div>
+            </div>
+        </section>
+    </div>
     <div id="hint"></div>
     <div id="crosshair"></div>
     <div id="lockTip">点击画面锁定鼠标 · Esc 退出</div>
@@ -232,7 +266,11 @@
     </div>
 
     <div id="deliveryBoard" class="deliveryBoard" hidden>
-        <div class="deliveryBoardTitle">📦 代销订单</div>
+        <button id="deliveryBoardToggle" class="deliveryBoardTitle" type="button" aria-expanded="true">
+            <span id="deliveryBoardTitleText">📦 代销订单</span>
+            <span id="deliveryBoardSummary" class="deliveryBoardSummary"></span>
+            <span class="deliveryBoardChevron" aria-hidden="true">▾</span>
+        </button>
         <div id="deliveryBoardList"></div>
     </div>
 
@@ -353,9 +391,21 @@
         <div class="farmWorkerCard" role="dialog" aria-modal="true" aria-labelledby="farmWorkerTitle">
             <button id="closeFarmWorkerBtn" class="farmWorkerClose" type="button" aria-label="关闭">×</button>
             <p class="farmWorkerKicker">农场员工</p>
-            <h2 id="farmWorkerTitle">今天优先种什么？</h2>
+            <h2 id="farmWorkerTitle">今天怎么安排？</h2>
             <p id="farmWorkerStatus" class="farmWorkerStatus"></p>
+            <div id="dailyPlanOptions" class="dailyPlanOptions"></div>
             <div id="farmWorkerCropOptions" class="farmWorkerCropOptions"></div>
+        </div>
+    </section>
+
+    <section id="dailySettlementPanel" class="dailySettlementPanel" hidden>
+        <div class="dailySettlementCard" role="dialog" aria-modal="true" aria-labelledby="dailySettlementTitle">
+            <p class="dailySettlementKicker" id="dailySettlementKicker">经营日报</p>
+            <h2 id="dailySettlementTitle">今日结算</h2>
+            <div id="dailySettlementBody" class="dailySettlementBody"></div>
+            <div class="dailySettlementActions">
+                <button id="dailySettlementCloseBtn" type="button">开始新一天</button>
+            </div>
         </div>
     </section>
 
@@ -415,10 +465,12 @@
     <script src="js/25-onboarding.js"></script>
     <script src="js/26-land-tenure.js"></script>
     <script src="js/27-weather-farming.js"></script>
+    <script src="js/37-cashflow.js"></script>
     <script src="js/28-tool-progression.js"></script>
     <script src="js/30-delivery-orders.js"></script>
     <script src="js/31-prologue.js"></script>
     <script src="js/32-gambling-risk.js"></script>
+    <script src="js/36-gameplay-loop.js"></script>
     <script src="js/15-app-shell.js"></script>
 </body>
 

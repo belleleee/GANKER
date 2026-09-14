@@ -92,10 +92,27 @@
             margin: 0 2px
         }
 
-        #clock {
+        #hudStack {
             position: fixed;
             top: 14px;
             left: 14px;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+            max-height: calc(100vh - 28px);
+            overflow-y: auto;
+            overflow-x: hidden;
+            pointer-events: none;
+        }
+
+        #hudStack .cashFlowPanel,
+        #hudStack .statsPanel {
+            pointer-events: auto;
+        }
+
+        #clock {
             background: rgba(255, 255, 255, .9);
             border: 1px solid #ccc;
             border-radius: 14px;
@@ -110,9 +127,6 @@
         }
 
         #coinHud {
-            position: fixed;
-            top: 49px;
-            left: 14px;
             min-width: 78px;
             background: rgba(255, 255, 255, .92);
             border: 1px solid #d5c08a;
@@ -134,9 +148,6 @@
         }
 
         #storageHud {
-            position: fixed;
-            top: 84px;
-            left: 14px;
             min-width: 104px;
             background: rgba(255, 255, 255, .92);
             border: 1px solid #b7c7a0;
@@ -158,9 +169,6 @@
         }
 
         #backpackHud {
-            position: fixed;
-            top: 119px;
-            left: 14px;
             min-width: 104px;
             background: rgba(255, 255, 255, .92);
             border: 1px solid #c9aa73;

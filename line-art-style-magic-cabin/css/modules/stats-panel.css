@@ -1,0 +1,118 @@
+.statsPanel {
+    width: min(246px, calc(100vw - 28px));
+    z-index: 6;
+    color: #3f4d38;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    user-select: none;
+}
+
+.statsPanelToggle {
+    width: 100%;
+    min-height: 34px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid rgba(121, 147, 92, .48);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, .92);
+    box-shadow: 0 1px 7px rgba(83, 109, 63, .14);
+    color: #536d3f;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+.statsPanelToggle span:first-child {
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.statsPanelToggle strong {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #2f5f49;
+    font-size: 11px;
+    text-align: right;
+}
+
+.statsPanelChevron {
+    width: 18px;
+    height: 18px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: rgba(139, 172, 102, .18);
+    color: #5f7b48;
+    transition: transform .18s ease;
+}
+
+.statsPanel:not(.collapsed) .statsPanelChevron {
+    transform: rotate(180deg);
+}
+
+.statsPanelBody {
+    margin-top: 7px;
+    padding: 10px;
+    border: 1px solid rgba(121, 147, 92, .38);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, .9);
+    box-shadow: 0 3px 14px rgba(48, 66, 42, .12);
+}
+
+.statsPanel.collapsed .statsPanelBody {
+    display: none;
+}
+
+.statsRow {
+    display: grid;
+    grid-template-columns: 42px 1fr 42px;
+    align-items: center;
+    gap: 8px;
+    min-height: 25px;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.statsRow + .statsRow {
+    margin-top: 7px;
+}
+
+.statsRow strong {
+    text-align: right;
+    color: #263528;
+}
+
+.statsBar {
+    height: 8px;
+    border: 1px solid rgba(89, 119, 76, .45);
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(210, 218, 198, .55);
+}
+
+.statsBar i {
+    display: block;
+    width: 50%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #8ab46d, #caa85c);
+    transition: width .25s ease;
+}
+
+.statsBar.reputation i {
+    background: linear-gradient(90deg, #6aa6a0, #86c8d4);
+}
+
+.statsBar.goodwill i {
+    background: linear-gradient(90deg, #91b875, #6db488);
+}
+
+@media (max-width: 720px) {
+    .statsPanel {
+        top: 284px;
+        width: min(218px, calc(100vw - 28px));
+    }
+}

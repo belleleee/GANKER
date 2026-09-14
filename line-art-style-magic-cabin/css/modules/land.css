@@ -1,7 +1,4 @@
 #landHud {
-    position: fixed;
-    top: 154px;
-    left: 14px;
     min-width: 104px;
     background: rgba(255, 255, 255, .92);
     border: 1px solid #c9a06a;
