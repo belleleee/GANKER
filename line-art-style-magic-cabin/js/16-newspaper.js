@@ -89,20 +89,28 @@ function makeLabelPlane(text, width, height, options) {
     return mesh;
 }
 
+function combinedNewspaperIssues() {
+    const live = typeof window.getLiveNewsLog === 'function' ? window.getLiveNewsLog() : [];
+    return live.length ? NEWSPAPER_ISSUES.concat(live) : NEWSPAPER_ISSUES;
+}
+
 function clampNewspaperIndex(value) {
+    const total = combinedNewspaperIssues().length;
     const n = Math.trunc(Number(value) || 0);
-    return Math.max(0, Math.min(NEWSPAPER_ISSUES.length - 1, n));
+    return Math.max(0, Math.min(total - 1, n));
 }
 
 function renderNewspaper() {
     if (!newspaperPanel) return;
-    const issue = NEWSPAPER_ISSUES[newspaperIndex];
+    const issues = combinedNewspaperIssues();
+    newspaperIndex = clampNewspaperIndex(newspaperIndex);
+    const issue = issues[newspaperIndex];
     newspaperDate.textContent = issue.date;
     newspaperHeadline.textContent = issue.title;
     newspaperBody.textContent = issue.body;
-    newspaperCounter.textContent = (newspaperIndex + 1) + ' / ' + NEWSPAPER_ISSUES.length;
+    newspaperCounter.textContent = (newspaperIndex + 1) + ' / ' + issues.length;
     prevNewspaperBtn.disabled = newspaperIndex === 0;
-    nextNewspaperBtn.disabled = newspaperIndex === NEWSPAPER_ISSUES.length - 1;
+    nextNewspaperBtn.disabled = newspaperIndex === issues.length - 1;
 }
 
 function openNewspaper() {
@@ -112,6 +120,8 @@ function openNewspaper() {
     if (typeof window.noteAchievementEvent === 'function') {
         window.noteAchievementEvent('newspaperRead');
     }
+    const live = typeof window.getLiveNewsLog === 'function' ? window.getLiveNewsLog() : [];
+    if (live.length) newspaperIndex = combinedNewspaperIssues().length - 1;
     renderNewspaper();
     newspaperPanel.hidden = false;
     window.APP_SHELL_BLOCK_GAME = true;

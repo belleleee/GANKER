@@ -28,6 +28,15 @@ const saveStatusEl = document.getElementById('saveStatus');
 const coinHud = document.getElementById('coinHud');
 const storageHud = document.getElementById('storageHud');
 const backpackHud = document.getElementById('backpackHud');
+const statsPanel = document.getElementById('statsPanel');
+const statsPanelToggle = document.getElementById('statsPanelToggle');
+const statsPanelSummary = document.getElementById('statsPanelSummary');
+const luckStat = document.getElementById('luckStat');
+const luckStatBar = document.getElementById('luckStatBar');
+const reputationStat = document.getElementById('reputationStat');
+const reputationStatBar = document.getElementById('reputationStatBar');
+const goodwillStat = document.getElementById('goodwillStat');
+const goodwillStatBar = document.getElementById('goodwillStatBar');
 const loginForm = document.getElementById('loginForm');
 const registerForm = document.getElementById('registerForm');
 const showLoginBtn = document.getElementById('showLoginBtn');
@@ -40,6 +49,8 @@ let cabinCoins = STARTING_CABIN_COINS;
 let cropStorage = { turnip: 0, cabbage: 0, rice: 0, potato: 0, starRelic: 0 };
 let cabinBackpack = { turnipSeed: 0, cabbageSeed: 0, riceSeed: 0, potatoSeed: 0 };
 let cafeTotalRevenue = 0;
+let cabinLuck = 50;
+let statsPanelCollapsed = true;
 
 const MEMBER_PROFILES = {
     zhou: {
@@ -145,6 +156,137 @@ function renderCoins(bump) {
     setTimeout(() => coinHud.classList.remove('bump'), 220);
 }
 
+function clampStat(value, fallback) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return fallback;
+    return Math.max(0, Math.min(100, Math.round(n)));
+}
+
+function readCabinReputation() {
+    const investment = readSavedInvestmentState();
+    if (!investment) return 60;
+    return clampStat(investment.reputation, 60);
+}
+
+function readCabinGoodwillPct() {
+    if (typeof window.getCharityGoodwill !== 'function') return 0;
+    return clampStat(window.getCharityGoodwill() * 100, 0);
+}
+
+function setStatsPanelCollapsed(collapsed) {
+    statsPanelCollapsed = !!collapsed;
+    if (!statsPanel || !statsPanelToggle) return;
+    statsPanel.classList.toggle('collapsed', statsPanelCollapsed);
+    statsPanelToggle.setAttribute('aria-expanded', statsPanelCollapsed ? 'false' : 'true');
+}
+
+function renderStatsPanel() {
+    if (!statsPanel) return;
+    const luck = clampStat(cabinLuck, 50);
+    const reputation = readCabinReputation();
+    const goodwill = readCabinGoodwillPct();
+    cabinLuck = luck;
+    if (statsPanelSummary) {
+        statsPanelSummary.textContent = '幸运 ' + luck + ' · 声誉 ' + reputation + ' · 口碑 ' + goodwill + '%';
+    }
+    if (luckStat) luckStat.textContent = String(luck);
+    if (reputationStat) reputationStat.textContent = String(reputation);
+    if (goodwillStat) goodwillStat.textContent = goodwill + '%';
+    if (luckStatBar) luckStatBar.style.width = luck + '%';
+    if (reputationStatBar) reputationStatBar.style.width = reputation + '%';
+    if (goodwillStatBar) goodwillStatBar.style.width = goodwill + '%';
+}
+
+function addCabinLuck(delta, reason) {
+    const change = Math.trunc(Number(delta) || 0);
+    if (!change) return cabinLuck;
+    const before = cabinLuck;
+    cabinLuck = clampStat(cabinLuck + change, 50);
+    renderStatsPanel();
+    if (cabinLuck !== before && reason && typeof showHintOverride === 'function') {
+        showHintOverride(String(reason) + ' · 幸运 ' + (change > 0 ? '+' : '') + change);
+    }
+    if (typeof saveGameState === 'function') saveGameState(false);
+    return cabinLuck;
+}
+
+let moneyFeedbackLayer = null;
+let moneyFeedbackFlash = null;
+let moneyFeedbackStats = { gain: 0, loss: 0, lastBigGain: 0, lastBigLoss: 0 };
+
+function ensureMoneyFeedbackDom() {
+    if (!moneyFeedbackLayer) {
+        moneyFeedbackLayer = document.createElement('div');
+        moneyFeedbackLayer.className = 'moneyFeedbackLayer';
+        document.body.appendChild(moneyFeedbackLayer);
+    }
+    if (!moneyFeedbackFlash) {
+        moneyFeedbackFlash = document.createElement('div');
+        moneyFeedbackFlash.className = 'moneyImpactFlash';
+        document.body.appendChild(moneyFeedbackFlash);
+    }
+}
+
+function cabinMoneyFeedback(amount, reason) {
+    const value = Math.trunc(Number(amount) || 0);
+    if (!value) return;
+    ensureMoneyFeedbackDom();
+    const isGain = value > 0;
+    const abs = Math.abs(value);
+    const major = abs >= 100;
+    const label = reason && reason !== false ? String(reason).replace(/<[^>]*>/g, '') : (isGain ? '收入' : '支出');
+    const rect = coinHud ? coinHud.getBoundingClientRect() : null;
+    const x = rect ? rect.left + rect.width / 2 : innerWidth - 80;
+    const y = rect ? rect.bottom + 10 : 76;
+    const node = document.createElement('div');
+    node.className = 'moneyFloat ' + (isGain ? 'gain' : 'loss') + (major ? ' major' : '');
+    node.style.setProperty('--x', x + 'px');
+    node.style.setProperty('--y', y + 'px');
+    node.innerHTML = (isGain ? '+' : '-') + abs + '<small>' + label + '</small>';
+    moneyFeedbackLayer.appendChild(node);
+    setTimeout(() => node.remove(), 1100);
+
+    moneyFeedbackFlash.className = 'moneyImpactFlash ' + (isGain ? 'gain' : 'loss');
+    moneyFeedbackFlash.style.animation = 'none';
+    void moneyFeedbackFlash.offsetWidth;
+    moneyFeedbackFlash.style.animation = '';
+
+    coinHud?.classList.remove('moneyGain', 'moneyLoss');
+    coinHud?.classList.add(isGain ? 'moneyGain' : 'moneyLoss');
+    setTimeout(() => coinHud?.classList.remove('moneyGain', 'moneyLoss'), 650);
+
+    if (typeof slime !== 'undefined') {
+        if (isGain) {
+            slime.squashV += major ? 1.15 : .55;
+            slime.wobV += major ? 1.65 : .8;
+        } else {
+            slime.squashV -= major ? 1.35 : .7;
+            slime.wobV += major ? 1.9 : 1.0;
+        }
+    }
+    if (!isGain) {
+        document.body.classList.remove('moneyLossShake');
+        void document.body.offsetWidth;
+        document.body.classList.add('moneyLossShake');
+        setTimeout(() => document.body.classList.remove('moneyLossShake'), 380);
+    }
+    if (typeof SND !== 'undefined') SND.play(isGain ? 'chim' : 'toggle');
+
+    moneyFeedbackStats[isGain ? 'gain' : 'loss'] += abs;
+    if (major && reason !== false) {
+        const now = performance.now();
+        if (isGain && now - moneyFeedbackStats.lastBigGain > 5000) {
+            moneyFeedbackStats.lastBigGain = now;
+            showHintOverride('这笔收入很关键：+' + abs + ' 金币 · 钱正在变成下一步的底气');
+        } else if (!isGain && now - moneyFeedbackStats.lastBigLoss > 5000) {
+            moneyFeedbackStats.lastBigLoss = now;
+            showHintOverride('这笔支出有点疼：-' + abs + ' 金币 · 记到账本里，下一次判断要更稳');
+        }
+    }
+}
+
+window.cabinMoneyFeedback = cabinMoneyFeedback;
+
 window.getCabinCoins = function getCabinCoins() {
     return cabinCoins;
 };
@@ -154,6 +296,9 @@ function addCabinCoins(amount, reason) {
     if (!gain) return;
     cabinCoins = Math.min(999999, cabinCoins + gain);
     renderCoins(true);
+    if (typeof window.renderCashFlowPanel === 'function') window.renderCashFlowPanel();
+    cabinMoneyFeedback(gain, reason);
+    if (typeof window.noteDailyMoney === 'function') window.noteDailyMoney(gain, reason);
     if (typeof saveGameState === 'function') saveGameState(false);
     if (reason === false) return;
     showHintOverride((reason || '获得金币') + ' +' + gain + ' · 当前金币 ' + cabinCoins);
@@ -170,12 +315,20 @@ function spendCabinCoins(amount, reason) {
     }
     cabinCoins -= cost;
     renderCoins(true);
+    if (typeof window.renderCashFlowPanel === 'function') window.renderCashFlowPanel();
+    cabinMoneyFeedback(-cost, reason || '花费金币');
+    if (typeof window.noteDailyMoney === 'function') window.noteDailyMoney(-cost, reason || '花费金币');
     if (typeof saveGameState === 'function') saveGameState(false);
     if (reason) showHintOverride(reason + ' -' + cost + ' · 当前金币 ' + cabinCoins);
     return true;
 }
 
 window.spendCabinCoins = spendCabinCoins;
+window.getCabinLuck = function getCabinLuck() {
+    return cabinLuck;
+};
+window.addCabinLuck = addCabinLuck;
+window.renderStatsPanel = renderStatsPanel;
 
 const CROP_STORAGE_KEYS = ['turnip', 'cabbage', 'rice', 'potato'];
 
@@ -622,6 +775,10 @@ function captureSaveState() {
             type: wx.type,
             random: wx.random
         },
+        stats: {
+            luck: cabinLuck,
+            panelCollapsed: statsPanelCollapsed
+        },
         economy: {
             coins: cabinCoins,
             storage: {
@@ -638,7 +795,8 @@ function captureSaveState() {
                 potatoSeed: cabinBackpack.potatoSeed || 0
             },
             coinGame: syncedCoinGame,
-            investment: savedInvestment
+            investment: savedInvestment,
+            cashFlow: typeof captureCashFlowState === 'function' ? captureCashFlowState() : null
         },
         ui: {
             sfxEnabled: SND.isEnabled(),
@@ -660,12 +818,14 @@ function captureSaveState() {
         },
         teaFarm: typeof captureTeaFarmState === 'function' ? captureTeaFarmState() : null,
         newspaper: typeof captureNewspaperState === 'function' ? captureNewspaperState() : null,
+        liveNews: typeof captureLiveNewsState === 'function' ? captureLiveNewsState() : null,
         mainStory: typeof captureMainStoryState === 'function' ? captureMainStoryState() : null,
         pendingMarketEvents: typeof captureMainStoryMarketEvents === 'function' ? captureMainStoryMarketEvents() : [],
         achievements: typeof captureAchievementState === 'function' ? captureAchievementState() : null,
         wealthEvents: typeof captureWealthEventsState === 'function' ? captureWealthEventsState() : null,
         land: typeof captureLandState === 'function' ? captureLandState() : null,
         weatherFarm: typeof captureWeatherFarmState === 'function' ? captureWeatherFarmState() : null,
+        gameplayLoop: typeof captureGameplayLoopState === 'function' ? captureGameplayLoopState() : null,
         cafeTotalRevenue: cafeTotalRevenue,
         toolUnlock: typeof captureToolUnlockState === 'function' ? captureToolUnlockState() : null,
         prologue: typeof capturePrologueState === 'function' ? capturePrologueState() : null,
@@ -777,6 +937,9 @@ function applySaveState(save) {
 
     const ui = save.ui || {};
     const economy = save.economy || {};
+    const stats = save.stats || {};
+    cabinLuck = clampStat(stats.luck, 50);
+    setStatsPanelCollapsed(stats.panelCollapsed !== false);
     cabinCoins = Math.max(0, Math.min(999999, Math.trunc(Number(economy.coins) || 0)));
     const storage = economy.storage || save.storage || {};
     cropStorage = {
@@ -799,6 +962,9 @@ function applySaveState(save) {
     renderCoins(false);
     renderStorage(false);
     renderBackpack(false);
+    if (typeof applyCashFlowState === 'function') {
+        applyCashFlowState(economy.cashFlow || save.cashFlow);
+    }
     SND.setEnabled(ui.sfxEnabled !== false);
     sfxToggle.classList.toggle('on', SND.isEnabled());
     SND.setVolume(finiteNumber(ui.sfxVolume, 0.6, 1));
@@ -843,6 +1009,9 @@ function applySaveState(save) {
         const elapsedRealSeconds = Number.isFinite(savedAtMs) ? Math.max(0, (Date.now() - savedAtMs) / 1000) : 0;
         applyTeaFarmState(save.teaFarm, elapsedRealSeconds);
     }
+    if (typeof applyLiveNewsState === 'function') {
+        applyLiveNewsState(save.liveNews);
+    }
     if (typeof applyNewspaperState === 'function') {
         applyNewspaperState(save.newspaper);
     }
@@ -864,6 +1033,9 @@ function applySaveState(save) {
     if (typeof applyWeatherFarmState === 'function') {
         applyWeatherFarmState(save.weatherFarm);
     }
+    if (typeof applyGameplayLoopState === 'function') {
+        applyGameplayLoopState(save.gameplayLoop);
+    }
     if (typeof applyPrologueState === 'function') {
         applyPrologueState(save.prologue);
     }
@@ -874,6 +1046,8 @@ function applySaveState(save) {
         applyColoringState(save.coloring);
     }
     cafeTotalRevenue = Math.max(0, Math.trunc(Number(save.cafeTotalRevenue) || 0));
+    renderStatsPanel();
+    if (typeof renderCashFlowPanel === 'function') renderCashFlowPanel();
 }
 
 function loadGameState(manual) {
@@ -1049,6 +1223,11 @@ document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden' && !window.APP_SHELL_BLOCK_GAME) saveGameState(false);
 });
 
+statsPanelToggle?.addEventListener('click', () => {
+    setStatsPanelCollapsed(!statsPanelCollapsed);
+    saveGameState(false);
+});
+
 (function autosaveLoop() {
     requestAnimationFrame(autosaveLoop);
     if (window.APP_SHELL_BLOCK_GAME) return;
@@ -1063,6 +1242,8 @@ setCurrentUser(currentCabinUser, false);
 renderCoins(false);
 renderStorage(false);
 renderBackpack(false);
+setStatsPanelCollapsed(statsPanelCollapsed);
+renderStatsPanel();
 if (!resumeFromStoreIfNeeded() && !resumeFromJournalIfNeeded()) {
     if (!loadRequestedSaveIfNeeded()) autoLoadGameState(false);
     const cafeRevenue = claimCafeRevenue();

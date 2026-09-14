@@ -209,6 +209,13 @@ function checkLiquidityCrisis() {
             const remedy = investUnlocked
                 ? '借点钱、清仓变现，或者去股市小屋——娃哈哈上市了的话，卖点创始人股也能救急，别真等到那天现金见底。'
                 : '借点钱、清仓变现，或者收一收开销，别真等到那天现金见底。';
+            if (typeof window.publishLiveNews === 'function') {
+                window.publishLiveNews(
+                    '现金流预警：' + dayLabel + ' 恐将见底',
+                    '账本上按现在的收支推算，' + dayLabel + ' 手里的钱会跌破0。' + remedy,
+                    '账本版'
+                );
+            }
             if (typeof showGuideCard === 'function') {
                 showGuideCard(
                     '现金流要出问题了——按现在的账，' + dayLabel + ' 手里的钱会跌破0。趁还有几天缓冲，' + remedy,

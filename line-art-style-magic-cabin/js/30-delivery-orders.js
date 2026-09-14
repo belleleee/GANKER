@@ -202,6 +202,13 @@ function tryFulfillDelivery(order) {
         }
         showHintOverride('客户收下了' + crop.name + '，货款将在 ' + payDelay + ' 天后回到现金流');
     }
+    if (order.bulk && typeof window.publishLiveNews === 'function') {
+        window.publishLiveNews(
+            '批发大单成交：' + crop.name + ' ×' + order.qty,
+            '森林里的批发客户一次性收走了 ' + order.qty + ' 份' + crop.name + '，这一单价值 ' + order.reward + ' 金币，仓库也跟着见了底。',
+            '经营版'
+        );
+    }
     if (typeof window.noteAchievementEvent === 'function') {
         window.noteAchievementEvent('deliveryDone', { cropId: order.cropId });
     }

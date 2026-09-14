@@ -34,7 +34,7 @@ const MAIN_STORY_STAGES = [
             { speaker: '旁白', text: '（新玩法：森林里开始有客户找上门订货了，右上角能看到订单板——点"接单"，跟着箭头把作物送过去，就能换一笔比直接卖钱更多的收入。仓库里屯的作物，也该真正花出去了。）' }
         ],
         unlockToast: '📖 主线推进：股市小屋解锁了',
-        questLabel: '完成第一笔送货，攒够 110 金币',
+        questLabel: '生产作物 → 接第一笔订单 → 攒够 110 金币',
         target: { x: 9.0, z: 0.0 },
         coinRequirement: 110,
         lockedHint: '先完成一笔送货，并攒够 110 金币。',
@@ -54,7 +54,7 @@ const MAIN_STORY_STAGES = [
             { speaker: '旁白', text: '（新玩法：走进茶场小屋后，屋里有三个操作台——晒茶青、炒茶、包装，挨个做完一整套，生茶青就能变成能卖钱的成品茶。）' }
         ],
         unlockToast: '📖 主线推进：茶场解锁了',
-        questLabel: '走进股市小屋，学会先看消息再做决定',
+        questLabel: '走进股市小屋：读新闻、看价格、理解风险',
         target: { x: -12.0, z: 8.5 },
         lockedHint: '先去股市小屋看看新闻和价格，再决定下一门生意怎么做。',
         reflection: '话说出去了，就得做到——这是你在竞标桌上学到的第一课。',
@@ -71,7 +71,7 @@ const MAIN_STORY_STAGES = [
             { speaker: '旁白', text: '（新玩法：镇上的钱滚钱商店开门了——走近按 E 进去，里面是猜大小的翻硬币小游戏，赢了翻倍，输了归零，什么时候收手，自己拿主意。）' }
         ],
         unlockToast: '📖 主线推进：钱滚钱商店解锁了',
-        questLabel: '采茶、晒茶、炒茶、装袋，卖出第一批成品茶',
+        questLabel: '完成茶叶生产链：采茶、晒茶、炒茶、装袋',
         target: { x: -11.5, z: -9.0 },
         lockedHint: '先把一批茶叶做成成品，弄明白产品怎么从田里走到市场。',
         choices: [
@@ -103,7 +103,7 @@ const MAIN_STORY_STAGES = [
             { speaker: '你', text: '不裁人，工资照发，亏了算我自己的——但这个厂，我要真正接过来，不是挂个名。' }
         ],
         unlockToast: '📖 主线推进：罐头厂的事定下来了',
-        questLabel: '广告之后再完成一笔送货，看看订单能否撑起扩张',
+        questLabel: '广告后再跑一单：用真实订单验证扩张',
         target: { x: 9.0, z: 0.0 },
         lockedHint: '先完成广告之后的新订单；有偿兼并还需要 400 金币。',
         auto: () => storyStat('deliveryCount') > storyMilestone('deliveryCount'),
@@ -135,7 +135,7 @@ const MAIN_STORY_STAGES = [
             { speaker: '你', text: '大城市挤不进去，那就换一条路——这些年跑遍乡镇攒下的联销体，才是我真正的底牌。' }
         ],
         unlockToast: '📖 主线推进：非常可乐的路子定下来了',
-        questLabel: '兼并之后再完成一笔送货，摸清自己的渠道',
+        questLabel: '兼并后再跑一单：证明渠道能下沉到乡镇',
         target: { x: 9.0, z: 0.0 },
         lockedHint: '先把新渠道跑通一笔订单，再决定可乐往哪里卖。',
         auto: () => storyStat('deliveryCount') > storyMilestone('deliveryCount'),
@@ -168,7 +168,7 @@ const MAIN_STORY_STAGES = [
             { speaker: '旁白', text: '回头看娃哈哈的走势：广告、兼并和渠道的选择，都已写进了股价。手上的仓位，是你自己做过的另一笔决定。' }
         ],
         unlockToast: '📖 主线推进：开始看更大的账',
-        questLabel: '重返股市小屋，看看广告、兼并和渠道怎样影响股价',
+        questLabel: '重返股市小屋：复盘经营选择怎样写进股价',
         target: { x: -12.0, z: 8.5 },
         reflection: '账上的数字越来越大，但记账的规矩不能变：先看懂，再动手。',
         auto: () => storyStat('investmentEntries') > storyMilestone('investmentEntries')
@@ -182,7 +182,7 @@ const MAIN_STORY_STAGES = [
             { speaker: '王师傅', text: '厂里的账、厂里的人，我们信得过你。这次的字，你自己看着签。' }
         ],
         unlockToast: '📖 主线推进：合同的事，该有个了断了',
-        questLabel: '读一份新报纸，再决定怎么处理合作合同',
+        questLabel: '读一份新报纸：先识别风险，再签合同',
         target: { x: -3.18, z: -1.95 },
         lockedHint: '这一关不看钱多钱少：先读一份新报纸，练习分辨字里行间的风险。',
         auto: () => storyStat('newspaperReads') > storyMilestone('newspaperReads'),
@@ -359,6 +359,9 @@ function advanceMainStoryStage(stage, resultText) {
         newspaperReads: storyStat('newspaperReads')
     };
     mainStoryState.stage = idx + 1;
+    if (typeof window.publishLiveNews === 'function') {
+        window.publishLiveNews(stage.title || '主线推进', resultText || stage.unlockToast || '小屋的故事又往前走了一步。', '主线快讯');
+    }
     if (typeof showHintOverride === 'function') showHintOverride(resultText || stage.unlockToast);
     if (typeof SND !== 'undefined') SND.play('chim');
     if (stage.reflection && typeof window.showThemeReflection === 'function') {
