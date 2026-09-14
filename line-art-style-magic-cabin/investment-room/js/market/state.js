@@ -6,6 +6,7 @@ const state = { coins: 1200, investment: { jobLevel: 1, lastSalaryDay: -1, total
 const screenPanel = document.getElementById('screenPanel');
 const dashClock = document.getElementById('dashClock');
 const dashRep = document.getElementById('dashRep');
+const dashSentiment = document.getElementById('dashSentiment');
 const dashSidebar = document.getElementById('dashSidebar');
 const dashMainHead = document.getElementById('dashMainHead');
 const dashTrade = document.getElementById('dashTrade');
@@ -182,6 +183,7 @@ function normalizeMarket(raw) {
       ? raw.storyEvents.filter(event => event && typeof event.id === 'string' &&
           event.targetStock === 'WAHA' && Number.isFinite(event.impact) &&
           Number.isInteger(event.dueDay)).slice(-16) : [],
+    sentiment: finiteNumber(raw && raw.sentiment, 0, -1, 1),
     stocks
   };
 }
@@ -519,21 +521,92 @@ function makeNewsEvent(offset) {
   };
 }
 
+/* ---------------- 板块联动 ----------------
+   "茶叶减产"不该只让茶业合作社一家动——跟茶挨得近的货运、跟农场挨得近
+   的咖啡馆，也该跟着抖一下，哪怕抖得比本体轻。玩家看报纸判断的时候，
+   才有"连锁反应"可以推理，而不是每条新闻只跟一支股票有关系。 */
+const SECTOR_CORRELATIONS = {
+  tea: [{ sector: 'freight', weight: .32 }, { sector: 'farm', weight: .15 }],
+  farm: [{ sector: 'cafe', weight: .3 }, { sector: 'tea', weight: .15 }],
+  freight: [{ sector: 'tea', weight: .2 }, { sector: 'farm', weight: .1 }],
+  cafe: [{ sector: 'farm', weight: .18 }],
+  book: [{ sector: 'magic', weight: .2 }],
+  magic: [{ sector: 'book', weight: .15 }, { sector: 'coin', weight: -.12 }],
+  coin: [{ sector: 'magic', weight: -.1 }],
+  light: []
+};
+
+function sectorOf(stockId) {
+  const item = STOCKS.find(s => s.id === stockId);
+  return item ? item.sector : null;
+}
+
+/* ---------------- 市场情绪 ----------------
+   跟着最近几天的整体涨跌自己滚出来的一个 -1(恐慌) ~ +1(狂热) 的分数，
+   会让日常波动带个方向性偏置，也会让 IPO 定价跟着市场冷热浮动。 */
+function marketSentimentScore() {
+  return finiteNumber(marketState && marketState.sentiment, 0, -1, 1);
+}
+
+function marketSentimentLabel() {
+  const s = marketSentimentScore();
+  if (s >= .5) return { id: 'euphoric', label: '狂热', tone: '#ff9f5b' };
+  if (s >= .15) return { id: 'optimistic', label: '乐观', tone: '#39ff9c' };
+  if (s > -.15) return { id: 'calm', label: '平稳', tone: '#8fd3e6' };
+  if (s > -.5) return { id: 'cautious', label: '谨慎', tone: '#ffd666' };
+  return { id: 'panic', label: '恐慌', tone: '#ff5d75' };
+}
+
+function updateMarketSentiment() {
+  const tradable = STOCKS.filter(item => !item.isPlayerCompany);
+  let sum = 0;
+  let n = 0;
+  tradable.forEach(item => {
+    const stock = getStock(item.id);
+    if (Number.isFinite(stock.prev) && stock.prev > 0) {
+      sum += (stock.price - stock.prev) / stock.prev;
+      n++;
+    }
+  });
+  const avgChange = n ? sum / n : 0;
+  const prev = marketSentimentScore();
+  const next = prev * .72 + avgChange * 6 + (Math.random() - .5) * .06;
+  marketState.sentiment = Math.max(-1, Math.min(1, next));
+}
+
+/* IPO定价跟着市场情绪走：狂热的时候市场愿意为新股多付钱（最多+20%），
+   恐慌的时候只愿意打折买（最多-25%）——同一份上市方案，选的时机不同，
+   融到的钱可以差出不少。 */
+function sentimentIpoMultiplier() {
+  const s = marketSentimentScore();
+  return s >= 0 ? 1 + s * .2 : 1 + s * .25;
+}
+
 function baseFluctuation() {
-  return (Math.random() - .5) * .03;
+  return (Math.random() - .5) * .03 + marketSentimentScore() * .008;
 }
 
 function newsImpact(stockId, day) {
   let impact = 0;
+  const mySector = sectorOf(stockId);
   for (const news of marketState.news) {
-    if (!news || news.targetStock !== stockId || news.isPlayerRumor ||
-        !Number.isFinite(news.impact) || !Number.isFinite(news.credibility)) continue;
+    if (!news || news.isPlayerRumor || !Number.isFinite(news.impact) || !Number.isFinite(news.credibility)) continue;
+    let weight = 0;
+    if (news.targetStock === stockId) {
+      weight = 1;
+    } else if (mySector) {
+      const newsSector = sectorOf(news.targetStock);
+      const links = SECTOR_CORRELATIONS[newsSector] || [];
+      const link = links.find(l => l.sector === mySector);
+      if (link) weight = link.weight;
+    }
+    if (!weight) continue;
     const applyDay = news.day + news.delay;
     if (day === applyDay) {
-      impact += news.credibility < .45 ? news.impact * .45 : news.impact * news.credibility;
+      impact += (news.credibility < .45 ? news.impact * .45 : news.impact * news.credibility) * weight;
     }
     if (news.credibility < .45 && (day === applyDay + 1 || day === applyDay + 2)) {
-      impact -= news.impact * .65;
+      impact -= news.impact * .65 * weight;
     }
   }
   return impact;
@@ -632,6 +705,7 @@ function advanceMarketDay() {
     stock.history.push(stock.price);
     stock.history = stock.history.slice(-24);
   }
+  updateMarketSentiment();
   if (marketState.news.length < 6 || Math.random() < .45) {
     marketState.news.push(makeNewsEvent(0));
     marketState.news = marketState.news.slice(-8);

@@ -138,3 +138,25 @@
   font-size:12px!important;
 }
 .founderSaleBtn:hover{background:rgba(255,214,102,.22)!important;box-shadow:0 0 16px rgba(255,214,102,.3)!important}
+
+.stockFundamentals{
+  margin:0 0 14px;
+  padding:9px 10px;
+  border:1px solid rgba(96,244,255,.14);
+  border-radius:7px;
+  background:rgba(6,16,20,.42);
+}
+.fundRow{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-height:22px;
+  font-size:12px;
+  color:#8fd3e6;
+}
+.fundRow + .fundRow{margin-top:6px}
+.fundRow span{flex:0 0 56px}
+.fundRow b{flex:0 0 auto;min-width:32px;text-align:right;color:#eafcff;font-family:"Menlo","Consolas",monospace}
+.fundValuation{min-width:auto!important;white-space:nowrap}
+.fundBar{flex:1;height:7px;border-radius:999px;overflow:hidden;background:rgba(96,244,255,.1)}
+.fundBar i{display:block;height:100%;border-radius:999px}

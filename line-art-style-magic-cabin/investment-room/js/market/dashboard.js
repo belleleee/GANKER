@@ -251,23 +251,28 @@ function launchWahaIpo(planId) {
     return;
   }
   const stock = getStock('WAHA');
+  /* 上市定价跟着市场情绪走：狂热的时候投资人愿意多付钱，恐慌的时候
+     只愿意打折买——同一个发行方案，挑的时机不同，融到的钱能差出一截。 */
+  const sentimentMult = typeof sentimentIpoMultiplier === 'function' ? sentimentIpoMultiplier() : 1;
+  const offerPrice = Math.max(1, Math.round(plan.price * sentimentMult));
   company.totalShares = 10000;
   company.publicShares = plan.publicShares;
   company.founderShares = company.totalShares - plan.publicShares;
-  company.offerPrice = plan.price;
+  company.offerPrice = offerPrice;
   company.offerTarget = plan.target;
   company.ipoDay = marketState.day;
   company.lockupUntilDay = marketState.day + 5;
-  company.treasury += plan.publicShares * plan.price;
+  company.treasury += plan.publicShares * offerPrice;
   company.listed = true;
   stock.prev = stock.price;
-  stock.price = plan.price;
+  stock.price = offerPrice;
   stock.history = stock.history.concat([stock.price]).slice(-24);
   const holding = getHolding('WAHA');
   holding.qty += plan.publicShares;
-  holding.cost += plan.publicShares * plan.price;
+  holding.cost += plan.publicShares * offerPrice;
   setHolding('WAHA', holding);
   state.investment.reputation = Math.max(0, Math.min(100, state.investment.reputation + plan.rep));
+  const sentimentNote = sentimentMult > 1.02 ? '（市场情绪火热，定价上浮）' : sentimentMult < 0.98 ? '（市场情绪谨慎，定价打了折）' : '';
   marketState.news.push({
     title: '娃哈哈完成上市：发行给' + plan.target,
     targetStock: 'WAHA',
@@ -278,8 +283,8 @@ function launchWahaIpo(planId) {
   });
   marketState.news = marketState.news.slice(-8);
   if (typeof showMarketFeedback === 'function') {
-    showMarketFeedback(plan.publicShares * plan.price, '上市融资',
-      '发行 ' + plan.publicShares + ' 股 · 定价 ' + plan.price + ' · 创始人持股 ' + wahaFounderPct(company) + '%', {
+    showMarketFeedback(plan.publicShares * offerPrice, '上市融资',
+      '发行 ' + plan.publicShares + ' 股 · 定价 ' + offerPrice + sentimentNote + ' · 创始人持股 ' + wahaFounderPct(company) + '%', {
         toastLabel: '公司融资 +'
       });
   }
@@ -326,6 +331,48 @@ function sidebarRows() {
     rows;
 }
 
+/* ---------------- 基本面：三句话看懂一支股票 ----------------
+   不做PE/PB/ROE那一套——玩家判断的是"好公司≠好股票"：
+   稳定度（波动越小越稳）、增长（最近价格趋势）、估值（现价相对近期
+   均价是偏高还是偏低），三项够用了。 */
+function stockFundamentals(stock) {
+  const history = (stock.history || []).slice(-12).filter(Number.isFinite);
+  if (history.length < 2) {
+    return { growthPct: 0, stability: 70, valuationLabel: '合理', fairValue: stock.price };
+  }
+  const early = history[0];
+  const growthPct = early ? (stock.price - early) / early : 0;
+  let volSum = 0;
+  for (let i = 1; i < history.length; i++) {
+    const prev = history[i - 1] || 1;
+    volSum += Math.abs((history[i] - prev) / prev);
+  }
+  const avgVol = volSum / (history.length - 1);
+  const stability = Math.max(4, Math.min(100, Math.round(100 - avgVol * 1400)));
+  const fairValue = history.reduce((a, b) => a + b, 0) / history.length;
+  const ratio = fairValue ? stock.price / fairValue : 1;
+  const valuationLabel = ratio > 1.12 ? '偏高' : ratio < 0.9 ? '偏低' : '合理';
+  return { growthPct, stability, valuationLabel, fairValue: Math.round(fairValue * 10) / 10 };
+}
+
+function fundamentalBar(pct, tone) {
+  return '<div class="fundBar"><i style="width:' + Math.max(2, Math.min(100, pct)) + '%;background:' + tone + '"></i></div>';
+}
+
+function stockFundamentalsHtml(stock) {
+  const f = stockFundamentals(stock);
+  const growthPct100 = Math.round(50 + f.growthPct * 250);
+  const growthTone = f.growthPct >= 0 ? '#39ff9c' : '#ff5d75';
+  const valTone = f.valuationLabel === '偏高' ? '#ff5d75' : f.valuationLabel === '偏低' ? '#39ff9c' : '#ffd666';
+  return '<div class="stockFundamentals">' +
+    '<div class="fundRow"><span>稳定度</span>' + fundamentalBar(f.stability, '#5be6ff') + '<b>' + f.stability + '</b></div>' +
+    '<div class="fundRow"><span>近期走势</span>' + fundamentalBar(growthPct100, growthTone) +
+    '<b style="color:' + growthTone + '">' + (f.growthPct >= 0 ? '+' : '') + Math.round(f.growthPct * 100) + '%</b></div>' +
+    '<div class="fundRow"><span>估值</span><b class="fundValuation" style="color:' + valTone + '">' + f.valuationLabel +
+    '（近期均价 ' + f.fairValue + '）</b></div>' +
+    '</div>';
+}
+
 function tradePanelHtml(stock) {
   if (stock.id === 'WAHA') return wahaCompanyPanelHtml(stock);
   const holding = getHolding(stock.id);
@@ -354,6 +401,7 @@ function tradePanelHtml(stock) {
   ).join('') + '<button class="ghost" data-action="cover" data-stock="' + stock.id + '" data-qty="999999"' + (canCover ? '' : ' disabled') + '>全平</button>';
   return '<div class="dashTradeHead"><h3>' + stock.name + '</h3><p>' + stock.id + ' · 持有 ' + holding.qty + ' 股' +
     (short.qty ? ' · 空单 ' + short.qty + ' 股' : '') + '</p></div>' +
+    stockFundamentalsHtml(stock) +
     (!canBuy ? '<p class="dashRumorHint warn">金币不够，买 1 股需要 ' + buyCost + ' 金币</p>' : '') +
     '<div class="dashTradeActions dashTradeActionsWrap">' + buyBtns + '</div>' +
     '<div class="dashTradeActions dashTradeActionsWrap">' + sellBtns + '</div>' +
@@ -376,14 +424,17 @@ function wahaCompanyPanelHtml(stock) {
   const company = companyState();
   const holding = getHolding('WAHA');
   if (!company.listed) {
-    return '<div class="dashTradeHead"><h3>上市方案</h3><p>选择这次把多少股、以什么价格卖给谁。</p></div>' +
+    const sentiment = typeof marketSentimentLabel === 'function' ? marketSentimentLabel() : { label: '平稳' };
+    const sentimentMult = typeof sentimentIpoMultiplier === 'function' ? sentimentIpoMultiplier() : 1;
+    return '<div class="dashTradeHead"><h3>上市方案</h3><p>选择这次把多少股、以什么价格卖给谁——当前市场情绪：' + sentiment.label + '，定价已按情绪调整。</p></div>' +
       '<div class="wahaIpoBox">' +
       Object.keys(WAHA_IPO_PLANS).map(id => {
         const plan = WAHA_IPO_PLANS[id];
+        const adjPrice = Math.max(1, Math.round(plan.price * sentimentMult));
         const founderPct = Math.round(((10000 - plan.publicShares) / 10000) * 1000) / 10;
         return '<button type="button" class="wahaIpoPlan" data-action="wahaIpo" data-plan="' + id + '" data-stock="WAHA">' +
           '<b>' + plan.label + '</b>' +
-          '<span>卖出 ' + plan.publicShares + ' 股 · 每股 ' + plan.price + ' · 融资 ' + (plan.publicShares * plan.price) + '</span>' +
+          '<span>卖出 ' + plan.publicShares + ' 股 · 每股 ' + adjPrice + ' · 融资 ' + (plan.publicShares * adjPrice) + '</span>' +
           '<small>上市后你持股 ' + founderPct + '%</small>' +
           '</button>';
       }).join('') +
@@ -671,6 +722,12 @@ function renderScreenPanel(key) {
   dashClock.textContent = 'DAY ' + marketState.day;
   dashRep.textContent = '声誉 ' + reputation();
   dashRep.className = 'dashRep ' + (reputation() >= 60 ? 'up' : reputation() <= 30 ? 'down' : '');
+  if (dashSentiment && typeof marketSentimentLabel === 'function') {
+    const sentiment = marketSentimentLabel();
+    dashSentiment.textContent = '市场 ' + sentiment.label;
+    dashSentiment.style.color = sentiment.tone;
+    dashSentiment.style.textShadow = '0 0 8px ' + sentiment.tone;
+  }
   dashSidebar.innerHTML = sidebarRows();
   dashBody.classList.toggle('wahaMode', isCompanyPage);
   dashBody.classList.toggle('companyMode', isCompanyPage);
