@@ -207,7 +207,7 @@ const WAHA_IPO_PLANS = {
     label: '员工与老经销商',
     target: '员工与老经销商',
     publicShares: 1600,
-    price: 34,
+    price: 102,
     rep: 8,
     shock: .04,
     note: '发行少、定价温和，控制权稳，口碑和声誉更好。'
@@ -216,7 +216,7 @@ const WAHA_IPO_PLANS = {
     label: '乡镇联销伙伴',
     target: '乡镇联销伙伴',
     publicShares: 2600,
-    price: 40,
+    price: 120,
     rep: 3,
     shock: .08,
     note: '融资和渠道兼顾，股权稀释适中。'
@@ -225,7 +225,7 @@ const WAHA_IPO_PLANS = {
     label: '公开市场投资者',
     target: '公开市场投资者',
     publicShares: 4200,
-    price: 48,
+    price: 144,
     rep: -4,
     shock: .13,
     note: '融资最多，但创始人控制权稀释明显，市场预期更剧烈。'

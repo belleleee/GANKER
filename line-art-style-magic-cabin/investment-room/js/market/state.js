@@ -2,7 +2,7 @@ const SESSION_KEY = 'magicCabin.session.v1';
 const GUEST_ID = 'guest';
 const SAVE_SCHEMA = 1;
 const CONTENT_ID = 'magic-cabin-local-2026';
-const state = { coins: 100, investment: { jobLevel: 1, lastSalaryDay: -1, totalWages: 0, realizedGain: 0, realizedLoss: 0, reputation: 60, lastRumorDay: -1, lastCoffeeDay: -1, holdings: {}, shorts: {} }, save: null };
+const state = { coins: 1200, investment: { jobLevel: 1, lastSalaryDay: -1, totalWages: 0, realizedGain: 0, realizedLoss: 0, reputation: 60, lastRumorDay: -1, lastCoffeeDay: -1, holdings: {}, shorts: {}, company: null }, save: null };
 const screenPanel = document.getElementById('screenPanel');
 const dashClock = document.getElementById('dashClock');
 const dashRep = document.getElementById('dashRep');
@@ -15,16 +15,18 @@ const dashBody = document.querySelector('.dashBody');
 const closeScreenPanel = document.getElementById('closeScreenPanel');
 const screenMeshes = [];
 const screenTextures = [];
+/* 股价整体 ×3：起始资金也从100提到1200，配合之前加的1/5/20批量交易，
+   现在买卖、涨跌、K线波动才会是"几百几百"地动，不再是个位数的零钱游戏。 */
 const STOCKS = [
-  { id: 'TEA', name: '茶业合作社', start: 39, sector: 'tea' },
-  { id: 'FARM', name: '农场经营', start: 34, sector: 'farm' },
-  { id: 'SHIP', name: '城镇货运', start: 47, sector: 'freight' },
-  { id: 'BOOK', name: '书籍工坊', start: 28, sector: 'book' },
-  { id: 'COIN', name: '硬币商店', start: 52, sector: 'coin' },
-  { id: 'LIGHT', name: '灯具作坊', start: 31, sector: 'light' },
-  { id: 'CAFE', name: '线稿咖啡馆', start: 26, sector: 'cafe' },
-  { id: 'MAGIC', name: '魔法道具铺', start: 61, sector: 'magic' },
-  { id: 'WAHA', name: '娃哈哈', start: 40, sector: 'company', isPlayerCompany: true }
+  { id: 'TEA', name: '茶业合作社', start: 117, sector: 'tea' },
+  { id: 'FARM', name: '农场经营', start: 102, sector: 'farm' },
+  { id: 'SHIP', name: '城镇货运', start: 141, sector: 'freight' },
+  { id: 'BOOK', name: '书籍工坊', start: 84, sector: 'book' },
+  { id: 'COIN', name: '硬币商店', start: 156, sector: 'coin' },
+  { id: 'LIGHT', name: '灯具作坊', start: 93, sector: 'light' },
+  { id: 'CAFE', name: '线稿咖啡馆', start: 78, sector: 'cafe' },
+  { id: 'MAGIC', name: '魔法道具铺', start: 183, sector: 'magic' },
+  { id: 'WAHA', name: '娃哈哈', start: 120, sector: 'company', isPlayerCompany: true }
 ];
 const NEWS_POOL = [
   { title: '茶场订单增长', targetStock: 'TEA', impact: .065, delay: 1 },
@@ -210,8 +212,28 @@ function normalizeInvestment(raw) {
     lastRumorDay: intValue(raw && raw.lastRumorDay, -1, -1, 999999),
     lastCoffeeDay: intValue(raw && raw.lastCoffeeDay, -1, -1, 999999),
     market: normalizeMarket(raw && raw.market),
+    company: normalizeCompanyState(raw && raw.company),
     holdings,
     shorts
+  };
+}
+
+function normalizeCompanyState(raw) {
+  const listed = !!(raw && raw.listed);
+  const totalShares = intValue(raw && raw.totalShares, 10000, 1000, 1000000);
+  const founderShares = intValue(raw && raw.founderShares, totalShares, 0, totalShares);
+  const publicShares = intValue(raw && raw.publicShares, listed ? Math.max(0, totalShares - founderShares) : 0, 0, totalShares);
+  const treasury = intValue(raw && raw.treasury, 0, 0, 999999999);
+  return {
+    listed,
+    totalShares,
+    founderShares,
+    publicShares,
+    treasury,
+    offerPrice: intValue(raw && raw.offerPrice, 0, 0, 999999),
+    offerTarget: typeof (raw && raw.offerTarget) === 'string' ? raw.offerTarget.slice(0, 40) : '',
+    ipoDay: intValue(raw && raw.ipoDay, -1, -1, 999999),
+    lockupUntilDay: intValue(raw && raw.lockupUntilDay, -1, -1, 999999)
   };
 }
 
@@ -219,7 +241,7 @@ function loadState() {
   const save = readJson(saveKey(), null);
   state.save = save && save.schema === SAVE_SCHEMA && save.content === CONTENT_ID ? save : null;
   const economy = state.save && state.save.economy || {};
-  state.coins = intValue(economy.coins, 100, 0, 999999);
+  state.coins = intValue(economy.coins, 1200, 0, 999999);
   state.investment = normalizeInvestment(economy.investment);
   marketState = state.investment.market;
   applyExternalMarketNews();
@@ -295,7 +317,7 @@ function saveState() {
   const save = state.save || { schema: SAVE_SCHEMA, content: CONTENT_ID, savedAt: new Date().toISOString(), economy: {} };
   save.savedAt = new Date().toISOString();
   save.economy = save.economy || {};
-  state.coins = intValue(state.coins, 100, 0, 999999);
+  state.coins = intValue(state.coins, 1200, 0, 999999);
   save.economy.coins = state.coins;
   marketState = normalizeMarket(marketState);
   state.investment.market = marketState;
@@ -375,7 +397,7 @@ function reputation() {
 
 function shortLimit() {
   const repFactor = .7 + reputation() / 200;
-  state.coins = intValue(state.coins, 100, 0, 999999);
+  state.coins = intValue(state.coins, 1200, 0, 999999);
   return Math.round(state.coins * 1.5 * repFactor);
 }
 
@@ -427,7 +449,7 @@ function canSpreadRumor() {
 function spreadRumor(stockId, bad) {
   if (!canSpreadRumor()) return;
   const cost = rumorCost();
-  state.coins = intValue(state.coins, 100, 0, 999999);
+  state.coins = intValue(state.coins, 1200, 0, 999999);
   if (state.coins < cost) return;
   const stock = STOCKS.find(item => item.id === stockId);
   if (!stock || stock.isPlayerCompany) return;
@@ -445,6 +467,12 @@ function spreadRumor(stockId, bad) {
     resolved: false
   });
   marketState.news = marketState.news.slice(-8);
+  if (typeof showMarketFeedback === 'function') {
+    showMarketFeedback(-cost, bad ? '散布利空成本' : '散布利好成本',
+      '花 ' + cost + ' 金币影响 ' + stock.name + '，声誉和结果都要等市场检验。', {
+        toastLabel: '成本 -'
+      });
+  }
   redrawScreens();
   renderScreenPanel(activeScreen);
   saveState();
@@ -557,6 +585,7 @@ function rollMarketEvent() {
 }
 
 function advanceMarketDay() {
+  const pnlBefore = typeof investmentPnlSummary === 'function' ? investmentPnlSummary().totalPnl : 0;
   marketState.day += 1;
   const event = rollMarketEvent();
   const shocks = {};
@@ -609,6 +638,15 @@ function advanceMarketDay() {
   }
   redrawScreens();
   if (!screenPanel.hidden) renderScreenPanel(activeScreen);
+  if (typeof investmentPnlSummary === 'function' && typeof showMarketFeedback === 'function') {
+    const pnlAfter = investmentPnlSummary().totalPnl;
+    const delta = Math.round(pnlAfter - pnlBefore);
+    if (delta) {
+      showMarketFeedback(delta, '今日盈亏', 'Day ' + marketState.day + ' 收盘 · 总盈亏从 ' + pnlBefore + ' 变为 ' + pnlAfter);
+    } else if (typeof showToast === 'function') {
+      showToast('Day ' + marketState.day + ' 收盘 · 持仓暂时没有明显变化', 2400);
+    }
+  }
   saveState();
 }
 
