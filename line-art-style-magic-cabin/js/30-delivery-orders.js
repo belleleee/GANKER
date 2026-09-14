@@ -23,7 +23,13 @@ function deliveryRewardMult() {
     return deliveryMainStoryFlag('adGambleWon') ? DELIVERY_REWARD_MULT_BASE * 1.25 : DELIVERY_REWARD_MULT_BASE;
 }
 function deliveryMaxOpen() {
-    return deliveryMainStoryFlag('ruralNetwork') ? DELIVERY_MAX_OPEN_BASE + 1 : DELIVERY_MAX_OPEN_BASE;
+    const planBonus = typeof window.getDailyPlan === 'function' && window.getDailyPlan() === 'orders' ? 1 : 0;
+    return (deliveryMainStoryFlag('ruralNetwork') ? DELIVERY_MAX_OPEN_BASE + 1 : DELIVERY_MAX_OPEN_BASE) + planBonus;
+}
+function deliverySpawnGap() {
+    const focus = typeof window.getDailyPlan === 'function' && window.getDailyPlan() === 'orders';
+    const mult = focus ? 0.58 : 1;
+    return (DELIVERY_SPAWN_MIN_GAP + Math.random() * (DELIVERY_SPAWN_MAX_GAP - DELIVERY_SPAWN_MIN_GAP)) * mult;
 }
 
 const DELIVERY_CUSTOMER_COLORS = [0xf4a6a0, 0x9fd0f0, 0xc8ecA0, 0xf3d98a, 0xd6a6f0, 0xa0e8d8];
@@ -149,14 +155,32 @@ function tryFulfillDelivery(order) {
     }
     cropStorage[crop.storageKey] = have - order.qty;
     if (typeof renderStorage === 'function') renderStorage(true);
-    if (typeof window.addCabinCoins === 'function') {
-        window.addCabinCoins(order.reward, '送货 · ' + crop.name + ' ×' + order.qty);
+    if (order.prepaidAmount) {
+        /* 已经预付过订金的单：送货当场结清尾款，不再排队等回款——
+           这就是预付款这个工具用"少收一点"换来的确定性。 */
+        const remainder = Math.max(0, order.effectiveReward - order.prepaidAmount);
+        if (remainder && typeof window.addCabinCoins === 'function') {
+            window.addCabinCoins(remainder, '送货尾款 · ' + crop.name + ' ×' + order.qty);
+        }
+        showHintOverride('客户收下了' + crop.name + '，当场结清尾款 +' + remainder + ' 金币');
+    } else {
+        const payDelay = 2 + Math.floor(Math.random() * 4);
+        if (typeof window.scheduleCashFlow === 'function') {
+            window.scheduleCashFlow(order.reward, payDelay, '代销回款 · ' + crop.name + ' ×' + order.qty, {
+                type: 'receivable'
+            });
+        } else if (typeof window.addCabinCoins === 'function') {
+            window.addCabinCoins(order.reward, '送货 · ' + crop.name + ' ×' + order.qty);
+        }
+        showHintOverride('客户收下了' + crop.name + '，货款将在 ' + payDelay + ' 天后回到现金流');
     }
     if (typeof window.noteAchievementEvent === 'function') {
         window.noteAchievementEvent('deliveryDone', { cropId: order.cropId });
     }
+    if (typeof window.noteDailyEvent === 'function') {
+        window.noteDailyEvent('deliveryDone', { cropId: order.cropId, reward: order.reward });
+    }
     removeDeliveryOrder(order, false);
-    showHintOverride('客户收下了' + crop.name + '，客气地道了谢');
     if (typeof SND !== 'undefined') SND.play('chim');
 }
 
@@ -170,16 +194,33 @@ function removeDeliveryOrder(order, expired) {
     }
     if (expired) {
         if (deliveryActiveTargetId === order.id) deliveryActiveTargetId = null;
+        if (order.accepted && typeof window.addGoodwillPenalty === 'function') {
+            window.addGoodwillPenalty(3, '接下的订单没送到，客户信任受损');
+        }
         showHintOverride('森林里那位客户等不及，先走了——订单错过了');
     }
     renderDeliveryBoard();
 }
 
-function acceptDeliveryOrder(id) {
+/* 预付订金：一种现金流工具——客户愿意先付一半钱，条件是总价打9折。
+   拿到手的钱变少，但一半货款立刻到账，不用等送货、也不用等那笔
+   延迟回款的随机天数，用"少赚一点"换"现在就有钱"。 */
+const DELIVERY_PREPAY_FEE = 0.1;
+const DELIVERY_PREPAY_SHARE = 0.5;
+
+function acceptDeliveryOrder(id, prepay) {
     const order = deliveryOrders.find(o => o.id === id);
     if (!order || order.accepted) return;
     order.accepted = true;
     const crop = deliveryCropDef(order.cropId);
+    if (prepay) {
+        order.effectiveReward = Math.max(1, Math.round(order.reward * (1 - DELIVERY_PREPAY_FEE)));
+        order.prepaidAmount = Math.round(order.effectiveReward * DELIVERY_PREPAY_SHARE);
+        if (typeof window.addCabinCoins === 'function') {
+            window.addCabinCoins(order.prepaidAmount, '订单预付款 · ' + (crop ? crop.name : '作物'));
+        }
+        showHintOverride('客户先付了 ' + order.prepaidAmount + ' 金币订金（总价打9折）——送货时结清剩下的钱');
+    }
     const entry = {
         x: order.x, z: order.z, r: DELIVERY_INTERACT_RADIUS,
         label: '送货 · ' + (crop ? crop.name : '作物') + ' ×' + order.qty,
@@ -197,6 +238,9 @@ function acceptDeliveryOrder(id) {
 
 const deliveryBoard = document.getElementById('deliveryBoard');
 const deliveryBoardList = document.getElementById('deliveryBoardList');
+const deliveryBoardToggle = document.getElementById('deliveryBoardToggle');
+const deliveryBoardSummary = document.getElementById('deliveryBoardSummary');
+let deliveryBoardCollapsed = false;
 
 function renderDeliveryBoard() {
     if (!deliveryBoard || !deliveryBoardList) return;
@@ -206,6 +250,17 @@ function renderDeliveryBoard() {
         return;
     }
     deliveryBoard.hidden = false;
+    deliveryBoard.classList.toggle('collapsed', deliveryBoardCollapsed);
+    if (deliveryBoardToggle) {
+        deliveryBoardToggle.setAttribute('aria-expanded', String(!deliveryBoardCollapsed));
+    }
+    if (deliveryBoardSummary) {
+        const soonest = pending.reduce((best, order) => Math.min(best, order.life), Infinity);
+        const urgentCount = pending.filter(order => order.life < 40).length;
+        deliveryBoardSummary.textContent =
+            pending.length + ' 单 · 最近 ' + deliveryFormatTime(soonest) + (urgentCount ? ' · ' + urgentCount + ' 急' : '');
+        deliveryBoardSummary.classList.toggle('urgent', urgentCount > 0);
+    }
     deliveryBoardList.innerHTML = pending.map(o => {
         const crop = deliveryCropDef(o.cropId);
         return '<div class="deliveryBoardRow">' +
@@ -213,7 +268,10 @@ function renderDeliveryBoard() {
             '<span class="deliveryBoardName">' + (crop ? crop.name : '作物') + ' ×' + o.qty + '</span>' +
             '<span class="deliveryBoardTimer' + (o.life < 40 ? ' urgent' : '') + '">' + deliveryFormatTime(o.life) + '</span>' +
             '<span class="deliveryBoardReward">+' + o.reward + ' 金币</span>' +
+            '<span class="deliveryBoardActions">' +
             '<button type="button" class="deliveryAcceptBtn" data-order="' + o.id + '">接单</button>' +
+            '<button type="button" class="deliveryPrepayBtn" data-order="' + o.id + '" title="现在先拿一半货款，总价打9折——送货那天不用再等回款">预付订金</button>' +
+            '</span>' +
             '</div>';
     }).join('');
 }
@@ -225,9 +283,22 @@ function deliveryFormatTime(seconds) {
 
 if (deliveryBoardList) {
     deliveryBoardList.addEventListener('click', event => {
+        const prepayBtn = event.target.closest('.deliveryPrepayBtn');
+        if (prepayBtn) {
+            acceptDeliveryOrder(Number(prepayBtn.dataset.order), true);
+            return;
+        }
         const btn = event.target.closest('.deliveryAcceptBtn');
         if (!btn) return;
-        acceptDeliveryOrder(Number(btn.dataset.order));
+        acceptDeliveryOrder(Number(btn.dataset.order), false);
+    });
+}
+
+if (deliveryBoardToggle) {
+    deliveryBoardToggle.addEventListener('click', () => {
+        deliveryBoardCollapsed = !deliveryBoardCollapsed;
+        if (typeof SND !== 'undefined') SND.play('ui');
+        renderDeliveryBoard();
     });
 }
 
@@ -279,7 +350,7 @@ function updateDeliveryOrders(dt, time) {
     if (!isDeliveryUnlocked()) return;
     deliverySpawnTimer -= dt || 0;
     if (deliverySpawnTimer <= 0) {
-        deliverySpawnTimer = DELIVERY_SPAWN_MIN_GAP + Math.random() * (DELIVERY_SPAWN_MAX_GAP - DELIVERY_SPAWN_MIN_GAP);
+        deliverySpawnTimer = deliverySpawnGap();
         spawnDeliveryOrder();
     }
     for (let i = deliveryOrders.length - 1; i >= 0; i--) {

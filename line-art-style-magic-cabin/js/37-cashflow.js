@@ -3,6 +3,15 @@
 const CASHFLOW_LOOKAHEAD_DAYS = 7;
 const CASHFLOW_MAX_EVENTS = 80;
 
+/* ---------------- 现金流工具：不只是看预测，还能主动出手 ----------------
+   贷款——现在借到钱，代价是利息和一笔到期必须还的钱；
+   清仓促销——把囤着的作物按六折立刻变现，救急但亏本。
+   两个工具都换的是"什么时候有钱"，不是白捡便宜。 */
+const CASHFLOW_LOAN_AMOUNTS = [200, 500, 1000];
+const CASHFLOW_LOAN_INTEREST = 0.15;
+const CASHFLOW_LOAN_DUE_DAYS = 5;
+const CASHFLOW_CLEARANCE_RATE = 0.6;
+
 let cashFlowState = {
     events: [],
     seq: 1,
@@ -169,6 +178,74 @@ function processCashFlowDueEvents() {
     renderCashFlowPanel();
 }
 
+function hasActiveLoan() {
+    return cashFlowState.events.some(event => event.type === 'loan');
+}
+
+function takeCashFlowLoan(amount) {
+    if (hasActiveLoan()) {
+        if (typeof showHintOverride === 'function') showHintOverride('手头还有一笔贷款没还清，先结清再借新的');
+        return;
+    }
+    const principal = Math.max(1, Math.trunc(Number(amount) || 0));
+    if (!principal) return;
+    if (typeof window.addCabinCoins === 'function') window.addCabinCoins(principal, '银行贷款到账');
+    const repay = Math.round(principal * (1 + CASHFLOW_LOAN_INTEREST));
+    scheduleCashFlow(-repay, CASHFLOW_LOAN_DUE_DAYS, '贷款还本付息', { type: 'loan' });
+    if (typeof showHintOverride === 'function') {
+        showHintOverride('借到 ' + principal + ' 金币，' + CASHFLOW_LOAN_DUE_DAYS + ' 天后要还 ' + repay + '（含息）');
+    }
+}
+
+function clearanceSaleCrops() {
+    if (typeof cropStorage === 'undefined' || typeof CROP_TYPES === 'undefined' || typeof CROP_STORAGE_KEYS === 'undefined') return;
+    let total = 0;
+    CROP_STORAGE_KEYS.forEach(key => {
+        const qty = Math.max(0, Math.trunc(Number(cropStorage[key]) || 0));
+        if (!qty) return;
+        const cropDef = Object.keys(CROP_TYPES).map(id => CROP_TYPES[id]).find(c => c.storageKey === key);
+        const price = cropDef ? cropDef.harvestCoins : 0;
+        total += Math.round(price * CASHFLOW_CLEARANCE_RATE) * qty;
+        cropStorage[key] = 0;
+    });
+    if (!total) {
+        if (typeof showHintOverride === 'function') showHintOverride('仓库里没什么可以清的');
+        return;
+    }
+    if (typeof renderStorage === 'function') renderStorage(true);
+    if (typeof window.addCabinCoins === 'function') window.addCabinCoins(total, '清仓甩卖');
+    if (typeof showHintOverride === 'function') showHintOverride('仓库清空，六折甩卖换回 ' + total + ' 金币');
+    renderCashFlowPanel();
+}
+
+function cashFlowToolsHtml() {
+    const loanActive = hasActiveLoan();
+    const loanBtns = loanActive
+        ? '<p class="cashFlowToolNote">贷款未结清，到期会自动扣还</p>'
+        : CASHFLOW_LOAN_AMOUNTS.map(v =>
+            '<button type="button" class="cashFlowToolBtn" data-loan="' + v + '">借 ' + v + '</button>'
+        ).join('');
+    return '<div class="cashFlowTools">' +
+        '<p class="cashFlowToolsTitle">现金流工具</p>' +
+        '<div class="cashFlowToolRow">' + loanBtns + '</div>' +
+        '<div class="cashFlowToolRow">' +
+        '<button type="button" class="cashFlowToolBtn clearance" data-clearance="1">清仓促销（六折变现仓库作物）</button>' +
+        '</div>' +
+        '</div>';
+}
+
+if (cashFlowBody) {
+    cashFlowBody.addEventListener('click', event => {
+        const loanBtn = event.target.closest('[data-loan]');
+        if (loanBtn) {
+            takeCashFlowLoan(Number(loanBtn.dataset.loan));
+            return;
+        }
+        const clearanceBtn = event.target.closest('[data-clearance]');
+        if (clearanceBtn) clearanceSaleCrops();
+    });
+}
+
 function upcomingDisplayItems() {
     const today = currentCashFlowDay();
     const items = cashFlowState.events.map(event => ({
@@ -208,7 +285,8 @@ function renderCashFlowPanel() {
             '</div>'
         ).join('') +
         (upcoming.length ? '' : '<p class="cashFlowEmpty">暂无未来收付款。</p>') +
-        '</div>';
+        '</div>' +
+        cashFlowToolsHtml();
 }
 
 function updateCashFlow() {
