@@ -80,6 +80,11 @@ function buyStock(id, count) {
     if (typeof showToast === 'function') showToast('娃哈哈还没上市，先选择发行方案。');
     return;
   }
+  if (typeof showInvestTipOnce === 'function') {
+    showInvestTipOnce('firstBuy',
+      '买入之后，你自己也成了影响价格的一份子',
+      '持仓越重，你的买卖动作本身也会轻轻推动股价——一次性砸太多进一支股票，容易把自己架在高位。分批买，比一把梭哈更接近"经营"而不是"赌"。');
+  }
   const qty = Math.max(1, Math.trunc(Number(count)) || 1);
   state.coins = Math.trunc(safeMoney(state.coins, 100));
   const cost = Math.ceil(stock.price * qty);
@@ -141,6 +146,11 @@ function shortStock(id, count) {
   if (stock.id === 'WAHA') {
     if (typeof showToast === 'function') showToast('创始人公司不能做空。');
     return;
+  }
+  if (typeof showInvestTipOnce === 'function') {
+    showInvestTipOnce('firstShort',
+      '做空是反着赚钱，风险也是反着来的',
+      '做空先拿到钱，但欠的是股票，不是钱——股价涨得越多，平仓要花的钱就越多，亏损没有上限。做空之前，先看看"稳定度"高不高，别在情绪狂热的时候跟风做空。');
   }
   const qty = Math.max(1, Math.trunc(Number(count)) || 1);
   state.coins = Math.trunc(safeMoney(state.coins, 100));
@@ -288,6 +298,11 @@ function launchWahaIpo(planId) {
         toastLabel: '公司融资 +'
       });
   }
+  if (typeof showInvestTipOnce === 'function') {
+    setTimeout(() => showInvestTipOnce('ipoConsequence',
+      '上市不是终点，是新的约束',
+      '从今往后，WAHA 的股价会跟着主线剧情里的经营决定走——广告砸得好、兼并谈得成，股价会涨；决定失误，股价也会跌。持股比例还决定了往后能不能靠"创始人紧急套现"救急。'), 900);
+  }
   redrawScreens();
   renderScreenPanel(activeScreen);
   saveState();
@@ -375,6 +390,14 @@ function stockFundamentalsHtml(stock) {
 
 function tradePanelHtml(stock) {
   if (stock.id === 'WAHA') return wahaCompanyPanelHtml(stock);
+  if (typeof showInvestTipOnce === 'function') {
+    showInvestTipOnce('fundamentals',
+      '看基本面，不是只看涨跌',
+      '稳定度低、走势乱涨的股票，价格常常已经"偏高"——好公司不等于好股票。买之前，把"稳定度/近期走势/估值"三行都扫一眼。');
+    showInvestTipOnce('sentiment',
+      '市场情绪会偷偷改变你的判断',
+      '头顶那行"市场 XX"是整体情绪——狂热的时候人人觉得会涨，容易追高；恐慌的时候人人想跑，容易错杀好东西。情绪不是事实，只是别人的情绪。');
+  }
   const holding = getHolding(stock.id);
   const short = getShort(stock.id);
   const avg = holding.qty ? Math.round(holding.cost / holding.qty) : 0;
@@ -426,6 +449,11 @@ function wahaCompanyPanelHtml(stock) {
   if (!company.listed) {
     const sentiment = typeof marketSentimentLabel === 'function' ? marketSentimentLabel() : { label: '平稳' };
     const sentimentMult = typeof sentimentIpoMultiplier === 'function' ? sentimentIpoMultiplier() : 1;
+    if (typeof showInvestTipOnce === 'function') {
+      showInvestTipOnce('ipoTradeoff',
+        '卖多少股，是真正的取舍',
+        '少卖股票融资就少，但你保得住控制权、股价也更稳；多卖股票能拿到更多钱，但公司往后就不完全是你说了算。选之前想清楚：这笔钱是要解决眼下的现金流，还是想换更快的扩张速度？');
+    }
     return '<div class="dashTradeHead"><h3>上市方案</h3><p>选择这次把多少股、以什么价格卖给谁——当前市场情绪：' + sentiment.label + '，定价已按情绪调整。</p></div>' +
       '<div class="wahaIpoBox">' +
       Object.keys(WAHA_IPO_PLANS).map(id => {
@@ -469,6 +497,11 @@ const FOUNDER_EMERGENCY_DISCOUNT = 0.08;
 
 function founderEmergencySaleHtml(company, stock) {
     if (!company.listed) return '';
+    if (typeof showInvestTipOnce === 'function') {
+        showInvestTipOnce('founderSale',
+            '这是给你个人用的应急工具，不是常规操作',
+            '主游戏那边现金流告急的时候，可以来这儿折价卖点创始人股换现金——注意是你个人腰包变多，公司账上不会多一分钱，创始人持股也会真的降下去，别当成常规收入来源。');
+    }
     const price = Math.max(1, Math.round(stock.price * (1 - FOUNDER_EMERGENCY_DISCOUNT)));
     const btns = FOUNDER_EMERGENCY_TIERS.map(frac => {
         const shares = Math.max(1, Math.round(company.totalShares * frac));
