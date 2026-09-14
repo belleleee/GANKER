@@ -20,6 +20,10 @@ dashBody.addEventListener('click', event => {
       launchWahaIpo(button.dataset.plan);
       return;
     }
+    if (button.dataset.action === 'founderSale') {
+      founderEmergencySale(button.dataset.shares);
+      return;
+    }
     const stockId = button.dataset.stock;
     if (!stockId) return;
     const qty = Math.max(1, Math.trunc(Number(button.dataset.qty)) || 1);

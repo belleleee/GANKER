@@ -403,7 +403,60 @@ function wahaCompanyPanelHtml(stock) {
     '<button data-action="buy" data-stock="WAHA"' + (canBuy ? '' : ' disabled') + '>增持公开股 1</button>' +
     '<button class="ghost" data-action="sell" data-stock="WAHA"' + (canSell ? '' : ' disabled') + '>卖公开股 1</button>' +
     '</div>' +
+    founderEmergencySaleHtml(company, stock) +
     '<button class="dashNextDay" data-action="nextDay">下一交易日 · Day ' + (marketState.day + 1) + '</button>';
+}
+
+/* ---------------- 创始人紧急套现 ----------------
+   跟"上市融资"不一样：那笔钱进的是公司账（company.treasury），
+   这里卖的是创始人自己手里的股份，钱直接进玩家个人钱包（state.coins，
+   跟主游戏的 cabinCoins 共享同一个存档字段），专门用来在主游戏那边
+   现金流告急的时候，能有个"卖点身家换现金"的真实去处。折价出手，
+   还会让股价承压——套现不是没有代价的。 */
+const FOUNDER_EMERGENCY_TIERS = [0.05, 0.1, 0.2];
+const FOUNDER_EMERGENCY_DISCOUNT = 0.08;
+
+function founderEmergencySaleHtml(company, stock) {
+    if (!company.listed) return '';
+    const price = Math.max(1, Math.round(stock.price * (1 - FOUNDER_EMERGENCY_DISCOUNT)));
+    const btns = FOUNDER_EMERGENCY_TIERS.map(frac => {
+        const shares = Math.max(1, Math.round(company.totalShares * frac));
+        const affordable = shares <= company.founderShares;
+        const proceeds = shares * price;
+        return '<button class="ghost founderSaleBtn" data-action="founderSale" data-shares="' + shares + '"' +
+            (affordable ? '' : ' disabled') + '>套现' + Math.round(frac * 100) + '%股权 · +' + proceeds + '</button>';
+    }).join('');
+    return '<div class="founderEmergencyBox">' +
+        '<p class="founderEmergencyTitle">创始人紧急套现 · 折价 ' + Math.round(FOUNDER_EMERGENCY_DISCOUNT * 100) +
+        '% 出手，钱进你个人腰包，不进公司账上</p>' +
+        '<div class="dashTradeActions dashTradeActionsWrap">' + btns + '</div>' +
+        '</div>';
+}
+
+function founderEmergencySale(shares) {
+    const company = companyState();
+    if (!company.listed) return;
+    const qty = Math.max(1, Math.trunc(Number(shares)) || 0);
+    if (qty > company.founderShares) {
+        if (typeof showToast === 'function') showToast('创始人股不够卖这么多');
+        return;
+    }
+    const stock = getStock('WAHA');
+    const price = Math.max(1, Math.round(stock.price * (1 - FOUNDER_EMERGENCY_DISCOUNT)));
+    const proceeds = qty * price;
+    company.founderShares -= qty;
+    company.publicShares += qty;
+    state.coins = Math.min(999999, state.coins + proceeds);
+    stock.pressure -= .02;
+    if (typeof showMarketFeedback === 'function') {
+        showMarketFeedback(proceeds, '创始人紧急套现',
+            '卖出 ' + qty + ' 股创始人股（折价出手）· 个人现金 +' + proceeds + ' · 创始人持股降到 ' + wahaFounderPct(company) + '%', {
+                toastLabel: '个人现金 +'
+            });
+    }
+    redrawScreens();
+    renderScreenPanel(activeScreen);
+    saveState();
 }
 
 function wahaCompanyDashboardHtml(stock) {

@@ -114,3 +114,27 @@
 .dashHoldingRow--head span:not(:first-child){
   font-family:inherit;
 }
+
+.founderEmergencyBox{
+  margin:6px 0 14px;
+  padding:10px 12px;
+  border:1px dashed rgba(255,214,102,.5);
+  border-radius:8px;
+  background:rgba(255,214,102,.06);
+}
+.founderEmergencyTitle{
+  margin:0 0 8px;
+  color:#ffd666;
+  font-size:11px;
+  font-weight:700;
+  line-height:1.5;
+}
+.founderSaleBtn{
+  flex:1 1 100px;
+  border-color:#ffd666!important;
+  background:rgba(255,214,102,.1)!important;
+  color:#ffe9ad!important;
+  text-shadow:0 0 8px rgba(255,214,102,.45)!important;
+  font-size:12px!important;
+}
+.founderSaleBtn:hover{background:rgba(255,214,102,.22)!important;box-shadow:0 0 16px rgba(255,214,102,.3)!important}
