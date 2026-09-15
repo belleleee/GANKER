@@ -2,105 +2,114 @@
 
 /* ================================================================
    主线剧情
-   把 农场 → 茶场 → 钱滚钱商店 → 股市 串成一条经营线。
-   第一份农场简历承接 plot 序章：从旧宅、农场、茶场到返城，
-   这里的主线卡片负责把剧情的精神落到每个经营系统的目标上。
+   核心不是传记，也不是小游戏合集：
+   一次失败的炼金术，让一个务实又固执的老人留在玩家身边。
+   玩家通过种田、采茶、现金流和投资逐渐认识他，直到中后期才知道
+   他是谁。经营系统是认识人物的方法，不是人物讲系统的工具。
    ================================================================ */
 
 const MAIN_STORY_STAGES = [
     {
         unlocks: null,
-        title: '序章 · 从一块地开始',
+        title: '序章 · 炼金失败之后',
         lines: [
-            { speaker: '旁白', text: '你翻完第三次萝卜地，手心被锄柄磨得发烫。那一刻你忽然想起序章里那句话：往后这个家，不靠祖宗，靠手脚。' },
-            { speaker: '旁白', text: '可一个人硬扛，终究扛不出一座农场。能把日子撑下去的人，也要学会把事情交给可靠的人。' },
-            { speaker: '你', text: '先把第一份简历看完。如果他真是愿意替家里分担的人，就让他来试试。' }
+            { speaker: '旁白', text: '你照着《炼金术：如何把一枚硬币变成两枚》把旧硬币、茶叶和星尘丢进锅里。火光一跳，整间小屋黑了下来。' },
+            { speaker: '旁白', text: '灯再亮时，角落多了一个老人。他拍了拍衣袖，看了一圈乱糟糟的小屋。' },
+            { speaker: '老人', text: '这是哪儿？怎么连个正经货架都没有？' },
+            { speaker: '你', text: '……我家。你谁啊？' },
+            { speaker: '老人', text: '叫我宗师傅吧。你先别研究黄金了，外头那块地空着。' }
         ],
         unlockToast: '📖 主线推进：正式开始经营',
-        questLabel: '亲手收割 3 次萝卜，读完第一份简历，再雇佣农场帮手',
-        target: { x: 9.0, z: 0.0 },
-        reflection: '记住这块地翻起来的手感——往后不管账本变多大，起点都是它。',
+        questLabel: '打开发光的炼金书，取瓶架材料，再启动坩埚',
+        target: { x: -3.58, z: -3.05 },
+        reflection: '你认识到宗师傅的第一面：他不讲发财神话，只让你先把地种出来。',
         prologuePartAfter: 1,
-        auto: () => typeof farmHireState !== 'undefined' && farmHireState.hired === true &&
-            farmHireState.playerHarvests >= FARM_RESUME_HARVEST_TARGET && farmHireState.resumeViewed === true
+        auto: () => typeof isAlchemyIntroComplete === 'function' && isAlchemyIntroComplete()
     },
     {
-        unlocks: 'investment',
-        title: '第一部分 · 代销小摊（1987）',
+        unlocks: 'tea',
+        title: '第一部分 · 七块钱也是钱',
         lines: [
-            { speaker: '旁白', text: '厂里供销科的活儿干了九年，你听说上城区有个校办经销部年年亏钱，正打算对外承包。' },
-            { speaker: '旁白', text: '想接这摊子，先得有点本钱，也得让人看见你是真能吃苦做买卖的人。你借了辆三轮车，在学校门口支起摊子：汽水、冰棍、毛巾、文具，什么都卖。' },
-            { speaker: '你', text: '先完成一笔送货，再攒够 110 个金币。做成第一单生意，才有本钱去股市小屋学着看账。' },
-            { speaker: '旁白', text: '（新玩法：森林里开始有客户找上门订货了，右上角能看到订单板——点"接单"，跟着箭头把作物送过去，就能换一笔比直接卖钱更多的收入。仓库里屯的作物，也该真正花出去了。）' }
+            { speaker: '旁白', text: '你第一次把作物换成现金，算完账只多了几枚金币，心里难免泄气。' },
+            { speaker: '你', text: '才赚这么点？' },
+            { speaker: '宗师傅', text: '七块不是钱？' },
+            { speaker: '你', text: '……是。' },
+            { speaker: '宗师傅', text: '那就接着干。车轮停下，现金也就停下。' },
+            { speaker: '旁白', text: '你不知道他为什么这么在意现金，只觉得这个老人抠得近乎固执。' }
         ],
-        unlockToast: '📖 主线推进：股市小屋解锁了',
+        unlockToast: '📖 主线推进：茶园解锁了',
         questLabel: '生产作物 → 接第一笔订单 → 攒够 110 金币',
         target: { x: 9.0, z: 0.0 },
         coinRequirement: 110,
         lockedHint: '先完成一笔送货，并攒够 110 金币。',
-        reflection: '110 个金币不算多，但这是你第一次，靠自己的本事把它凑齐的。',
+        reflection: '你认识到宗师傅的第二面：钱不能断。利润写在纸上，现金握在手里。',
         prologuePartAfter: 2,
         auto: () => storyStat('deliveryCount') >= 1 && currentCoins() >= 110
     },
     {
-        unlocks: 'tea',
-        title: '第二部分 · 承包谈判（1987）',
-        lines: [
-            { speaker: '旁白', text: '竞标那天，蒋经理坐镇多年，资历深、关系广，是这一行谁都绕不开的人物。评委葛局长手里的笔悬着，迟迟没落下。' },
-            { speaker: '老陆', text: '别怕，你手上有的是他没有的——你敢吃苦，敢承诺，也懂门路。他有的，只是资历和关系户。' },
-            { speaker: '你', text: '我承诺，第一年净利四万，第二年，十万。' },
-            { speaker: '旁白', text: '一句话把在场的人都镇住了。合同签下来那天，退休的周老师和范老师主动留下来帮衬——往后这些年，他们会是最信得过的人。' },
-            { speaker: '你', text: '茶场也该开出来了。一块地能顾住今天，一片茶场才顾得住明天。' },
-            { speaker: '旁白', text: '（新玩法：走进茶场小屋后，屋里有三个操作台——晒茶青、炒茶、包装，挨个做完一整套，生茶青就能变成能卖钱的成品茶。）' }
-        ],
-        unlockToast: '📖 主线推进：茶场解锁了',
-        questLabel: '走进股市小屋：读新闻、看价格、理解风险',
-        target: { x: -12.0, z: 8.5 },
-        lockedHint: '先去股市小屋看看新闻和价格，再决定下一门生意怎么做。',
-        reflection: '话说出去了，就得做到——这是你在竞标桌上学到的第一课。',
-        prologuePartAfter: 3,
-        auto: () => storyStat('investmentEntries') >= 1
-    },
-    {
         unlocks: 'coin',
-        title: '第三部分 · 广告豪赌（1988）',
+        title: '第二部分 · 比蹬三轮轻松',
         lines: [
-            { speaker: '旁白', text: '茶场有了收入，你请了朱教授帮忙研究儿童营养饮品——他起初直摆手，说这类"补品"十有八九是骗钱的花招，直到你把 300 多份孩子的饮食记录摆在他面前。' },
-            { speaker: '旁白', text: '配方定下来那天，厂里的小孩们围着抢着起名字，最后喊出了一句"娃哈哈"——这个名字，就这么定了下来。' },
-            { speaker: '郑主任', text: '电视台黄金时段还剩一个位置，广告费不便宜。你要不要赌这一把？' },
-            { speaker: '旁白', text: '（新玩法：镇上的钱滚钱商店开门了——走近按 E 进去，里面是猜大小的翻硬币小游戏，赢了翻倍，输了归零，什么时候收手，自己拿主意。）' }
+            { speaker: '旁白', text: '茶园开出来后，你开始采茶、晒茶、炒茶、装袋。流程变长了，回钱也变慢了。' },
+            { speaker: '你', text: '这比种田麻烦多了。' },
+            { speaker: '宗师傅', text: '比蹬三轮轻松。' },
+            { speaker: '你', text: '你还蹬过三轮？送什么？' },
+            { speaker: '宗师傅', text: '货。' },
+            { speaker: '旁白', text: '他没有继续说。你第一次得到一个碎片：宗师傅以前不是坐在办公室里的人。' }
         ],
         unlockToast: '📖 主线推进：钱滚钱商店解锁了',
         questLabel: '完成茶叶生产链：采茶、晒茶、炒茶、装袋',
         target: { x: -11.5, z: -9.0 },
         lockedHint: '先把一批茶叶做成成品，弄明白产品怎么从田里走到市场。',
+        reflection: '你认识到宗师傅的第三面：他所有判断，好像都从“货到底卖不卖得出去”开始。',
+        prologuePartAfter: 3,
+        auto: () => typeof teaProcessState !== 'undefined' && teaProcessState.finished >= 1
+    },
+    {
+        unlocks: null,
+        title: '第三部分 · 广告豪赌（1988）',
+        lines: [
+            { speaker: '旁白', text: '茶场有了收入，你开始琢磨把饮品做成真正的商品。包装、名字、宣传，每一项都要钱。' },
+            { speaker: '宗师傅', text: '别先想着好看。喝的东西，先得好喝。' },
+            { speaker: '旁白', text: '配方定下来那天，几个孩子围着抢着起名字，最后喊出了一句"娃哈哈"——这个名字，就这么留在了账本上。' },
+            { speaker: '郑主任', text: '电视台黄金时段还剩一个位置，广告费不便宜。你要不要赌这一把？' },
+            { speaker: '宗师傅', text: '东西能卖，广告才叫放大。东西卖不动，广告就是烧钱。' },
+            { speaker: '旁白', text: '这是你第一次看见他的冒险：他不是爱赌，他只是认定以后，很少愿意退。' }
+        ],
+        unlockToast: '📖 主线推进：广告方案定下来了',
+        questLabel: '去钱滚钱商店体验一次：钱可以生钱，也可以归零',
+        target: { x: -6.2, z: -9.2 },
+        lockedHint: '先去钱滚钱商店体验一次，再决定敢不敢押广告。',
         choices: [
             {
                 label: '上黄金时段广告（豪赌一把，成本高但覆盖广）',
-                resultText: '你咬牙签下了黄金时段的合同。第二天订单就像雪片一样飞进来，娃哈哈这个名字，一下子传遍了半座城。（名气打出去了：往后森林里的送货订单，报酬会比原来高一截。）',
+                resultText: '你咬牙签下了黄金时段的合同。订单像雪片一样飞进来，娃哈哈这个名字传遍半座城。宗师傅没有庆祝太久，只说：明天把货送上。',
                 coinBonus: 260,
                 flag: 'adGambleWon',
+                mentor: { trust: 6, agreement: 8, independence: -2 },
                 marketEvent: { impact: 0.18, delay: 2, headline: '娃哈哈黄金时段广告带动订单' }
             },
             {
                 label: '上便宜时段（稳妥，但效果有限）',
-                resultText: '你选了便宜时段。订单确实涨了一些，但远没有想象中猛——至少这一步，走得稳当。',
+                resultText: '你选了便宜时段。订单涨了一点，却没能把名字打出去。宗师傅看了你一会儿，说：稳不是错，但机会也会过期。',
                 coinBonus: 90,
                 flag: null,
+                mentor: { trust: -1, agreement: -4, independence: 5 },
                 marketEvent: { impact: 0.06, delay: 2, headline: '娃哈哈选择低成本广告投放' }
             }
         ],
-        reflection: '进那扇门之前再想一遍：赢了别贪，输了别赌气加倍——这才是过关的本事。',
+        reflection: '你开始看见他的锋利：判断一旦形成，他会往前冲，也会要求身边的人一起冲。',
         prologuePartAfter: 4,
-        auto: () => typeof teaProcessState !== 'undefined' && teaProcessState.finished >= 1
+        auto: () => storyStat('coinShopEntries') >= 1
     },
     {
         unlocks: null,
         title: '第四部分 · 兼并国企（1991）',
         lines: [
-            { speaker: '旁白', text: '娃哈哈营养食品厂已经有 140 个人，订单却还是接不过来。这时候，杭州罐头厂——曾经全国数一数二的大厂，如今 2200 号人闲着没活干——被中间人刘处长带到了你面前。' },
+            { speaker: '旁白', text: '娃哈哈营养食品厂已经有 140 个人，订单却还是接不过来。这时候，一座老工厂被中间人带到了你面前：设备旧、人多、账重，但产能是真的。' },
             { speaker: '王师傅', text: '厂里的人都在传，说你们要来是要裁人的。这话是真是假？' },
-            { speaker: '你', text: '不裁人，工资照发，亏了算我自己的——但这个厂，我要真正接过来，不是挂个名。' }
+            { speaker: '你', text: '不裁人，工资照发，亏了算我自己的——但这个厂，我要真正接过来，不是挂个名。' },
+            { speaker: '旁白', text: '你听见这句话时，既佩服，也有点害怕。因为它听起来不像商量，更像命令。' }
         ],
         unlockToast: '📖 主线推进：罐头厂的事定下来了',
         questLabel: '广告后再跑一单：用真实订单验证扩张',
@@ -110,21 +119,23 @@ const MAIN_STORY_STAGES = [
         choices: [
             {
                 label: '有偿兼并（掏 400 金币买断，担子重但产能真正归你）',
-                resultText: '你把身家掏了大半，签下兼并合同。王师傅带头，厂里的老工人没有一个走的——这份信任，比钱更值钱。（产能真正归你了：往后茶场每卖出一批成品茶，收购价都会比别人高一截。）',
+                resultText: '你把身家掏了大半，签下兼并合同。王师傅带头，厂里的老工人没有一个走。宗师傅说话算话，但你也第一次感觉到：他认定的事，很难再被劝回头。',
                 coinCost: 400,
                 coinBonus: 0,
                 flag: 'factoryBonus',
+                mentor: { trust: 7, agreement: 7, independence: -1 },
                 marketEvent: { impact: 0.20, delay: 2, headline: '娃哈哈有偿兼并扩大产能' }
             },
             {
                 label: '联营/租赁（风险小，但产能终究不是自己的）',
-                resultText: '你选了更稳妥的联营方式。厂子转起来了，但设备和产能说到底还是人家的，往后想扩大手脚都施展不开。',
+                resultText: '你选了更稳妥的联营方式。厂子转起来了，但设备和产能说到底还是人家的。宗师傅没有责怪你，只低声说：借来的地方，走路总要轻一点。',
                 coinBonus: 60,
                 flag: null,
+                mentor: { trust: 1, agreement: -3, independence: 5 },
                 marketEvent: { impact: 0.04, delay: 2, headline: '娃哈哈与罐头厂达成联营' }
             }
         ],
-        reflection: '不裁人、工资照发——这句话说出口容易，扛下去难。往后几年，会证明这句话值不值钱。'
+        reflection: '同一种实干，在小摊上叫坚持；到了大厂里，有时就像固执。'
     },
     {
         unlocks: null,
@@ -132,7 +143,8 @@ const MAIN_STORY_STAGES = [
         lines: [
             { speaker: '旁白', text: '七年过去，可口可乐和百事可乐把大城市的货架占得满满当当，国产汽水一个接一个被挤出局——人称"水淹七军"。' },
             { speaker: '金总', text: '大城市这条路，你们真挤不进去——渠道、品牌、资本，哪一样比得过人家？' },
-            { speaker: '你', text: '大城市挤不进去，那就换一条路——这些年跑遍乡镇攒下的联销体，才是我真正的底牌。' }
+            { speaker: '你', text: '大城市挤不进去，那就换一条路——这些年跑遍乡镇攒下的联销体，才是我真正的底牌。' },
+            { speaker: '旁白', text: '这条路很聪明，也很硬。聪明在它绕开巨头，硬在它要求老经销商先相信你。' }
         ],
         unlockToast: '📖 主线推进：非常可乐的路子定下来了',
         questLabel: '兼并后再跑一单：证明渠道能下沉到乡镇',
@@ -142,62 +154,69 @@ const MAIN_STORY_STAGES = [
         choices: [
             {
                 label: '避开大城市，靠乡镇联销体铺货（稳扎稳打，田老板这样的老伙计最先接货）',
-                resultText: '田老板第一个进了货，乡镇的小卖部一家接一家跟上。可口可乐和百事可乐盯着大城市，谁也没顾上这条"农村包围城市"的路。（联销体真正铺开了：森林里同时能接的送货订单多了一单。）',
+                resultText: '田老板第一个进了货，乡镇的小卖部一家接一家跟上。宗师傅看着订单沉默了很久，说：大城市有大城市的路，我们有我们的腿。',
                 coinBonus: 380,
                 flag: 'ruralNetwork',
+                mentor: { trust: 8, agreement: 7, independence: 0 },
                 marketEvent: { impact: 0.17, delay: 2, headline: '非常可乐在乡镇渠道打开销路' }
             },
             {
                 label: '跟可口可乐、百事可乐正面打广告战（硬碰硬，资本拼不过人家）',
-                resultText: '广告砸出去不少钱，声势没造起来几分，反倒被城里的经销商挤得没了脾气——这条路，走错了方向。',
+                resultText: '广告砸出去不少钱，声势没造起来几分，反倒被城里的经销商挤得没了脾气。宗师傅说：不是每一仗都该正面打。',
                 coinCost: 200,
                 coinBonus: 0,
                 flag: null,
+                mentor: { trust: -2, agreement: -5, independence: 4 },
                 marketEvent: { impact: -0.14, delay: 2, headline: '非常可乐广告投入未能打开市场' }
             }
         ],
-        reflection: '别人的地盘，别硬闯；自己走出来的路，才是真的底牌。'
+        reflection: '你理解他为什么相信渠道：那不是地图上的线，是一趟一趟跑出来的人情和账期。'
     },
     {
-        unlocks: null,
-        title: '第六章 · 看懂更大的账',
+        unlocks: 'investment',
+        title: '第六部分 · 名字还能值钱？',
         lines: [
-            { speaker: '旁白', text: '非常可乐站稳了脚跟，你已经不只是在种地、炒茶、抛硬币了。越来越多的钱开始变成合同、股价、消息和预期。' },
-            { speaker: '旁白', text: '市场会给人错觉：上涨时像所有门都打开，下跌时像所有路都堵死。可真正要紧的，是看懂这背后的生意。' },
-            { speaker: '你', text: '再去股市小屋看看。买之前先读新闻，赚钱之前先学会判断。' },
-            { speaker: '旁白', text: '回头看娃哈哈的走势：广告、兼并和渠道的选择，都已写进了股价。手上的仓位，是你自己做过的另一笔决定。' }
+            { speaker: '旁白', text: '你走进股市小屋，满屏 K 线跳动。宗师傅却没有先看涨跌，只点开一家公司的资料。' },
+            { speaker: '宗师傅', text: '它卖什么？现金什么时候回来？欠了多少？' },
+            { speaker: '你', text: '你不是说你不看这个吗？' },
+            { speaker: '旁白', text: '旧报纸翻到一页，标题写着：娃哈哈创始人——宗庆后。照片上的人，和旁边喝茶的老人一模一样。' },
+            { speaker: '你', text: '……宗师傅？你叫宗庆后？' },
+            { speaker: '宗庆后', text: '怎么，名字还能值钱？' }
         ],
         unlockToast: '📖 主线推进：开始看更大的账',
-        questLabel: '重返股市小屋：复盘经营选择怎样写进股价',
+        questLabel: '进入股市小屋：从公司生意看懂价格背后的账',
         target: { x: -12.0, z: 8.5 },
-        reflection: '账上的数字越来越大，但记账的规矩不能变：先看懂，再动手。',
-        auto: () => storyStat('investmentEntries') > storyMilestone('investmentEntries')
+        reflection: '身份揭晓以后，你发现自己认识的不是百科里的名字，而是那个陪你种地、数库存、盯现金的人。',
+        lockedHint: '先走到股市小屋，翻开那份旧资料。'
     },
     {
         unlocks: null,
-        title: '第七章 · 达能之争（2007）',
+        title: '第七部分 · 第一个拦路的人',
         lines: [
-            { speaker: '旁白', text: '九年前引进的那家外资合作方，忽然打来电话，说要谈"续约"的事——开口就是 40 亿，收购商标和渠道。' },
-            { speaker: '沈律师', text: '这份合同是十年前签的，条款很长，措辞也很绕。有几条看着普通，其实藏着陷阱——真要签字，得一条一条核对清楚。' },
-            { speaker: '王师傅', text: '厂里的账、厂里的人，我们信得过你。这次的字，你自己看着签。' }
+            { speaker: '旁白', text: '联销体推行到最后一站，邵老板把货单推回桌上。他不是外人。当年你蹬三轮送货，第一批愿意掏钱进货的人里，就有他。' },
+            { speaker: '邵老板', text: '那时候你车都停不稳，我先拿了货。现在你让我先打款、后发货，还说这是规矩？' },
+            { speaker: '宗庆后', text: '这些年，是你们垫着钱，把这张网撑起来的。我记得。可公司要往前走，账期不能一直压在厂里。' },
+            { speaker: '旁白', text: '这一次没人像坏人。邵老板有理，宗庆后也有理。你第一次清楚地看见：成功后的规矩，会伤到当年帮你撑过来的人。' }
         ],
-        unlockToast: '📖 主线推进：合同的事，该有个了断了',
-        questLabel: '读一份新报纸：先识别风险，再签合同',
-        target: { x: -3.18, z: -1.95 },
-        lockedHint: '这一关不看钱多钱少：先读一份新报纸，练习分辨字里行间的风险。',
-        auto: () => storyStat('newspaperReads') > storyMilestone('newspaperReads'),
+        unlockToast: '📖 主线推进：联销体的规矩定下来了',
+        questLabel: '现金流面板保持安全后，再处理邵老板的质疑',
+        target: { x: 9.0, z: 0.0 },
+        lockedHint: '先让未来 7 天现金流不低于 0，再决定联销体规矩怎么落地。',
+        auto: () => typeof projectedCashFlow === 'function' && projectedCashFlow(7).min >= 0,
         choices: [
             {
-                label: '仔细核对每一条条款，哪怕慢一点、麻烦一点',
-                resultText: '你带着沈律师把合同一条一条抠了下来，真找出了两条藏着陷阱的条款——一条关于商标转让的审批权，一条关于"类似资产"的优先收购权。合同改了，公司还是你的。',
+                label: '坚持先款后货：规矩统一，哪怕先伤感情',
+                resultText: '你把新规矩推了下去。邵老板沉默很久，最后还是签了字。宗庆后说你做得对，可你知道，有些旧交情从这天起变薄了。',
                 ending: 'good',
-                flag: 'contractRead'
+                flag: 'strictDealerTerms',
+                mentor: { trust: 5, agreement: 7, independence: -2 }
             },
             {
-                label: '先签了再说，机会不等人，条款以后再慢慢扯',
-                resultText: '合同签下去了，你才发现那几条绕来绕去的条款，早把商标和渠道的主动权让了出去。',
-                ending: 'bad',
-                flag: null
+                label: '给老经销商过渡期：现金慢一点，关系留一线',
+                resultText: '你给邵老板这样的老伙计留了三个月过渡期。宗庆后皱了皱眉，但没有拦你。你第一次不是照着他做，而是带着理解，做了自己的判断。',
+                ending: 'good',
+                flag: 'dealerGracePeriod',
+                mentor: { trust: 3, agreement: -2, independence: 8 }
             }
         ]
     }
@@ -207,9 +226,9 @@ const ENDINGS = {
     good: {
         title: '结局 · 这块牌子还是你的',
         lines: [
-            '合同改完那天，你把"娃哈哈"的牌子擦了一遍又一遍。字里行间的陷阱，你一条一条读了出来，没有一步是靠运气。',
-            '王师傅在厂门口放了挂鞭炮，田老板从乡下赶了大半天路过来道喜。他们说的不多，就一句：这块牌子，还是咱们自己的。',
-            '从代销小摊到今天，你没靠谁的祖荫，也没被哪份合同绕进去——一步一步，扛下来的。'
+            '联销体的新规矩落地后，订单没有立刻变漂亮。有人抱怨，有人观望，也有人像邵老板那样，骂完以后照旧把货接走。',
+            '宗庆后站在仓库门口说：我说什么你都听，那这一路就白走了。你忽然明白，他留给你的不是答案，而是一种看账、看人、看路的方式。',
+            '最后你记住的不是一句“伟大企业家”，而是一个具体的人：能吃苦，会算账，重感情，也固执。你认识了宗庆后。'
         ],
         achievement: 'ending_good'
     },
@@ -225,7 +244,13 @@ const ENDINGS = {
     }
 };
 
-let mainStoryState = { stage: 0, flags: {}, endingId: null, milestones: {} };
+let mainStoryState = {
+    stage: 0,
+    flags: {},
+    endingId: null,
+    milestones: {},
+    mentor: { trust: 50, agreement: 50, independence: 50 }
+};
 let pendingMarketEvents = [];
 
 function captureMainStoryMarketEvents() {
@@ -242,6 +267,19 @@ const mainStoryTitle = document.getElementById('mainStoryTitle');
 const mainStoryBody = document.getElementById('mainStoryBody');
 const mainStoryChoices = document.getElementById('mainStoryChoices');
 const mainStoryNextBtn = document.getElementById('mainStoryNextBtn');
+const closeMainStoryBtn = document.getElementById('closeMainStoryBtn');
+
+/* 目标没达成时点“继续”/按回车不会真的翻页，之前只弹一条被卡片本身挡住看
+   不见的提示，玩家会以为卡片卡死了。改成在卡片上直接抖一下 + 高亮锁定
+   提示行，反馈是"看得见"的。 */
+function flashMainStoryLocked() {
+    const card = mainStoryPanel && mainStoryPanel.querySelector('.mainStoryCard');
+    if (!card) return;
+    card.classList.remove('shake');
+    void card.offsetWidth;
+    card.classList.add('shake');
+    setTimeout(() => card.classList.remove('shake'), 420);
+}
 
 const endingPanel = document.getElementById('endingPanel');
 const endingKicker = document.getElementById('endingKicker');
@@ -265,6 +303,22 @@ function currentCoins() {
 
 function stageCoinsMet(stage) {
     return !stage.coinRequirement || currentCoins() >= stage.coinRequirement;
+}
+
+function clampMentorValue(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return 50;
+    return Math.max(0, Math.min(100, Math.round(n)));
+}
+
+function applyMentorDelta(delta) {
+    if (!delta || typeof delta !== 'object') return;
+    const current = mainStoryState.mentor || { trust: 50, agreement: 50, independence: 50 };
+    mainStoryState.mentor = {
+        trust: clampMentorValue(current.trust + (Number(delta.trust) || 0)),
+        agreement: clampMentorValue(current.agreement + (Number(delta.agreement) || 0)),
+        independence: clampMentorValue(current.independence + (Number(delta.independence) || 0))
+    };
 }
 
 function storyStat(key) {
@@ -382,6 +436,7 @@ function onMainStoryNext() {
     }
     if (Array.isArray(stage.choices)) return;
     if (!mainStoryStageReady(stage)) {
+        flashMainStoryLocked();
         if (typeof showHintOverride === 'function') {
             showHintOverride(stage.lockedHint || '先完成当前主线目标');
         }
@@ -396,6 +451,7 @@ function onMainStoryChoice(choiceIndex) {
     const stage = MAIN_STORY_STAGES[idx];
     if (!stage || !Array.isArray(stage.choices)) return;
     if (!mainStoryStageReady(stage)) {
+        flashMainStoryLocked();
         if (typeof showHintOverride === 'function') {
             showHintOverride(stage.lockedHint || '先完成当前主线目标');
         }
@@ -412,6 +468,7 @@ function onMainStoryChoice(choiceIndex) {
         window.addCabinCoins(choice.coinBonus, false);
     }
     if (choice.flag) mainStoryState.flags[choice.flag] = true;
+    if (choice.mentor) applyMentorDelta(choice.mentor);
     if (choice.marketEvent) {
         pendingMarketEvents.push(Object.assign({ id: 'story-' + idx + '-' + choiceIndex, targetStock: 'WAHA' }, choice.marketEvent));
     }
@@ -509,7 +566,8 @@ function captureMainStoryState() {
         stage: mainStoryState.stage,
         flags: Object.assign({}, mainStoryState.flags),
         endingId: mainStoryState.endingId || null,
-        milestones: Object.assign({}, mainStoryState.milestones)
+        milestones: Object.assign({}, mainStoryState.milestones),
+        mentor: Object.assign({}, mainStoryState.mentor || {})
     };
 }
 
@@ -523,7 +581,13 @@ function applyMainStoryState(raw) {
         milestones[key] = Number.isFinite(Number(rawMilestones[key]))
             ? Math.max(0, Math.trunc(Number(rawMilestones[key]))) : storyStat(key);
     });
-    mainStoryState = { stage, flags, endingId, milestones };
+    const rawMentor = raw && raw.mentor && typeof raw.mentor === 'object' ? raw.mentor : {};
+    const mentor = {
+        trust: clampMentorValue(rawMentor.trust),
+        agreement: clampMentorValue(rawMentor.agreement),
+        independence: clampMentorValue(rawMentor.independence)
+    };
+    mainStoryState = { stage, flags, endingId, milestones, mentor };
 }
 
 /* ================================================================
@@ -574,14 +638,10 @@ function currentMainStoryObjective() {
     const stage = MAIN_STORY_STAGES[mainStoryState.stage];
     if (!stage) return null;
     let label = stage.questLabel;
-    if (mainStoryState.stage === 0 && typeof farmHireState !== 'undefined') {
-        if (farmHireState.playerHarvests < FARM_RESUME_HARVEST_TARGET) {
-            label = '亲手收割萝卜 ' + farmHireState.playerHarvests + '/' + FARM_RESUME_HARVEST_TARGET + ' 次，再去农场招聘';
-        } else if (!farmHireState.resumeViewed) {
-            label = '去农场查看第一份简历';
-        } else if (!farmHireState.hired) {
-            label = '去农场雇佣经营者';
-        }
+    if (mainStoryState.stage === 0 && typeof isAlchemyIntroComplete === 'function' && !isAlchemyIntroComplete()) {
+        label = typeof window.alchemyIntroHint === 'function'
+            ? window.alchemyIntroHint()
+            : '打开发光的炼金书，取瓶架材料，再启动坩埚';
     } else if (mainStoryState.stage === 1) {
         const delivered = storyStat('deliveryCount') >= 1;
         if (!delivered) label = '完成第一笔送货（订单板接单），再攒够 110 金币';
@@ -622,6 +682,7 @@ function updateQuestGuide(dt) {
 window.updateQuestGuide = updateQuestGuide;
 
 if (mainStoryNextBtn) mainStoryNextBtn.addEventListener('click', onMainStoryNext);
+if (closeMainStoryBtn) closeMainStoryBtn.addEventListener('click', () => closeMainStoryStage(false));
 if (mainStoryPanel) {
     mainStoryPanel.addEventListener('click', event => {
         if (event.target === mainStoryPanel) closeMainStoryStage(false);

@@ -28,6 +28,44 @@
     font-family: 'Segoe Print', Georgia, 'Times New Roman', serif;
 }
 
+.mainStoryClose {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    width: 30px;
+    height: 30px;
+    border: 1px solid rgba(138, 106, 60, .45);
+    border-radius: 50%;
+    background: rgba(255, 253, 242, .7);
+    color: #6b4f2c;
+    font-size: 17px;
+    line-height: 1;
+    cursor: pointer;
+    transition: .15s;
+}
+
+.mainStoryClose:hover {
+    background: #fff;
+    color: #3a2f22;
+    border-color: #a8763c;
+}
+
+@keyframes mainStoryShake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(7px); }
+    60% { transform: translateX(-5px); }
+    80% { transform: translateX(4px); }
+}
+
+.mainStoryCard.shake {
+    animation: mainStoryShake .38s ease;
+}
+
+.mainStoryCard.shake .mainStoryCoinNote {
+    color: #b0402c;
+}
+
 .mainStoryKicker {
     margin: 0;
     letter-spacing: .28em;
