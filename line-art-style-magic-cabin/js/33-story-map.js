@@ -10,15 +10,15 @@ let storyMapReturnFocus = null;
 
 const STORY_MAP_NOTES = [
     '炼金术失败，陌生老人留下来，让你先从种地开始。',
-    '去杂货铺买第一份种子。',
-    '翻地、播种、浇水，收获第一颗萝卜。',
-    '第一笔送货只赚几枚金币，但现金开始流动。',
-    '采茶、制茶、卖茶，第一次听见宗师傅提起三轮车。',
-    '产品能卖以后，才决定广告是不是值得赌。',
-    '扩张不是口号：老工厂、工资和产能一起压到账上。',
-    '渠道从乡镇铺开，老伙计开始成为真正的底牌。',
-    '在股市小屋翻到旧报纸，终于知道宗师傅是谁。',
-    '处理老经销商的质疑：规矩、现金和情分怎么摆。'
+    '买种子、翻地、播种、收获——第一次真正赚到钱。',
+    '开始送货接单，现金第一次转成一个完整的圈。',
+    '送货趟数多了，发现这个老头对生意熟得不像话。',
+    '采茶、制茶、卖茶，第一次看懂"加工"能值多少钱。',
+    '仓库堆满了货，却没人买——第一次听见"娃哈哈"这个名字。',
+    '在股市小屋翻到旧报纸，终于知道他是谁。',
+    '生意做大，现金却见底——处理老经销商的质疑。',
+    '第一次，他没能替你拿主意。',
+    '材料集齐，回到最初的小屋，准备最后一次炼金。'
 ];
 
 const STORY_MAP_UNLOCKS = {
@@ -28,12 +28,17 @@ const STORY_MAP_UNLOCKS = {
 };
 
 function storyMapChoice(index) {
-    if (index === 5) return mainStoryState.flags.adGambleWon ? '黄金时段广告' : '低成本广告';
-    if (index === 6) return mainStoryState.flags.factoryBonus ? '有偿兼并' : '联营 / 租赁';
-    if (index === 7) return mainStoryState.flags.ruralNetwork ? '乡镇联销体' : '正面广告战';
-    if (index === 9) {
-        if (mainStoryState.flags.strictDealerTerms) return '坚持统一规矩';
+    if (index === 7) {
+        if (mainStoryState.flags.strictDealerTerms) return '坚持先款后货';
         if (mainStoryState.flags.dealerGracePeriod) return '给老经销商过渡期';
+    }
+    if (index === 8) {
+        if (mainStoryState.flags.trustedOwnJudgment) return '跟投新公司';
+        return '听他的，不投';
+    }
+    if (index === 9) {
+        if (mainStoryState.flags.gracefulFarewell) return '体面地送他走';
+        if (mainStoryState.flags.coldFarewell) return '事情办完就是办完';
     }
     return '';
 }

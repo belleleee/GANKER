@@ -26,8 +26,9 @@ const DELIVERY_BULK_REWARD_MULT = 2.4;
 const DELIVERY_BULK_EXPIRE_SECONDS = 420;
 
 function isBulkDeliveryUnlocked() {
-    /* 主线插入了"买种子/第一颗萝卜"两章之后，原来对应"广告豪赌"章节的
-       stage>=3 要跟着往后挪两位，不然批发大单会提前很多解锁。 */
+    /* 主线重写成十个故事节点之后，这里对应"东西做出来，然后呢？"
+       （仓库囤货卖不掉、开始学定价渠道）那一章之后，生意规模化，
+       批发大单才自然。 */
     return typeof mainStoryState !== 'undefined' && mainStoryState.stage >= 5;
 }
 

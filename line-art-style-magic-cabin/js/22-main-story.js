@@ -4,20 +4,21 @@
    主线剧情
    核心三个词：魔法、赚钱、陪伴。不是"魔法+宗庆后传记+模拟经营"，
    而是"我和一个来自另一个世界的老头一起研究怎么赚钱"。
-   一次失败的炼金术意外召来一个务实又固执的老人，玩家为了凑够送他
-   回去的材料钱，被迫从100金币和一块荒地开始经营。玩家通过种田、
-   采茶、现金流和投资逐渐认识他，直到中后期才知道他是谁——经营系统
-   是认识人物的方法，不是人物讲系统的工具。
+   十个故事节点，每个都是玩家必须面对的具体问题，不是"解锁XX系统"的
+   任务清单。种地/送货/采茶这些操作是节点内部要做的事，不跟章节平级，
+   地图上只看得见这十个问题本身。经营系统是认识宗庆后的方法，
+   不是人物讲系统的工具。
    ================================================================ */
 
 const MAIN_STORY_STAGES = [
     {
-        /* 开场那段"你醒了→打开发光的书→炼金失败→第一次见到他"的戏，
-           现在整段搬到 39-alchemy-intro.js 自己的对话框里演——这里
-           保持 silent，条件达成（炼金意外完成）就静默推进，不重复弹卡片。 */
+        /* 问题：这是哪儿？这老头是谁？
+           机制：开局炼金谜题（39-alchemy-intro.js 自己的对话框里演）
+           碎片：他跟你一样，也说不清自己怎么到这儿的
+           钩子：想送他回去，需要"归魂炼金术"——材料要钱，先挣第一块钱 */
         unlocks: null,
         silent: true,
-        title: '序章 · 炼金失败之后',
+        title: '炼金失败之后',
         lines: [],
         unlockToast: '📖 主线推进：正式开始经营',
         questLabel: '打开发光的炼金书，取瓶架材料，再启动坩埚',
@@ -25,210 +26,155 @@ const MAIN_STORY_STAGES = [
         auto: () => typeof isAlchemyIntroStoryStarted === 'function' && isAlchemyIntroStoryStarted()
     },
     {
-        /* 引导仍然靠地图上那圈"光圈"和 questLabel——卡片本身跟其余章节
-           一样，是"事情做完之后"弹出来复盘，不是"事情之前"的说明书。
-           买种子这个动作发生在杂货铺，卡片里由师傅回头点评一句。 */
+        /* 问题：钱到底是怎么变多的？
+           机制：买种子→翻地→播种→浇水→收获→卖出，第一次完整过一遍
+           碎片：他对几块钱都格外认真
+           钩子：这么点钱也算钱？——那下一趟送货再看看 */
         unlocks: null,
-        title: '拿点种子再说',
+        title: '第一笔生意',
         lines: [
-            { speaker: '旁白', text: '你在杂货铺买下了第一份种子——萝卜的，师傅说这个皮实，新手不容易种死。' },
-            { speaker: '师傅', text: '买都买了，还愣着干嘛？回去把地种上。' },
-            { speaker: '你', text: '这就去。' }
+            { speaker: '旁白', text: '种子买好、地翻好、水浇透——第一颗萝卜从土里挖出来的时候，你满心以为能改变点什么。' },
+            { speaker: '旁白', text: '卖掉之后，钱包从 100 变成 120。' },
+            { speaker: '你', text: '忙活半天，就赚了 20？' },
+            { speaker: '师傅', text: '昨天这 20 块，是你的吗？' },
+            { speaker: '旁白', text: '你一时语塞——这个老头，对几块钱都格外认真。' }
         ],
-        unlockToast: '📖 主线推进：买到第一批种子了',
-        questLabel: '去杂货铺买一份萝卜种子',
+        unlockToast: '📖 主线推进：赚到第一笔钱了',
+        questLabel: '去杂货铺买种子，翻地播种，收获并卖出第一批作物',
         target: { x: 10, z: -10 },
-        lockedHint: '先去杂货铺买至少一份种子。',
-        auto: () => storyStat('seedBuys') >= 1
+        lockedHint: '先去杂货铺买种子，种出第一批作物并卖掉。',
+        auto: () => storyStat('totalHarvests') >= 1 && currentCoins() >= 120
     },
     {
+        /* 问题：这几块钱，为什么让他这么在意？
+           机制：接单送货，第一次走完"现金→货物→销售→现金"的整圈
+           碎片：他把账本看得很重，却没解释原因
+           钩子：他这么在意钱，到底是为什么？ */
         unlocks: null,
-        title: '第一颗萝卜',
+        title: '钱是怎么回来的',
         lines: [
-            { speaker: '旁白', text: '第一颗萝卜从土里挖出来，个头不大，但确实是自己种出来的。' },
-            { speaker: '师傅', text: '不赖。拿去换成钱，才算数。' },
-            { speaker: '你', text: '就这一颗？' },
-            { speaker: '师傅', text: '一颗是一颗。账不是这么算的吗？' }
+            { speaker: '旁白', text: '你开始接单送货——种、卖、送、收款，钱这才第一次在你手里转成一个完整的圈。' },
+            { speaker: '你', text: '送一趟才赚七块，这也算钱？' },
+            { speaker: '师傅', text: '七块钱也是钱。' },
+            { speaker: '你', text: '你怎么这么在意这几块钱？' },
+            { speaker: '旁白', text: '师傅没有解释，只是把账本往你这边推了推。' }
         ],
-        unlockToast: '📖 主线推进：收获了第一颗萝卜',
-        questLabel: '翻地、播种、浇水，收获第一颗萝卜',
-        target: { x: 9.0, z: 0.0 },
-        lockedHint: '把地翻好、种上、浇熟，等萝卜成熟再收割。',
-        auto: () => storyStat('totalHarvests') >= 1
-    },
-    {
-        unlocks: 'tea',
-        title: '第一部分 · 七块钱也是钱',
-        lines: [
-            { speaker: '旁白', text: '你第一次把作物换成现金，算完账只多了几枚金币，心里难免泄气。' },
-            { speaker: '你', text: '才赚这么点？' },
-            { speaker: '宗师傅', text: '七块不是钱？' },
-            { speaker: '你', text: '……是。' },
-            { speaker: '宗师傅', text: '那就接着干。车轮停下，现金也就停下。' },
-            { speaker: '旁白', text: '你不知道他为什么这么在意现金，只觉得这个老人抠得近乎固执。' }
-        ],
-        unlockToast: '📖 主线推进：茶园解锁了',
-        questLabel: '生产作物 → 接第一笔订单 → 攒够 110 金币',
+        unlockToast: '📖 主线推进：现金开始转起来了',
+        questLabel: '接单送货，攒够 110 金币',
         target: { x: 9.0, z: 0.0 },
         coinRequirement: 110,
         lockedHint: '先完成一笔送货，并攒够 110 金币。',
-        reflection: '你认识到宗师傅的第二面：钱不能断。利润写在纸上，现金握在手里。',
-        prologuePartAfter: 2,
         auto: () => storyStat('deliveryCount') >= 1 && currentCoins() >= 110
     },
     {
-        unlocks: 'coin',
-        title: '第二部分 · 比蹬三轮轻松',
+        /* 问题：这个老头以前到底是干什么的？
+           机制：多送几趟货，熟悉这门生意
+           碎片：第一次记忆闪回——三轮车、清晨、一个年轻男人的背影
+           钩子：一句"你们有没有茶"，把玩家送进了茶园 */
+        unlocks: 'tea',
+        title: '这个老头以前干什么的？',
         lines: [
-            { speaker: '旁白', text: '茶园开出来后，你开始采茶、晒茶、炒茶、装袋。流程变长了，回钱也变慢了。' },
-            { speaker: '你', text: '这比种田麻烦多了。' },
-            { speaker: '宗师傅', text: '比蹬三轮轻松。' },
-            { speaker: '你', text: '你还蹬过三轮？送什么？' },
-            { speaker: '宗师傅', text: '货。' },
-            { speaker: '旁白', text: '他没有继续说。你第一次得到一个碎片：宗师傅以前不是坐在办公室里的人。' }
+            { speaker: '旁白', text: '送货趟数多了，你发现师傅对路线、客户、账期比你还熟——谁家今天要货、谁家还没结账，他一清二楚。' },
+            { speaker: '你', text: '等等，你以前是不是干过这个？' },
+            { speaker: '师傅', text: '干过。' },
+            { speaker: '你', text: '送货？' },
+            { speaker: '师傅', text: '嗯。' },
+            { speaker: '你', text: '多久？' },
+            { speaker: '师傅', text: '……几年。' },
+            { speaker: '旁白', text: '恍惚间，你好像看见一辆三轮车，清晨的雾里，一个年轻男人的背影。' },
+            { speaker: '你', text: '那个人……是你？' },
+            { speaker: '旁白', text: '他已经转身往前走了，像是没听见。' },
+            { speaker: '旁白', text: '路上一个老客户随口问了一句："你们有没有茶？"——这句话，把你送进了茶园。' }
         ],
-        unlockToast: '📖 主线推进：钱滚钱商店解锁了',
+        unlockToast: '📖 主线推进：茶园解锁了',
+        questLabel: '再多送几趟货，熟悉这门生意',
+        target: { x: 9.0, z: 0.0 },
+        lockedHint: '再多送几趟货。',
+        auto: () => storyStat('deliveryCount') >= 3
+    },
+    {
+        /* 问题：同样的叶子，为什么加工一下就能贵三倍？
+           机制：采茶→晒茶→炒茶→装袋，第一次理解"原料→产品→增值"
+           碎片：他年轻时候什么都卖过——冰棍、文具
+           钩子：他绝对不是普通人 */
+        unlocks: null,
+        title: '一片叶子能值多少钱',
+        lines: [
+            { speaker: '旁白', text: '茶园开出来后，你先试着直接卖鲜叶——一斤才 10 块。' },
+            { speaker: '旁白', text: '照着流程采茶、晒茶、炒茶、装袋，同样的叶子，变成 30 块。' },
+            { speaker: '你', text: '什么都没多，就是装进盒子里，怎么贵了这么多？' },
+            { speaker: '师傅', text: '什么叫没多？你采了、炒了、做了、装了——这些不是东西？' },
+            { speaker: '你', text: '你以前也卖过东西？' },
+            { speaker: '师傅', text: '卖过。冰棍、文具……什么都卖过。' },
+            { speaker: '旁白', text: '你越来越确信：这个老头，绝对不是普通人。' }
+        ],
+        unlockToast: '📖 主线推进：看懂了"加工"这件事',
         questLabel: '完成茶叶生产链：采茶、晒茶、炒茶、装袋',
         target: { x: -11.5, z: -9.0 },
         lockedHint: '先把一批茶叶做成成品，弄明白产品怎么从田里走到市场。',
-        reflection: '你认识到宗师傅的第三面：他所有判断，好像都从“货到底卖不卖得出去”开始。',
-        prologuePartAfter: 3,
         auto: () => typeof teaProcessState !== 'undefined' && teaProcessState.finished >= 1
     },
     {
-        unlocks: null,
-        title: '第三部分 · 广告豪赌（1988）',
+        /* 问题：东西做出来了，然后呢？
+           机制：仓库堆货卖不掉，第一次面对定价/客流/库存/渠道
+           碎片：他嘴里第一次漏出"娃哈哈"这个词，随即改口
+           钩子：娃哈哈是什么？ */
+        unlocks: 'coin',
+        title: '东西做出来，然后呢？',
         lines: [
-            { speaker: '旁白', text: '茶场有了收入，你开始琢磨把饮品做成真正的商品。包装、名字、宣传，每一项都要钱。' },
-            { speaker: '宗师傅', text: '别先想着好看。喝的东西，先得好喝。' },
-            { speaker: '旁白', text: '配方定下来那天，几个孩子围着抢着起名字，最后喊出了一句"娃哈哈"——这个名字，就这么留在了账本上。' },
-            { speaker: '郑主任', text: '电视台黄金时段还剩一个位置，广告费不便宜。你要不要赌这一把？' },
-            { speaker: '宗师傅', text: '东西能卖，广告才叫放大。东西卖不动，广告就是烧钱。' },
-            { speaker: '旁白', text: '这是你第一次看见他的冒险：他不是爱赌，他只是认定以后，很少愿意退。' }
+            { speaker: '旁白', text: '尝到甜头，你开始疯狂制茶。没几天，仓库堆到：茶 ×47。' },
+            { speaker: '你', text: '这么多茶，不是能卖很多钱吗？' },
+            { speaker: '师傅', text: '谁买？' },
+            { speaker: '旁白', text: '两个字，把你问住了。' },
+            { speaker: '旁白', text: '你这才开始学定价、客流、库存、渠道这些没人教过你的东西。' },
+            { speaker: '师傅', text: '（低声）当年娃哈哈刚开始的时候……' },
+            { speaker: '你', text: '等等——娃哈哈是什么？' },
+            { speaker: '师傅', text: '……以前的事。' }
         ],
-        unlockToast: '📖 主线推进：广告方案定下来了',
-        questLabel: '去钱滚钱商店体验一次：钱可以生钱，也可以归零',
-        target: { x: -6.2, z: -9.2 },
-        lockedHint: '先去钱滚钱商店体验一次，再决定敢不敢押广告。',
-        choices: [
-            {
-                label: '上黄金时段广告（豪赌一把，成本高但覆盖广）',
-                resultText: '你咬牙签下了黄金时段的合同。订单像雪片一样飞进来，娃哈哈这个名字传遍半座城。宗师傅没有庆祝太久，只说：明天把货送上。',
-                coinBonus: 260,
-                flag: 'adGambleWon',
-                mentor: { trust: 6, agreement: 8, independence: -2 },
-                marketEvent: { impact: 0.18, delay: 2, headline: '娃哈哈黄金时段广告带动订单' }
-            },
-            {
-                label: '上便宜时段（稳妥，但效果有限）',
-                resultText: '你选了便宜时段。订单涨了一点，却没能把名字打出去。宗师傅看了你一会儿，说：稳不是错，但机会也会过期。',
-                coinBonus: 90,
-                flag: null,
-                mentor: { trust: -1, agreement: -4, independence: 5 },
-                marketEvent: { impact: 0.06, delay: 2, headline: '娃哈哈选择低成本广告投放' }
-            }
-        ],
-        reflection: '你开始看见他的锋利：判断一旦形成，他会往前冲，也会要求身边的人一起冲。',
-        prologuePartAfter: 4,
-        auto: () => storyStat('coinShopEntries') >= 1
+        unlockToast: '📖 主线推进："娃哈哈"这个词，你听见了',
+        questLabel: '把囤积的茶叶想办法卖出去',
+        target: { x: -11.5, z: -9.0 },
+        lockedHint: '仓库堆着货卖不出去可不行，想想办法把茶叶变成钱。',
+        auto: () => typeof teaProcessState !== 'undefined' && teaProcessState.finished >= 3
     },
     {
-        unlocks: null,
-        title: '第四部分 · 兼并国企（1991）',
-        lines: [
-            { speaker: '旁白', text: '娃哈哈营养食品厂已经有 140 个人，订单却还是接不过来。这时候，一座老工厂被中间人带到了你面前：设备旧、人多、账重，但产能是真的。' },
-            { speaker: '王师傅', text: '厂里的人都在传，说你们要来是要裁人的。这话是真是假？' },
-            { speaker: '你', text: '不裁人，工资照发，亏了算我自己的——但这个厂，我要真正接过来，不是挂个名。' },
-            { speaker: '旁白', text: '你听见这句话时，既佩服，也有点害怕。因为它听起来不像商量，更像命令。' }
-        ],
-        unlockToast: '📖 主线推进：罐头厂的事定下来了',
-        questLabel: '广告后再跑一单：用真实订单验证扩张',
-        target: { x: 9.0, z: 0.0 },
-        lockedHint: '先完成广告之后的新订单；有偿兼并还需要 400 金币。',
-        auto: () => storyStat('deliveryCount') > storyMilestone('deliveryCount'),
-        choices: [
-            {
-                label: '有偿兼并（掏 400 金币买断，担子重但产能真正归你）',
-                resultText: '你把身家掏了大半，签下兼并合同。王师傅带头，厂里的老工人没有一个走。宗师傅说话算话，但你也第一次感觉到：他认定的事，很难再被劝回头。',
-                coinCost: 400,
-                coinBonus: 0,
-                flag: 'factoryBonus',
-                mentor: { trust: 7, agreement: 7, independence: -1 },
-                marketEvent: { impact: 0.20, delay: 2, headline: '娃哈哈有偿兼并扩大产能' }
-            },
-            {
-                label: '联营/租赁（风险小，但产能终究不是自己的）',
-                resultText: '你选了更稳妥的联营方式。厂子转起来了，但设备和产能说到底还是人家的。宗师傅没有责怪你，只低声说：借来的地方，走路总要轻一点。',
-                coinBonus: 60,
-                flag: null,
-                mentor: { trust: 1, agreement: -3, independence: 5 },
-                marketEvent: { impact: 0.04, delay: 2, headline: '娃哈哈与罐头厂达成联营' }
-            }
-        ],
-        reflection: '同一种实干，在小摊上叫坚持；到了大厂里，有时就像固执。'
-    },
-    {
-        unlocks: null,
-        title: '第五部分 · 非常可乐（1998）',
-        lines: [
-            { speaker: '旁白', text: '七年过去，可口可乐和百事可乐把大城市的货架占得满满当当，国产汽水一个接一个被挤出局——人称"水淹七军"。' },
-            { speaker: '金总', text: '大城市这条路，你们真挤不进去——渠道、品牌、资本，哪一样比得过人家？' },
-            { speaker: '你', text: '大城市挤不进去，那就换一条路——这些年跑遍乡镇攒下的联销体，才是我真正的底牌。' },
-            { speaker: '旁白', text: '这条路很聪明，也很硬。聪明在它绕开巨头，硬在它要求老经销商先相信你。' }
-        ],
-        unlockToast: '📖 主线推进：非常可乐的路子定下来了',
-        questLabel: '兼并后再跑一单：证明渠道能下沉到乡镇',
-        target: { x: 9.0, z: 0.0 },
-        lockedHint: '先把新渠道跑通一笔订单，再决定可乐往哪里卖。',
-        auto: () => storyStat('deliveryCount') > storyMilestone('deliveryCount'),
-        choices: [
-            {
-                label: '避开大城市，靠乡镇联销体铺货（稳扎稳打，田老板这样的老伙计最先接货）',
-                resultText: '田老板第一个进了货，乡镇的小卖部一家接一家跟上。宗师傅看着订单沉默了很久，说：大城市有大城市的路，我们有我们的腿。',
-                coinBonus: 380,
-                flag: 'ruralNetwork',
-                mentor: { trust: 8, agreement: 7, independence: 0 },
-                marketEvent: { impact: 0.17, delay: 2, headline: '非常可乐在乡镇渠道打开销路' }
-            },
-            {
-                label: '跟可口可乐、百事可乐正面打广告战（硬碰硬，资本拼不过人家）',
-                resultText: '广告砸出去不少钱，声势没造起来几分，反倒被城里的经销商挤得没了脾气。宗师傅说：不是每一仗都该正面打。',
-                coinCost: 200,
-                coinBonus: 0,
-                flag: null,
-                mentor: { trust: -2, agreement: -5, independence: 4 },
-                marketEvent: { impact: -0.14, delay: 2, headline: '非常可乐广告投入未能打开市场' }
-            }
-        ],
-        reflection: '你理解他为什么相信渠道：那不是地图上的线，是一趟一趟跑出来的人情和账期。'
-    },
-    {
+        /* 问题：这个老头，到底是谁？
+           机制：走进股市小屋，第一次学着"先看生意，再看价格"
+           碎片：身份正式揭晓——他就是宗庆后
+           钩子：认识了名字之后，才刚开始真正认识这个人 */
         unlocks: 'investment',
-        title: '第六部分 · 名字还能值钱？',
+        title: '原来你叫宗庆后',
         lines: [
-            { speaker: '旁白', text: '你走进股市小屋，满屏 K 线跳动。宗师傅却没有先看涨跌，只点开一家公司的资料。' },
-            { speaker: '宗师傅', text: '它卖什么？现金什么时候回来？欠了多少？' },
+            { speaker: '旁白', text: '你走进股市小屋，满屏 K 线跳动。师傅却没有先看涨跌，只点开一家公司的资料。' },
+            { speaker: '师傅', text: '它卖什么？现金什么时候回来？欠了多少？' },
             { speaker: '你', text: '你不是说你不看这个吗？' },
-            { speaker: '旁白', text: '旧报纸翻到一页，标题写着：娃哈哈创始人——宗庆后。照片上的人，和旁边喝茶的老人一模一样。' },
-            { speaker: '你', text: '……宗师傅？你叫宗庆后？' },
+            { speaker: '旁白', text: '角落一份旧报纸摊开，标题写着：娃哈哈创始人——宗庆后。照片上的人，和旁边喝茶的老人一模一样。' },
+            { speaker: '你', text: '……师傅？你叫宗庆后？' },
             { speaker: '宗庆后', text: '怎么，名字还能值钱？' }
         ],
-        unlockToast: '📖 主线推进：开始看更大的账',
+        unlockToast: '📖 主线推进：你知道他是谁了',
         questLabel: '进入股市小屋：从公司生意看懂价格背后的账',
         target: { x: -12.0, z: 8.5 },
-        reflection: '身份揭晓以后，你发现自己认识的不是百科里的名字，而是那个陪你种地、数库存、盯现金的人。',
         lockedHint: '先走到股市小屋，翻开那份旧资料。'
     },
     {
+        /* 问题：账面上赚了，为什么手里还是没钱？
+           机制：现金流面板保持安全，第一次理解"利润≠现金"
+           碎片：联销体记忆——当年也曾亲手伤过帮过他的人
+           钩子：规矩和情分之间，这次轮到玩家自己拿主意 */
         unlocks: null,
-        title: '第七部分 · 第一个拦路的人',
+        title: '赚了钱，为什么还是没钱？',
         lines: [
-            { speaker: '旁白', text: '联销体推行到最后一站，邵老板把货单推回桌上。他不是外人。当年你蹬三轮送货，第一批愿意掏钱进货的人里，就有他。' },
+            { speaker: '旁白', text: '生意做大了。报表写着：营收 +3000，利润 +800。可翻开钱包，现金只剩 37。' },
+            { speaker: '你', text: '？？？钱呢？' },
+            { speaker: '旁白', text: '你这才明白：赚了，不等于手里有钱——库存、应收、账期，中间全是缺口。' },
+            { speaker: '宗庆后', text: '（沉默了一下）这个问题，我以前也碰到过。' },
+            { speaker: '旁白', text: '联销体推行到最后一站，邵老板把货单推回桌上。他不是外人——当年你送货，第一批愿意掏钱进货的人里，就有他。' },
             { speaker: '邵老板', text: '那时候你车都停不稳，我先拿了货。现在你让我先打款、后发货，还说这是规矩？' },
-            { speaker: '宗庆后', text: '这些年，是你们垫着钱，把这张网撑起来的。我记得。可公司要往前走，账期不能一直压在厂里。' },
-            { speaker: '旁白', text: '这一次没人像坏人。邵老板有理，宗庆后也有理。你第一次清楚地看见：成功后的规矩，会伤到当年帮你撑过来的人。' }
+            { speaker: '宗庆后', text: '这些年，是你们垫着钱，把这张网撑起来的。我记得。可生意要往前走，账期不能一直压着。' },
+            { speaker: '旁白', text: '邵老板有理，宗庆后也有理。你第一次清楚地看见：账做大了，规矩会伤到当年帮你撑过来的人。' }
         ],
-        unlockToast: '📖 主线推进：联销体的规矩定下来了',
+        unlockToast: '📖 主线推进：现金流的账，你算明白了',
         questLabel: '现金流面板保持安全后，再处理邵老板的质疑',
         target: { x: 9.0, z: 0.0 },
         lockedHint: '先让未来 7 天现金流不低于 0，再决定联销体规矩怎么落地。',
@@ -236,17 +182,89 @@ const MAIN_STORY_STAGES = [
         choices: [
             {
                 label: '坚持先款后货：规矩统一，哪怕先伤感情',
-                resultText: '你把新规矩推了下去。邵老板沉默很久，最后还是签了字。宗庆后说你做得对，可你知道，有些旧交情从这天起变薄了。',
-                ending: 'good',
+                resultText: '',
                 flag: 'strictDealerTerms',
                 mentor: { trust: 5, agreement: 7, independence: -2 }
             },
             {
                 label: '给老经销商过渡期：现金慢一点，关系留一线',
-                resultText: '你给邵老板这样的老伙计留了三个月过渡期。宗庆后皱了皱眉，但没有拦你。你第一次不是照着他做，而是带着理解，做了自己的判断。',
-                ending: 'good',
+                resultText: '',
                 flag: 'dealerGracePeriod',
                 mentor: { trust: 3, agreement: -2, independence: 8 }
+            }
+        ]
+    },
+    {
+        /* 问题：这次，我该听谁的？
+           机制：股市小屋出现一家"看不懂"的新公司，第一次没有标准答案
+           碎片：他第一次承认自己判断不了——他也有边界
+           钩子：不管结果如何，这是玩家第一次真正靠自己拿主意 */
+        unlocks: null,
+        title: '这一次，我不听你的',
+        lines: [
+            { speaker: '旁白', text: '股市小屋里出现一家新公司：高速增长，暂时亏损，重研发，商业模式你从没见过。' },
+            { speaker: '你', text: '这家我想跟一点。' },
+            { speaker: '宗庆后', text: '我不投。' },
+            { speaker: '你', text: '为什么？' },
+            { speaker: '宗庆后', text: '看不懂。' },
+            { speaker: '旁白', text: '这是他第一次，没能替你拿主意。' }
+        ],
+        unlockToast: '📖 主线推进：这次你自己做了判断',
+        questLabel: '自己判断要不要投这家看不懂的新公司',
+        target: { x: -12.0, z: 8.5 },
+        lockedHint: '先去股市小屋看看那家新公司。',
+        auto: () => storyStat('investmentEntries') >= 1,
+        choices: [
+            {
+                label: '跟投（相信自己这些天攒下的判断）',
+                resultText: '',
+                flag: 'trustedOwnJudgment',
+                mentor: { trust: 2, agreement: -6, independence: 14 },
+                marketEvent: { impact: 0.15, delay: 3, headline: '一家新经济公司逆势上涨，非共识判断经受住了考验' }
+            },
+            {
+                label: '听他的，不投（稳妥，但可能错过）',
+                resultText: '',
+                flag: null,
+                mentor: { trust: 4, agreement: 8, independence: -6 },
+                marketEvent: { impact: -0.05, delay: 3, headline: '谨慎策略错过一波新经济行情' }
+            }
+        ]
+    },
+    {
+        /* 问题：材料终于凑齐了，真要送他走吗？
+           机制：回到开局那口坩埚，完成"归魂炼金术"
+           碎片：最后一次并肩——两人各自不擅长对方的事，但已经处得很好
+           钩子：结局由这一路攒下的关系决定 */
+        unlocks: null,
+        title: '最后一次炼金',
+        lines: [
+            { speaker: '旁白', text: '材料终于凑齐了——月银、星尘、灵魂石，都摆在了当年那口坩埚旁边。屋子里的一切，和第一天几乎一模一样。' },
+            { speaker: '你', text: '（习惯性地）这次怎么做？' },
+            { speaker: '宗庆后', text: '你不是会了吗？' },
+            { speaker: '你', text: '我问的是炼金。' },
+            { speaker: '宗庆后', text: '我又不会魔法。' },
+            { speaker: '旁白', text: '你笑了一下，转身面对坩埚。真正送走他之前，还有最后一件事要想清楚。' }
+        ],
+        unlockToast: '📖 主线推进：材料集齐，可以做最后一次炼金了',
+        questLabel: '材料备齐后，回到炼金锅完成最后一次炼金',
+        target: { x: -2.35, z: -0.45 },
+        lockedHint: '钱攒够 3000 金币，材料才备得齐。',
+        auto: () => currentCoins() >= 3000,
+        choices: [
+            {
+                label: '把这段情分放在心上，体面地送他走',
+                resultText: '',
+                ending: 'good',
+                flag: 'gracefulFarewell',
+                mentor: { trust: 5, agreement: 5, independence: 5 }
+            },
+            {
+                label: '事情办完就是办完，不必多想',
+                resultText: '',
+                ending: 'bad',
+                flag: 'coldFarewell',
+                mentor: { trust: -3, agreement: -2, independence: 8 }
             }
         ]
     }
@@ -254,20 +272,20 @@ const MAIN_STORY_STAGES = [
 
 const ENDINGS = {
     good: {
-        title: '结局 · 这块牌子还是你的',
+        title: '结局 · 这份情分记下了',
         lines: [
-            '联销体的新规矩落地后，订单没有立刻变漂亮。有人抱怨，有人观望，也有人像邵老板那样，骂完以后照旧把货接走。',
-            '宗庆后站在仓库门口说：我说什么你都听，那这一路就白走了。你忽然明白，他留给你的不是答案，而是一种看账、看人、看路的方式。',
-            '最后你记住的不是一句“伟大企业家”，而是一个具体的人：能吃苦，会算账，重感情，也固执。你认识了宗庆后。'
+            '坩埚再次亮起来的时候，你没有像第一次那样慌。你把这些日子攒下的账本、成就墙、还有心里那点舍不得，一并放进了那圈光里。',
+            '宗庆后临走前只说了一句：这一路，你不是照我说的做，是自己算明白的。我没白待这一趟。',
+            '光散开以后，屋子恢复了安静。你忽然明白，他留给你的不是一套怎么赚钱的方法，而是一种看账、看人、看路的方式——你认识了宗庆后，也认识了现在的自己。'
         ],
         achievement: 'ending_good'
     },
     bad: {
-        title: '结局 · 替别人做的嫁衣',
+        title: '结局 · 账算完了，人走了',
         lines: [
-            '那年冬天，"娃哈哈"的招牌被人摘了下来，换上了一块新的牌子。你手里攥着那份签了字的合同，忽然觉得那些绕来绕去的条款，原来早就写好了结局。',
-            '王师傅和田老板还是没走。"东西换了牌子，可账和人没换"——他们这么说的时候，你才知道，有些东西，合同抢不走。',
-            '你没有输给任何人，只是输给了一张没读懂的纸，和当年那点"先签了再说"的侥幸。路还长，摔一跤，才看得更清楚一点。'
+            '材料倒进坩埚，光一闪，宗庆后就那么干脆地不见了——像一笔已经结清的账，说走就走，没什么好留恋的。',
+            '你低头看着账本，数字都对，一分不差。可屋子空出来一块，怎么擦都擦不干净。',
+            '你没有输给任何人，只是没来得及问一句：这一路，除了赚钱，还剩下点别的什么？路还长，这个问题，以后大概还会想起来。'
         ],
         achievement: 'ending_bad',
         retry: true
@@ -546,8 +564,8 @@ if (mainStoryChoices) {
 }
 
 /* ================================================================
-   结局：目前只有"达能之争"这一关会分出好/坏两条结局，
-   坏结局允许重新回去把合同再读一遍。
+   结局：最后一次炼金那一章的选择，决定送别宗庆后的方式——
+   坏结局允许重新回去，把那次选择再想一遍。
    ================================================================ */
 
 function triggerEnding(id) {
@@ -558,8 +576,8 @@ function triggerEnding(id) {
     endingKicker.textContent = id === 'good' ? '结局 · 好结局' : '结局 · 坏结局';
     endingTitle.textContent = ending.title;
     endingBody.innerHTML = ending.lines.map(t => '<p>' + t + '</p>').join('') +
-        (ending.retry ? '<p class="endingRetryNote">合上账本，深吸一口气——愿意的话，可以回去把那份合同再读一遍。</p>' : '');
-    if (endingCloseBtn) endingCloseBtn.textContent = ending.retry ? '回去重新读合同' : '合上这本账';
+        (ending.retry ? '<p class="endingRetryNote">合上账本，深吸一口气——愿意的话，可以回去把那个选择再想一遍。</p>' : '');
+    if (endingCloseBtn) endingCloseBtn.textContent = ending.retry ? '回去重新想想' : '合上这本账';
     endingPanel.hidden = false;
     endingPanel.dataset.retry = ending.retry ? '1' : '0';
     if (typeof window.clearPlayerInputState === 'function') window.clearPlayerInputState();
@@ -714,12 +732,10 @@ function currentMainStoryObjective() {
         label = typeof window.alchemyIntroHint === 'function'
             ? window.alchemyIntroHint()
             : '打开发光的炼金书，取瓶架材料，再启动坩埚';
-    } else if (mainStoryState.stage === 3) {
+    } else if (mainStoryState.stage === 2) {
         const delivered = storyStat('deliveryCount') >= 1;
         if (!delivered) label = '完成第一笔送货（订单板接单），再攒够 110 金币';
         else if (currentCoins() < 110) label = '第一笔送货完成，继续攒到 110 金币';
-    } else if (mainStoryState.stage === 6 || mainStoryState.stage === 7) {
-        label += '（' + (storyStat('deliveryCount') > storyMilestone('deliveryCount') ? '已完成' : '还需 1 单') + '）';
     }
     if (stage.coinRequirement && !stageCoinsMet(stage)) {
         label += '（当前 ' + currentCoins() + ' 金币）';
