@@ -417,11 +417,33 @@ function addBackpackItem(itemName, amount) {
     renderBackpack(true);
 }
 
+function allBackpackSeedsEmpty() {
+    return BACKPACK_SEED_KEYS.every(key => (cabinBackpack[key] || 0) <= 0);
+}
+
+/* 手上四种种子全空了，光靠翻地时那句一闪而过的小提示容易被忽略——
+   种过地之后第一次真的一颗种子都没有了，弹一次能读完的对话，
+   讲清楚该去哪儿补货。走 showFeatureIntro 自带的"只弹一次"机制。 */
+function maybeShowOutOfSeedsIntro() {
+    if (!allBackpackSeedsEmpty()) return;
+    if (typeof storyStat !== 'function' || storyStat('plantCount') < 1) return;
+    if (typeof showFeatureIntro !== 'function') return;
+    showFeatureIntro('outOfSeeds', '经营 · 缺货', '种子用完了', [
+        { speaker: '旁白', text: '背包翻了个遍，四样种子一颗都不剩——地空在那儿，也种不下去。' },
+        { speaker: '师傅', text: '地闲着最费——种子没了，去杂货铺补一趟货，别让地空等着。' },
+        { speaker: '你', text: '钱要是也不够呢？' },
+        { speaker: '师傅', text: '先种便宜的那样，能周转开就行，不用一次全买齐。' }
+    ]);
+}
+
 function useBackpackItem(itemName, amount, silent) {
     const cost = Math.max(0, Math.trunc(Number(amount) || 0));
     if (!cost || BACKPACK_SEED_KEYS.indexOf(itemName) < 0) return true;
     if ((cabinBackpack[itemName] || 0) < cost) {
-        if (!silent) showHintOverride('背包里没有' + (SEED_LABELS[itemName] || '种子') + '了，去商店开箱后按 <b>B</b> 购买');
+        if (!silent) {
+            showHintOverride('背包里没有' + (SEED_LABELS[itemName] || '种子') + '了，去商店开箱后按 <b>B</b> 购买');
+            maybeShowOutOfSeedsIntro();
+        }
         return false;
     }
     cabinBackpack[itemName] -= cost;
