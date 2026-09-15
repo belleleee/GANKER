@@ -309,32 +309,45 @@
     margin-top: 0;
 }
 
+/* 这条横幅是师傅唯一"常驻在场"的地方——不是系统提示，是他这个人在
+   说话，所以做得比一般 toast 大很多：真人头像、更大的字、更有分量的
+   卡片，而不是一个不起眼的小胶囊。 */
 .guideBanner {
-    top: 16px;
+    top: 22px;
     left: 50%;
     width: auto;
-    max-width: min(560px, 86vw);
+    max-width: min(680px, 92vw);
     transform: translateX(-50%) scale(1);
     align-items: center;
-    gap: 10px;
-    padding: 10px 22px 10px 16px;
-    border-radius: 999px;
-    background: linear-gradient(135deg, rgba(120, 78, 26, .82), rgba(60, 40, 14, .82));
-    border: 1.5px solid rgba(255, 216, 115, .75);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, .35), 0 0 22px rgba(255, 200, 100, .28);
+    gap: 16px;
+    padding: 14px 30px 14px 14px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(120, 78, 26, .92), rgba(50, 33, 12, .94));
+    border: 2px solid rgba(255, 216, 115, .8);
+    box-shadow: 0 16px 44px rgba(0, 0, 0, .45), 0 0 34px rgba(255, 200, 100, .3);
     animation: guideBannerPop .32s cubic-bezier(.2, 1.4, .4, 1);
+}
+
+.guideBannerAvatar {
+    flex: none;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: 50% 15%;
+    box-shadow: 0 0 0 3px rgba(255, 216, 115, .85), 0 4px 14px rgba(0, 0, 0, .4);
 }
 
 .guideBanner .questKicker {
     color: #ffd873;
-}
-
-.guideBanner .questKicker::before {
-    content: '🗨️ ';
+    font-size: 12px;
+    letter-spacing: .3em;
 }
 
 .guideBanner .questTextLine {
-    font-size: 15px;
+    font-size: 19px;
+    font-weight: 700;
+    line-height: 1.5;
 }
 
 @keyframes guideBannerPop {

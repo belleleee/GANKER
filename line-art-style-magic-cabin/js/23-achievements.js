@@ -937,7 +937,7 @@ function pollAchievements() {
             }
             const quote = MENTOR_ACHIEVEMENT_QUOTES[a.id];
             if (quote && typeof showGuideCard === 'function') {
-                showGuideCard('师傅：' + quote, 6);
+                showGuideCard(quote, 6);
             }
             if (typeof SND !== 'undefined') SND.play('chim');
         }

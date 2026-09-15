@@ -66,6 +66,6 @@ function updateMentorAmbient(dt) {
     if (typeof mainStoryState === 'undefined' || mainStoryState.stage < 1) return;
     const pool = mentorAmbientPool();
     if (!pool.length) return;
-    if (typeof showGuideCard === 'function') showGuideCard('师傅：' + pickRandomLine(pool), 6);
+    if (typeof showGuideCard === 'function') showGuideCard(pickRandomLine(pool), 6);
 }
 window.updateMentorAmbient = updateMentorAmbient;
