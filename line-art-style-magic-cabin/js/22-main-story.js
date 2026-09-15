@@ -435,6 +435,7 @@ function advanceMainStoryStage(stage, resultText) {
         newspaperReads: storyStat('newspaperReads')
     };
     mainStoryState.stage = idx + 1;
+    if (typeof window.refreshProgressiveHud === 'function') window.refreshProgressiveHud();
     if (typeof window.publishLiveNews === 'function') {
         window.publishLiveNews(stage.title || '主线推进', resultText || stage.unlockToast || '小屋的故事又往前走了一步。', '主线快讯');
     }
@@ -622,6 +623,7 @@ function applyMainStoryState(raw) {
         independence: clampMentorValue(rawMentor.independence)
     };
     mainStoryState = { stage, flags, endingId, milestones, mentor };
+    if (typeof window.refreshProgressiveHud === 'function') window.refreshProgressiveHud();
 }
 
 /* ================================================================

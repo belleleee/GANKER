@@ -887,6 +887,24 @@ function updateSaveStatus() {
     setSaveStatus((currentCabinUser ? currentCabinUser.name : '游客') + '：' + label);
 }
 
+/* ---------------- HUD 渐进式解锁：该出现的时候再出现，开局别一次性堆满 ----------------
+   仓库/背包/地契这几块只有在能种地之后才有意义，跟工具栏渐进解锁
+   （js/28-tool-progression.js）复用同一个"锄头解锁了没"的信号；
+   现金流面板和状态数值面板是更后期的经营工具，等序章过去、主线正式
+   开始（mainStoryState.stage>=1）才出现。时钟和金币从头就显示——
+   时间和"手里只有100块"这两件事从进门那一刻就该看得见。 */
+function refreshProgressiveHud() {
+    const farmingUnlocked = typeof window.isToolUnlocked === 'function' && window.isToolUnlocked(3);
+    const storyStarted = typeof mainStoryState !== 'undefined' && mainStoryState.stage >= 1;
+    if (storageHud) storageHud.hidden = !farmingUnlocked;
+    if (backpackHud) backpackHud.hidden = !farmingUnlocked;
+    if (typeof landHud !== 'undefined' && landHud) landHud.hidden = !farmingUnlocked;
+    if (typeof cashFlowPanel !== 'undefined' && cashFlowPanel) cashFlowPanel.hidden = !storyStarted;
+    if (statsPanel) statsPanel.hidden = !storyStarted;
+}
+window.refreshProgressiveHud = refreshProgressiveHud;
+refreshProgressiveHud();
+
 /* ---------------- 剧情存档点：主线每推进一章，先留一份"回退用"的快照 ----------------
    之前的存档只有一个槽位，剧情一旦推过去就没法回头。现在每次
    advanceMainStoryStage 真正把 stage+1 之前，先把当时的完整存档快照存一份，

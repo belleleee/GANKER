@@ -29,6 +29,7 @@ function unlockTool(key, toastText) {
     if (toolUnlockState[key]) return;
     toolUnlockState[key] = true;
     refreshToolSlotVisibility();
+    if (typeof window.refreshProgressiveHud === 'function') window.refreshProgressiveHud();
     if (toastText && typeof showHintOverride === 'function') showHintOverride(toastText);
     if (typeof SND !== 'undefined') SND.play('chim');
     if (typeof saveGameState === 'function') saveGameState(false);
@@ -79,6 +80,7 @@ function applyToolUnlockState(raw) {
         wand: !!(raw && raw.wand)
     };
     refreshToolSlotVisibility();
+    if (typeof window.refreshProgressiveHud === 'function') window.refreshProgressiveHud();
 }
 
 window.isToolUnlocked = isToolUnlocked;
