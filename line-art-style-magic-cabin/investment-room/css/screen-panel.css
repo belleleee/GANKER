@@ -19,6 +19,13 @@
   background:rgba(96,244,255,.08);color:#9ff1ff;font-size:20px;line-height:1;
   cursor:pointer;transition:.15s;text-shadow:0 0 8px rgba(96,244,255,.6);
 }
+#dashHelpBtn{
+  position:relative;flex:0 0 auto;width:34px;height:34px;
+  border:1px solid rgba(255,214,102,.5);border-radius:7px;
+  background:rgba(255,214,102,.1);color:#ffd666;font-size:16px;font-weight:800;line-height:1;
+  cursor:pointer;transition:.15s;text-shadow:0 0 8px rgba(255,214,102,.5);
+}
+#dashHelpBtn:hover{background:rgba(255,214,102,.2);box-shadow:0 0 14px rgba(255,214,102,.35)}
 
 .knowledgePanel{
   position:fixed;inset:0;z-index:15;display:none;

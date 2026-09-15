@@ -106,6 +106,12 @@ function interactGlobe() {
 
 function interactNpc(stockId) {
   const stock = STOCKS.find(item => item.id === stockId);
+  if (stock && stock.isPlayerCompany) {
+    activeScreen = 'company';
+    saveState();
+    renderScreenPanel('company');
+    return;
+  }
   const holding = getHolding(stockId);
   if (!holding.qty) {
     showToast('这个位置还空着——买一点 ' + (stock ? stock.name : stockId) + ' 就会有史莱姆来负责它');
@@ -153,6 +159,9 @@ function interactPastry() {
   if (Math.random() < .3) {
     const bonus = 4 + Math.floor(Math.random() * 8);
     state.coins = Math.min(999999, state.coins + bonus);
+    if (typeof showMarketFeedback === 'function') {
+      showMarketFeedback(bonus, '意外收入', '咖啡角的小点心底下翻到了金币。');
+    }
     showToast('🥐 顺手拿了块点心，居然在盘子底下翻到 ' + bonus + ' 金币', 3200);
     saveState();
   } else {
@@ -245,6 +254,13 @@ if (knowledgePanel) {
   knowledgePanel.addEventListener('click', event => {
     if (event.target === knowledgePanel) closeKnowledgeCard();
   });
+}
+
+/* 交易屏里点一下"？"就能随时看"股市菜单怎么用"，不用走到书架前
+   翻书——操作层数一多，帮助入口得跟操作本身在同一屏才有用。 */
+const dashHelpBtn = document.getElementById('dashHelpBtn');
+if (dashHelpBtn) {
+  dashHelpBtn.addEventListener('click', () => openKnowledgeCard('menu-guide'));
 }
 
 function interactStool(target) {
