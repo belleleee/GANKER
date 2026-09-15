@@ -97,6 +97,78 @@ MARKET_INTEL_SPOTS.forEach(spot => {
     });
 });
 
+/* ================================================================
+   情报小史莱姆：光站在原地不好找，今天还有打听次数时，在三个地点
+   各冒出一只举着消息图标的小史莱姆——用得着的时候看得见，用完就
+   缩回去，玩家一眼就知道"这儿今天还有话可以打听"。
+   ================================================================ */
+
+const MARKET_INTEL_SLIME_ICONS = { farm: '🌾', cafe: '☕', store: '🛒' };
+const MARKET_INTEL_SLIME_COLORS = { farm: 0x9bd66a, cafe: 0xd6a26a, store: 0x6ab6d6 };
+let marketIntelSlimeTexCache = {};
+
+function marketIntelIconTexture(emoji) {
+    if (marketIntelSlimeTexCache[emoji]) return marketIntelSlimeTexCache[emoji];
+    const canvas = document.createElement('canvas');
+    canvas.width = 96; canvas.height = 96;
+    const ctx = canvas.getContext('2d');
+    ctx.font = '64px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(emoji, 48, 52);
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.needsUpdate = true;
+    marketIntelSlimeTexCache[emoji] = tex;
+    return tex;
+}
+
+function buildMarketIntelSlime(spot) {
+    const g = new THREE.Group();
+    const color = MARKET_INTEL_SLIME_COLORS[spot.id] || 0x9bd66a;
+    const bodyMat = LITMAT(color, { transparent: true, opacity: .9 });
+    const body = solid(new THREE.SphereGeometry(.34, 18, 14), bodyMat);
+    body.scale.set(1, .8, 1);
+    body.position.y = .28;
+    g.add(body);
+    const eyeMat = new THREE.MeshBasicMaterial({ color: 0x2a2018 });
+    for (const side of [-1, 1]) {
+        const eye = new THREE.Mesh(new THREE.SphereGeometry(.04, 8, 6), eyeMat);
+        eye.position.set(side * .12, .34, .27);
+        g.add(eye);
+    }
+    const icon = new THREE.Sprite(new THREE.SpriteMaterial({ map: marketIntelIconTexture(MARKET_INTEL_SLIME_ICONS[spot.id] || '💬'), depthTest: false }));
+    icon.scale.set(.46, .46, 1);
+    icon.position.y = .92;
+    g.add(icon);
+    g.userData.icon = icon;
+    g.userData.phase = Math.random() * Math.PI * 2;
+    const groundY = typeof groundAt === 'function' ? groundAt(spot.x, spot.z, 0) : 0;
+    g.position.set(spot.x, groundY, spot.z);
+    if (typeof scene !== 'undefined') scene.add(g);
+    return g;
+}
+
+const marketIntelSlimes = (typeof scene !== 'undefined')
+    ? MARKET_INTEL_SPOTS.map(spot => ({ spot, mesh: buildMarketIntelSlime(spot) }))
+    : [];
+
+function updateMarketIntelSlimes(dt, time) {
+    if (!marketIntelSlimes.length) return;
+    const available = marketIntelRemaining() > 0;
+    for (const entry of marketIntelSlimes) {
+        const mesh = entry.mesh;
+        mesh.visible = available;
+        if (!available) continue;
+        const ph = mesh.userData.phase;
+        mesh.scale.y = .82 + Math.sin(time * 2.4 + ph) * .05;
+        if (mesh.userData.icon) {
+            mesh.userData.icon.position.y = .92 + Math.sin(time * 2.6 + ph) * .05;
+        }
+    }
+}
+
+window.updateMarketIntelSlimes = updateMarketIntelSlimes;
+
 function captureMarketIntelState() {
     ensureIntelDayReset();
     return {

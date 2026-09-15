@@ -68,6 +68,9 @@
                 if (typeof updateAlchemyIntro === 'function') {
                     updateAlchemyIntro(dt, time);
                 }
+                if (typeof updateMarketIntelSlimes === 'function') {
+                    updateMarketIntelSlimes(dt, time);
+                }
                 
                 FILL.uniforms.uTime.value = time;
                 FILL.uniforms.uFireStrength.value = fireP;
