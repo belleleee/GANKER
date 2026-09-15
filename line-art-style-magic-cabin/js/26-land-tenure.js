@@ -63,14 +63,43 @@ function renderLandHud() {
     }
 }
 
-function openLandPanel(kicker, title, bodyHtml, buttons) {
+/* 对话框式：跟主线卡片/开局对话一样，一句一句地讲，讲完了才露出
+   按钮——不再是一次性摊开一整块说明文字的"卡片"。 */
+let landLines = [];
+let landLineIndex = 0;
+let landButtons = [];
+
+function landLinesDone() {
+    return landLineIndex >= landLines.length - 1;
+}
+
+function renderLandPanel() {
+    if (!landBody) return;
+    const linesDone = landLinesDone();
+    const line = landLines[Math.min(landLineIndex, Math.max(0, landLines.length - 1))];
+    landBody.innerHTML = line ? '<p><span class="mainStorySpeaker">' + line.speaker + '</span>' + line.text + '</p>' : '';
+    landBody.classList.toggle('dialogStep', !linesDone);
+    if (landActions) landActions.hidden = !linesDone;
+}
+
+function advanceLandDialogue() {
+    if (!landLinesDone()) {
+        landLineIndex++;
+        renderLandPanel();
+        if (typeof SND !== 'undefined') SND.play('ui');
+    }
+}
+
+function openLandPanel(kicker, title, lines, buttons) {
     if (!landPanel) return;
     landPanelOpen = true;
     landKicker.textContent = kicker;
     landTitle.textContent = title;
-    landBody.innerHTML = bodyHtml;
+    landLines = Array.isArray(lines) ? lines : [];
+    landLineIndex = 0;
+    landButtons = buttons || [];
     landActions.innerHTML = '';
-    buttons.forEach(b => {
+    landButtons.forEach(b => {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'landBtn' + (b.primary ? ' primary' : '');
@@ -81,6 +110,7 @@ function openLandPanel(kicker, title, bodyHtml, buttons) {
         });
         landActions.appendChild(btn);
     });
+    renderLandPanel();
     landPanel.hidden = false;
     if (typeof window.clearPlayerInputState === 'function') window.clearPlayerInputState();
     if (document.pointerLockElement) document.exitPointerLock();
@@ -97,6 +127,14 @@ function closeLandPanel() {
     window.APP_GAME_MODAL_OPEN = false;
     if (typeof saveGameState === 'function') saveGameState(false);
 }
+
+if (landBody) {
+    landBody.addEventListener('click', advanceLandDialogue);
+}
+addEventListener('keydown', event => {
+    if (!landPanel || landPanel.hidden) return;
+    if (event.key === 'Enter') advanceLandDialogue();
+});
 
 function doRentLand() {
     if (typeof spendCabinCoins !== 'function' || !spendCabinCoins(LAND_RENT_COST, '租下农田')) {
@@ -124,9 +162,11 @@ function promptRentFirstTime() {
     openLandPanel(
         '第一个决定',
         '要不要 all-in 租下这块地？',
-        '<p><span class="mainStorySpeaker">旁白</span>屋子东边这片荒地，地主愿意租给你，开价 <b>' + LAND_RENT_COST + '</b> 金币——你手里满打满算也就 <b>' + landCoins() + '</b> 金币，这几乎是全部家当。</p>' +
-        '<p><span class="mainStorySpeaker">师傅</span>租下来，才能翻地种萝卜，走出第一步；不租，就只能在屋子里接着晃荡。</p>' +
-        '<p><span class="mainStorySpeaker">旁白</span>钱攒到 <b>' + LAND_BUYOUT_COST + '</b> 金币以上，还能把这块地直接买断，从此不用再交租。</p>',
+        [
+            { speaker: '旁白', text: '屋子东边这片荒地，地主愿意租给你，开价 <b>' + LAND_RENT_COST + '</b> 金币——你手里满打满算也就 <b>' + landCoins() + '</b> 金币，这几乎是全部家当。' },
+            { speaker: '师傅', text: '租下来，才能翻地种萝卜，走出第一步；不租，就只能在屋子里接着晃荡。' },
+            { speaker: '旁白', text: '钱攒到 <b>' + LAND_BUYOUT_COST + '</b> 金币以上，还能把这块地直接买断，从此不用再交租。' }
+        ],
         [
             { label: '再想想', onClick: () => showHintOverride('想好了随时回来找地主') },
             { label: 'All-in 租下来（-' + LAND_RENT_COST + ' 金币）', primary: true, onClick: doRentLand }
@@ -145,8 +185,10 @@ function promptRenew() {
     openLandPanel(
         '租期到了',
         '地主上门收地了',
-        '<p><span class="mainStorySpeaker">旁白</span>当初租的那 ' + LAND_RENT_DAYS + ' 天期限到了，地主上门了。</p>' +
-        '<p><span class="mainStorySpeaker">地主</span>要么续租接着种，要么——你手头要是宽裕，不如直接买断，以后再也不用看人脸色。</p>',
+        [
+            { speaker: '旁白', text: '当初租的那 ' + LAND_RENT_DAYS + ' 天期限到了，地主上门了。' },
+            { speaker: '地主', text: '要么续租接着种，要么——你手头要是宽裕，不如直接买断，以后再也不用看人脸色。' }
+        ],
         buttons
     );
 }
