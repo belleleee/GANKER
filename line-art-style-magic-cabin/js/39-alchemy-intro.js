@@ -56,8 +56,14 @@ const ALCHEMY_INTRO_DIALOGUES = {
         { speaker: '???', text: '我还想问你。这是哪儿？' },
         { speaker: '旁白', text: '他打量了一圈：炼金锅、魔法阵、墙上瓶瓶罐罐的材料，像是从没见过这些东西。' },
         { speaker: '旁白', text: '你把"炼金失控"这件事解释了一遍，他没听懂"魔法"是什么；你也说不清他从哪来。' },
-        { speaker: '你', text: '那……我再炼一次，把你变回去？' },
-        { speaker: '旁白', text: '可再来一次，需要材料。材料要买。你翻了翻钱包。' },
+        { speaker: '你', text: '所以……你也不知道怎么回去？' },
+        { speaker: '???', text: '不知道。' },
+        { speaker: '你', text: '那怎么办？' },
+        { speaker: '???', text: '你不是会魔法吗？' },
+        { speaker: '你', text: '可以查书！应该有灵魂召回或者逆向召唤之类的……' },
+        { speaker: '旁白', text: '你翻开那本《炼金术入门》，一页新的配方浮了出来。' },
+        { speaker: '旁白', text: '「归魂炼金术」<br>月银 ×1　星尘 ×3　灵魂石 ×1<br>预计材料费用：3000 金币' },
+        { speaker: '旁白', text: '你翻了翻钱包。' },
         { speaker: '你', text: '……金币：100。' },
         { speaker: '旁白', text: '两个人沉默了一会儿。' },
         { speaker: '???', text: '先挣钱。' },
@@ -399,7 +405,7 @@ function updateAlchemyIntro(dt, time) {
         const line = alchemyIntroNarration();
         if (nameTag && line) nameTag.textContent = line.speaker || '???';
         if (dialogText && line) {
-            dialogText.innerHTML = line.text.replace(/(右侧的书架|微光的书|旧硬币、茶叶、星尘|墙上的瓶架|炼金锅|魔法阵|炼金失控|一枚金币变成两枚|赚钱|成功|100|先挣钱|不是有地吗)/g, '<span style="color:#ffd56b;font-weight:800">$1</span>');
+            dialogText.innerHTML = line.text.replace(/(右侧的书架|微光的书|旧硬币、茶叶、星尘|墙上的瓶架|炼金锅|魔法阵|炼金失控|一枚金币变成两枚|赚钱|成功|归魂炼金术|月银 ×1|星尘 ×3|灵魂石 ×1|3000 金币|100|先挣钱|不是有地吗)/g, '<span style="color:#ffd56b;font-weight:800">$1</span>');
         }
         if (arrow) arrow.style.opacity = alchemyIntroDialogueDone() ? '0.35' : '1';
     } else if (alchemyIntroDialog) {
