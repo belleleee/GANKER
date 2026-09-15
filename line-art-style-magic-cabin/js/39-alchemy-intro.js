@@ -394,7 +394,10 @@ function updateAlchemyIntro(dt, time) {
        坩埚用完谜题就算解完了，但 meet 那段台词还没讲，对话框不能关。 */
     if (dialogActive) {
         ensureAlchemyIntroOverlay();
-        if (alchemyIntroDialog) alchemyIntroDialog.style.opacity = '1';
+        if (alchemyIntroDialog) {
+            alchemyIntroDialog.style.opacity = '1';
+            alchemyIntroDialog.style.pointerEvents = 'auto';
+        }
         const dialogText = alchemyIntroDialog && alchemyIntroDialog.querySelector('.alchemy-intro-dialog-text');
         const nameTag = alchemyIntroDialog && alchemyIntroDialog.querySelector('div');
         const arrow = alchemyIntroDialog && alchemyIntroDialog.querySelector('.alchemy-intro-dialog-arrow');
@@ -405,7 +408,12 @@ function updateAlchemyIntro(dt, time) {
         }
         if (arrow) arrow.style.opacity = alchemyIntroDialogueDone() ? '0.35' : '1';
     } else if (alchemyIntroDialog) {
+        /* 对话讲完之后必须把 pointer-events 也关掉——只把 opacity 调成
+           0 的话，这块看不见的对话框（底部居中、最宽能到1120px）会
+           永远盖在画布上吞掉那片区域的点击/拖动，"固定视角"底下拖动
+           转镜头失灵、点某些按钮没反应，都是这个看不见的框在挡。 */
         alchemyIntroDialog.style.opacity = '0';
+        alchemyIntroDialog.style.pointerEvents = 'none';
     }
 
     if (guidingActive) {
