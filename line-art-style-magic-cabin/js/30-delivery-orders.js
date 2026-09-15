@@ -266,6 +266,8 @@ const DELIVERY_PREPAY_SHARE = 0.5;
 function acceptDeliveryOrder(id, prepay) {
     const order = deliveryOrders.find(o => o.id === id);
     if (!order || order.accepted) return;
+    const prepayUnlocked = typeof isMainStoryFeatureUnlocked === 'function' && isMainStoryFeatureUnlocked('prepay');
+    if (prepay && !prepayUnlocked) return;
     order.accepted = true;
     const crop = deliveryCropDef(order.cropId);
     if (prepay) {
@@ -316,6 +318,7 @@ function renderDeliveryBoard() {
             pending.length + ' 单 · 最近 ' + deliveryFormatTime(soonest) + (urgentCount ? ' · ' + urgentCount + ' 急' : '');
         deliveryBoardSummary.classList.toggle('urgent', urgentCount > 0);
     }
+    const prepayUnlocked = typeof isMainStoryFeatureUnlocked === 'function' && isMainStoryFeatureUnlocked('prepay');
     deliveryBoardList.innerHTML = pending.map(o => {
         const crop = deliveryCropDef(o.cropId);
         return '<div class="deliveryBoardRow' + (o.bulk ? ' bulk' : '') + '">' +
@@ -326,7 +329,9 @@ function renderDeliveryBoard() {
             '<span class="deliveryBoardReward">+' + o.reward + ' 金币</span>' +
             '<span class="deliveryBoardActions">' +
             '<button type="button" class="deliveryAcceptBtn" data-order="' + o.id + '">接单</button>' +
-            '<button type="button" class="deliveryPrepayBtn" data-order="' + o.id + '" title="现在先拿一半货款，总价打9折——送货那天不用再等回款">预付订金</button>' +
+            (prepayUnlocked
+                ? '<button type="button" class="deliveryPrepayBtn" data-order="' + o.id + '" title="现在先拿一半货款，总价打9折——送货那天不用再等回款">预付订金</button>'
+                : '') +
             '</span>' +
             '</div>';
     }).join('');
@@ -412,9 +417,7 @@ function updateDeliveryOrders(dt, time) {
             { speaker: '旁白', text: '森林里开始有客户蹲点等货了。订单板在小屋右上角，接单后地上会有箭头指路。' },
             { speaker: '师傅', text: '东西种出来，得卖得出去才算数。' },
             { speaker: '你', text: '接了订单，就一定要送到吗？' },
-            { speaker: '师傅', text: '接了就是应了别人的事。应了的事，不管多小，都要办到。' },
-            { speaker: '旁白', text: '手头紧的时候，"预付订金"能先拿到一半货款——多搭点手续费，换一个确定。' },
-            { speaker: '师傅', text: '这不是坏事。谁都有周转不开的时候，肯花点代价换确定，是本事，不是丢人。' }
+            { speaker: '师傅', text: '接了就是应了别人的事。应了的事，不管多小，都要办到。' }
         ]);
     }
     deliverySpawnTimer -= dt || 0;

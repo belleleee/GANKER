@@ -28,13 +28,14 @@ const STORY_MAP_ICONS = ['🏠', '🌱', '🚚', '🚲', '🍵', '🏪', '✨', 
 const STORY_MAP_UNLOCKS = {
     investment: '股市小屋',
     tea: '茶场',
-    coin: '钱滚钱商店'
+    coin: '钱滚钱商店',
+    prepay: '预付订金'
 };
 
 function storyMapChoice(index) {
     if (index === 7) {
-        if (mainStoryState.flags.strictDealerTerms) return '坚持先款后货';
-        if (mainStoryState.flags.dealerGracePeriod) return '给老经销商过渡期';
+        if (mainStoryState.flags.embracedPrepay) return '学着用预付订金';
+        if (mainStoryState.flags.waryOfPrepay) return '记下了，但能不用就不用';
     }
     if (index === 8) {
         if (mainStoryState.flags.trustedOwnJudgment) return '跟投新公司';

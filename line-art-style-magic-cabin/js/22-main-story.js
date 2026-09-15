@@ -184,41 +184,43 @@ const MAIN_STORY_STAGES = [
     },
     {
         /* 问题：账面上赚了，为什么手里还是没钱？
-           机制：现金流面板保持安全，第一次理解"利润≠现金"
-           碎片：联销体记忆——当年也曾亲手伤过帮过他的人
-           钩子：规矩和情分之间，这次轮到玩家自己拿主意 */
-        unlocks: null,
+           机制：订单板出现一笔现在周转不开的大单，第一次理解"利润≠现金"
+           碎片：联销体记忆——邵老板当年怎么帮他周转过这道坎
+           钩子：这次是师傅把当年的法子教给玩家，不是替玩家拿主意 */
+        unlocks: 'prepay',
         title: '赚了钱，为什么还是没钱？',
         lines: [
-            { speaker: '旁白', text: '生意做大了。报表写着：营收 +3000，利润 +800。可翻开钱包，现金只剩 37。' },
-            { speaker: '你', text: '？？？钱呢？' },
-            { speaker: '旁白', text: '你这才明白：赚了，不等于手里有钱——库存、应收、账期，中间全是缺口。' },
-            { speaker: '宗庆后', text: '（沉默了一下）这个问题，我以前也碰到过。' },
-            { speaker: '旁白', text: '联销体推行到最后一站，邵老板把货单推回桌上。他不是外人——当年你送货，第一批愿意掏钱进货的人里，就有他。' },
-            { speaker: '邵老板', text: '那时候你车都停不稳，我先拿了货。现在你让我先打款、后发货，还说这是规矩？' },
-            { speaker: '宗庆后', text: '这些年，是你们垫着钱，把这张网撑起来的。我记得。可生意要往前走，账期不能一直压着。' },
-            { speaker: '旁白', text: '邵老板有理，宗庆后也有理。你第一次清楚地看见：账做大了，规矩会伤到当年帮你撑过来的人。' },
-            { speaker: '你', text: '当年你是怎么处理的？' },
-            { speaker: '宗庆后', text: '没有两全的办法。选哪边，都要还债——不是欠钱，是欠人情。' },
-            { speaker: '旁白', text: '这次他没有替你拿主意。' }
+            { speaker: '旁白', text: '订单板上摆着一笔大单，利润相当可观——可翻遍钱包，连备货的本钱都凑不齐。' },
+            { speaker: '你', text: '这单明明能赚，怎么反倒卡住了？' },
+            { speaker: '旁白', text: '你这才明白：账上有赚头，不等于手里有钱——这中间差着一段周转的时间。' },
+            { speaker: '宗庆后', text: '（沉默了一下）这个坎，我以前也踩过。' },
+            { speaker: '旁白', text: '联销体刚起步那会儿，邵老板是第一批愿意掏钱进货的人。有一次订单太大，宗庆后自己也周转不开。' },
+            { speaker: '邵老板', text: '你先把订金打给我一半，我先按单子备货，剩下的等你东西出手了再补给你。' },
+            { speaker: '宗庆后', text: '我当时不乐意——好像欠了他一份人情。他说，这不是人情，这是生意人该有的法子。' },
+            { speaker: '你', text: '那后来呢？' },
+            { speaker: '宗庆后', text: '后来才想明白：让客户先付一部分订金，我能先周转开；他也算买了个"东西一定送到"的放心——两边都让一点利，账才转得动。' },
+            { speaker: '旁白', text: '你看着眼前这张大单，忽然懂了——原来"预付订金"不是走捷径，是拿一点利润，换出周转的空间。' }
         ],
-        unlockToast: '📖 主线推进：现金流的账，你算明白了',
-        questLabel: '现金流面板保持安全后，再处理邵老板的质疑',
+        unlockToast: '📖 主线推进：你学会了"预付订金"这招',
+        questLabel: '遇到一笔现在周转不开的大单，听师傅讲完邵老板的故事',
         target: { x: 9.0, z: 0.0 },
-        lockedHint: '先让未来 7 天现金流不低于 0，再决定联销体规矩怎么落地。',
-        auto: () => typeof projectedCashFlow === 'function' && projectedCashFlow(7).min >= 0,
+        lockedHint: '先接到一笔现在周转不开的大单，答案自然会出现。',
+        auto: () => {
+            if (typeof deliveryOrders === 'undefined' || !Array.isArray(deliveryOrders)) return false;
+            return deliveryOrders.some(order => order.bulk && !order.accepted && currentCoins() < order.reward);
+        },
         choices: [
             {
-                label: '坚持先款后货：规矩统一，哪怕先伤感情',
+                label: '学着用：这法子不丢人，先渡过这一关',
                 resultText: '',
-                flag: 'strictDealerTerms',
-                mentor: { trust: 5, agreement: 7, independence: -2 }
+                flag: 'embracedPrepay',
+                mentor: { trust: 5, agreement: 4, independence: 0 }
             },
             {
-                label: '给老经销商过渡期：现金慢一点，关系留一线',
+                label: '记下这招，但能不用就不用',
                 resultText: '',
-                flag: 'dealerGracePeriod',
-                mentor: { trust: 3, agreement: -2, independence: 8 }
+                flag: 'waryOfPrepay',
+                mentor: { trust: 2, agreement: -2, independence: 8 }
             }
         ]
     },
