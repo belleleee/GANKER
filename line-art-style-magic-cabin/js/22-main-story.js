@@ -25,31 +25,31 @@ const MAIN_STORY_STAGES = [
         target: { x: -3.58, z: -3.05 },
         auto: () => typeof isAlchemyIntroStoryStarted === 'function' && isAlchemyIntroStoryStarted()
     },
-    {
-        /* 问题：钱到底是怎么变多的？
-           机制：买种子→翻地→播种→浇水→收获→卖出，第一次完整过一遍
-           碎片：他对几块钱都格外认真
-           钩子：这么点钱也算钱？——那下一趟送货再看看 */
-        unlocks: null,
-        title: '第一笔生意',
-        lines: [
-            { speaker: '旁白', text: '种子买好、地翻好、水浇透——第一颗萝卜从土里挖出来的时候，你满心以为能改变点什么。' },
-            { speaker: '你', text: '（举着萝卜）你看！我自己种出来的！' },
-            { speaker: '师傅', text: '别举了，先拿去卖。地里的东西，长在土里不叫钱。' },
-            { speaker: '旁白', text: '卖掉之后，钱包从 100 变成 120。' },
-            { speaker: '你', text: '忙活半天，就赚了 20？' },
-            { speaker: '师傅', text: '昨天这 20 块，是你的吗？' },
-            { speaker: '你', text: '……不是。' },
-            { speaker: '师傅', text: '那就别嫌少。从没有到有，永远是最难的一步。' },
-            { speaker: '旁白', text: '你一时语塞——这个老头，对几块钱都格外认真。' }
-        ],
-        unlockToast: '📖 主线推进：赚到第一笔钱了',
-        questLabel: '去杂货铺买种子，翻地播种，收获并卖出第一批作物',
-        target: { x: 10, z: -10 },
-        lockedHint: '先去杂货铺买种子，种出第一批作物并卖掉。',
-        auto: () => storyStat('totalHarvests') >= 1 
-        // && currentCoins() >= 120
-    },
+    // {
+    //     /* 问题：钱到底是怎么变多的？
+    //        机制：买种子→翻地→播种→浇水→收获→卖出，第一次完整过一遍
+    //        碎片：他对几块钱都格外认真
+    //        钩子：这么点钱也算钱？——那下一趟送货再看看 */
+    //     unlocks: null,
+    //     title: '第一笔生意',
+    //     lines: [
+    //         { speaker: '旁白', text: '种子买好、地翻好、水浇透——第一颗萝卜从土里挖出来的时候，你满心以为能改变点什么。' },
+    //         { speaker: '你', text: '（举着萝卜）你看！我自己种出来的！' },
+    //         { speaker: '师傅', text: '别举了，先拿去卖。地里的东西，长在土里不叫钱。' },
+    //         { speaker: '旁白', text: '卖掉之后，钱包从 100 变成 120。' },
+    //         { speaker: '你', text: '忙活半天，就赚了 20？' },
+    //         { speaker: '师傅', text: '昨天这 20 块，是你的吗？' },
+    //         { speaker: '你', text: '……不是。' },
+    //         { speaker: '师傅', text: '那就别嫌少。从没有到有，永远是最难的一步。' },
+    //         { speaker: '旁白', text: '你一时语塞——这个老头，对几块钱都格外认真。' }
+    //     ],
+    //     unlockToast: '📖 主线推进：赚到第一笔钱了',
+    //     questLabel: '去杂货铺买种子，翻地播种，收获并卖出第一批作物',
+    //     target: { x: 10, z: -10 },
+    //     lockedHint: '先去杂货铺买种子，种出第一批作物并卖掉。',
+    //     auto: () => storyStat('totalHarvests') >= 1 
+    //     // && currentCoins() >= 120
+    // },
     {
         /* 问题：这几块钱，为什么让他这么在意？
            机制：接单送货，第一次走完"现金→货物→销售→现金"的整圈
@@ -59,8 +59,8 @@ const MAIN_STORY_STAGES = [
         title: '钱是怎么回来的',
         lines: [
             { speaker: '旁白', text: '你开始接单送货——种、卖、送、收款，钱这才第一次在你手里转成一个完整的圈。' },
-            { speaker: '你', text: '送一趟才赚七块，这也算钱？' },
-            { speaker: '师傅', text: '七块钱也是钱。' },
+            { speaker: '你', text: '送一趟才赚几块钱，这也算钱？' },
+            { speaker: '师傅', text: '几块钱也是钱。' },
             { speaker: '你', text: '你怎么这么在意这几块钱？' },
             { speaker: '旁白', text: '师傅没有解释，只是把账本往你这边推了推。' },
             { speaker: '师傅', text: '你自己算。这一页，每一笔都是走出去的一趟路。' },

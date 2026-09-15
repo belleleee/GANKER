@@ -138,6 +138,9 @@ function pickTeaPlant(
         1;
 
     teaProcessState.raw += 1;
+    if (typeof window.noteDailyEvent === 'function') {
+        window.noteDailyEvent('teaPick', { raw: teaProcessState.raw });
+    }
 
     const teaWeatherMult = typeof weatherYieldMultiplier === 'function'
         ? weatherYieldMultiplier(TEA_WEATHER_GOOD, TEA_WEATHER_BAD)

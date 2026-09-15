@@ -1,0 +1,114 @@
+.moneyFeedbackLayer {
+    position: fixed;
+    inset: 0;
+    z-index: 10035;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.moneyFloat {
+    position: absolute;
+    left: var(--x, 50%);
+    top: var(--y, 78px);
+    min-width: 86px;
+    padding: 8px 12px;
+    border: 2px solid currentColor;
+    border-radius: 8px;
+    background: rgba(255, 253, 244, .92);
+    font: 900 20px/1.05 "Noto Sans SC", monospace;
+    text-align: center;
+    transform: translate(-50%, 0);
+    opacity: 0;
+    animation: moneyFloatGain .95s cubic-bezier(.2, .85, .25, 1) forwards;
+    box-shadow: 0 12px 28px rgba(32, 28, 20, .18);
+}
+
+.moneyFloat small {
+    display: block;
+    max-width: 190px;
+    margin-top: 4px;
+    overflow: hidden;
+    color: #5c614f;
+    font-size: 11px;
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.moneyFloat.gain {
+    color: #3f8f58;
+}
+
+.moneyFloat.loss {
+    color: #c94f45;
+    animation-name: moneyFloatLoss;
+}
+
+.moneyFloat.major {
+    min-width: 112px;
+    font-size: 26px;
+}
+
+.moneyImpactFlash {
+    position: fixed;
+    inset: 0;
+    z-index: 10034;
+    pointer-events: none;
+    opacity: 0;
+}
+
+.moneyImpactFlash.gain {
+    background: radial-gradient(circle at 50% 38%, rgba(121, 212, 130, .24), rgba(121, 212, 130, 0) 54%);
+    animation: moneyImpactGain .6s ease-out forwards;
+}
+
+.moneyImpactFlash.loss {
+    background: radial-gradient(circle at 50% 38%, rgba(210, 58, 54, .28), rgba(24, 10, 8, .08) 58%, rgba(0, 0, 0, 0) 76%);
+    animation: moneyImpactLoss .75s ease-out forwards;
+}
+
+#coinHud.moneyGain {
+    color: #2f8b4d;
+    text-shadow: 0 0 12px rgba(71, 180, 95, .45);
+}
+
+#coinHud.moneyLoss {
+    color: #c94f45;
+    text-shadow: 0 0 12px rgba(210, 58, 54, .45);
+}
+
+body.moneyLossShake canvas {
+    animation: moneyLossShake .34s ease-out;
+}
+
+@keyframes moneyFloatGain {
+    0% { opacity: 0; transform: translate(-50%, 10px) scale(.82); }
+    18% { opacity: 1; transform: translate(-50%, -4px) scale(1.08); }
+    100% { opacity: 0; transform: translate(-50%, -72px) scale(.98); }
+}
+
+@keyframes moneyFloatLoss {
+    0% { opacity: 0; transform: translate(-50%, -8px) scale(.88); }
+    18% { opacity: 1; transform: translate(-50%, 5px) scale(1.08); }
+    100% { opacity: 0; transform: translate(-50%, 78px) scale(.98); }
+}
+
+@keyframes moneyImpactGain {
+    0% { opacity: 0; }
+    20% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes moneyImpactLoss {
+    0% { opacity: 0; }
+    15% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes moneyLossShake {
+    0%, 100% { transform: translate(0, 0); }
+    20% { transform: translate(-3px, 1px); }
+    40% { transform: translate(4px, -2px); }
+    60% { transform: translate(-2px, 2px); }
+    80% { transform: translate(2px, -1px); }
+}
