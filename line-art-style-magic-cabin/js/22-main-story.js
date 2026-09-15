@@ -243,14 +243,10 @@ const MAIN_STORY_STAGES = [
             { speaker: '旁白', text: '这是他第一次，没能——或者说，没打算——替你做这个决定。' }
         ],
         unlockToast: '📖 主线推进：这次你自己做了判断',
-        questLabel: '去股市小屋，给"魔法道具铺"记一次你自己的估值',
+        questLabel: '在股市小屋赚够 1000 金币',
         target: { x: -12.0, z: 8.5 },
-        lockedHint: '先去股市小屋，看完魔法道具铺的基本面，记一次你自己的估值。',
-        auto: () => {
-            const inv = typeof readSavedInvestmentState === 'function' ? readSavedInvestmentState() : null;
-            const stock = inv && inv.market && inv.market.stocks && inv.market.stocks.MAGIC;
-            return !!(stock && Number(stock.playerValuation) > 0);
-        },
+        lockedHint: '先在股市小屋赚够 1000 金币的账面盈利。',
+        auto: () => typeof readSavedInvestmentPnl === 'function' && readSavedInvestmentPnl() >= 1000,
         choices: [
             {
                 label: '跟投（相信自己这些天攒下的判断）',
