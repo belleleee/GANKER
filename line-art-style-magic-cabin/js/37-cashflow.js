@@ -341,7 +341,22 @@ function renderCashFlowPanel() {
         cashFlowToolsHtml();
 }
 
+/* 第一次手头紧到金币不够15的时候，指一条明路去咖啡馆打零工——
+   不然玩家卡在缺钱的死胡同里，不一定想得起来还有这条路。走
+   showFeatureIntro 自带的"只弹一次"机制，不用另起一套存档字段。 */
+function checkLowCashCafeHint() {
+    if (typeof cabinCoins !== 'number' || cabinCoins >= 15) return;
+    if (typeof showFeatureIntro !== 'function') return;
+    showFeatureIntro('lowCashCafeHint', '经营 · 手头紧', '钱包快见底了', [
+        { speaker: '旁白', text: '钱包里只剩不到 15 金币，眼下能动的钱不多了。' },
+        { speaker: '师傅', text: '手头紧的时候别硬扛。仓库旁边那间线稿咖啡馆能打零工，进去干一班，能换点现钱。' },
+        { speaker: '你', text: '打工没问题，就是有点丢脸。' },
+        { speaker: '师傅', text: '缺钱不丢脸，缺钱硬撑着才丢脸。先去挣一笔，回头再想别的。' }
+    ]);
+}
+
 function updateCashFlow() {
+    checkLowCashCafeHint();
     processCashFlowDueEvents();
 }
 
@@ -356,5 +371,6 @@ if (cashFlowToggle) {
 window.captureCashFlowState = captureCashFlowState;
 window.applyCashFlowState = applyCashFlowState;
 window.scheduleCashFlow = scheduleCashFlow;
+window.projectedCashFlow = projectedCashFlow;
 window.renderCashFlowPanel = renderCashFlowPanel;
 window.updateCashFlow = updateCashFlow;
