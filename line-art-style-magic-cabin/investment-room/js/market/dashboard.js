@@ -74,6 +74,77 @@ function showMarketFeedback(amount, title, detail, options) {
   }
 }
 
+/* ---------------- 宗师傅苏格拉底式提问 ----------------
+   买之前先问"为什么买"，不是直接告诉你该不该买——三个理由对应他
+   三种反应：算过基本面的，他认；听消息就冲的，他要你先想想核实
+   过没有；纯靠感觉的，他直接泼冷水。理由本身不影响成交，影响的
+   是他怎么看你这一笔——判断质量的反馈，比"对/错"更接近真实投资。 */
+const MENTOR_BUY_REASONS = [
+  {
+    id: 'fundamentals',
+    label: '我算过基本面/估值，觉得被低估了',
+    quote: '"这才像话。算错了不丢人，没算才丢人——继续这么来。"'
+  },
+  {
+    id: 'news',
+    label: '听到消息/新闻，觉得要涨',
+    quote: '"消息只是线索，不是答案。核实过没有，还是听风就是雨？"'
+  },
+  {
+    id: 'feel',
+    label: '说不清，就是感觉会涨',
+    quote: '"凭感觉进的场，跌下去也别怪我没提醒你——凭感觉赚的钱，迟早凭感觉还回去。"'
+  }
+];
+
+let mentorBuyLayer = null;
+let pendingBuyRequest = null;
+
+function ensureMentorBuyDom() {
+  if (mentorBuyLayer) return;
+  mentorBuyLayer = document.createElement('div');
+  mentorBuyLayer.className = 'mentorBuyLayer';
+  mentorBuyLayer.hidden = true;
+  document.body.appendChild(mentorBuyLayer);
+  mentorBuyLayer.addEventListener('click', event => {
+    if (event.target === mentorBuyLayer) closeMentorBuyPrompt();
+    const btn = event.target.closest('button[data-reason]');
+    if (btn) confirmMentorBuyReason(btn.dataset.reason);
+  });
+}
+
+function requestBuyWithReason(id, qty, margin) {
+  const stock = safeStockForTrade(id);
+  ensureMentorBuyDom();
+  pendingBuyRequest = { id, qty: Math.max(1, Math.trunc(Number(qty)) || 1), margin: !!margin };
+  const rows = MENTOR_BUY_REASONS.map(r =>
+    '<button type="button" class="mentorReasonBtn" data-reason="' + r.id + '">' + r.label + '</button>').join('');
+  mentorBuyLayer.innerHTML =
+    '<div class="mentorBuyCard">' +
+    '<p class="mentorBuyAsk">宗庆后：买 ' + stock.name + ' ×' + pendingBuyRequest.qty + ' 之前，问你一句——<b>你为什么买？</b></p>' +
+    '<div class="mentorReasonList">' + rows + '</div>' +
+    '</div>';
+  mentorBuyLayer.hidden = false;
+}
+
+function closeMentorBuyPrompt() {
+  pendingBuyRequest = null;
+  if (mentorBuyLayer) mentorBuyLayer.hidden = true;
+}
+
+function confirmMentorBuyReason(reasonId) {
+  const request = pendingBuyRequest;
+  const reason = MENTOR_BUY_REASONS.find(r => r.id === reasonId);
+  if (!request || !reason) { closeMentorBuyPrompt(); return; }
+  closeMentorBuyPrompt();
+  if (request.margin) {
+    buyStockOnMargin(request.id, request.qty);
+  } else {
+    buyStock(request.id, request.qty);
+  }
+  if (typeof showToast === 'function') showToast(reason.quote, 3600);
+}
+
 function buyStock(id, count) {
   const stock = safeStockForTrade(id);
   if (stock.id === 'WAHA' && !companyState().listed) {
