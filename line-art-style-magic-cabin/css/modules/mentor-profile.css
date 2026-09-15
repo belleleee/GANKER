@@ -2,6 +2,31 @@
     width: min(680px, 94vw);
 }
 
+.mentorHero {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.mentorHeroAvatar {
+    flex: 0 0 auto;
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: 50% 15%;
+    box-shadow: 0 0 0 3px rgba(200, 150, 44, .55), 0 6px 18px rgba(58, 47, 34, .3);
+}
+
+.mentorHero .achievementsKicker {
+    margin: 0 0 2px;
+}
+
+.mentorHero h2 {
+    margin: 0;
+}
+
 .mentorFragmentsHint {
     margin: 0 0 16px;
     color: #6b5a41;
@@ -12,16 +37,23 @@
 .mentorRelation {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
     margin-bottom: 20px;
-    padding-bottom: 18px;
-    border-bottom: 3px double rgba(58, 47, 34, .3);
+    padding: 14px 16px 16px;
+    background: rgba(255, 253, 242, .55);
+    border: 1px solid rgba(58, 47, 34, .16);
+    border-radius: 12px;
 }
 
 .mentorRelationRow {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 6px;
+}
+
+.mentorRelationRow:not(:last-child) {
+    padding-bottom: 10px;
+    border-bottom: 1px dashed rgba(58, 47, 34, .16);
 }
 
 .mentorRelationHead {
@@ -32,13 +64,24 @@
     color: #8a6a3c;
 }
 
+.mentorRelationHead span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.mentorRelationIcon {
+    font-style: normal;
+    font-size: 14px;
+}
+
 .mentorRelationHead strong {
     color: #3a2f22;
     font-size: 13px;
 }
 
 .mentorRelationBar {
-    height: 8px;
+    height: 9px;
     border-radius: 999px;
     background: rgba(58, 47, 34, .12);
     overflow: hidden;
@@ -55,57 +98,74 @@
 }
 
 .mentorFragments {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 10px;
+    padding-left: 14px;
+}
+
+.mentorFragments::before {
+    content: '';
+    position: absolute;
+    left: 26px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: repeating-linear-gradient(180deg, rgba(58, 47, 34, .22) 0 4px, transparent 4px 9px);
 }
 
 .mentorFragmentCard {
+    position: relative;
     display: flex;
     gap: 12px;
     align-items: flex-start;
-    padding: 12px 14px;
-    background: rgba(255, 253, 242, .5);
-    border: 1px dashed rgba(58, 47, 34, .28);
+    padding: 11px 14px;
+    background: rgba(255, 253, 242, .45);
+    border: 1px solid rgba(58, 47, 34, .14);
     border-radius: 10px;
-    opacity: .55;
-    transition: opacity .2s ease, border-color .2s ease, background .2s ease;
+    opacity: .6;
+    transition: opacity .2s ease, border-color .2s ease, background .2s ease, transform .15s ease;
 }
 
 .mentorFragmentCard.on {
     opacity: 1;
-    border: 1px solid rgba(200, 150, 44, .6);
-    background: linear-gradient(135deg, rgba(200, 150, 44, .12), transparent 60%), rgba(255, 250, 236, .92);
+    border: 1px solid rgba(200, 150, 44, .55);
+    background: linear-gradient(135deg, rgba(200, 150, 44, .14), transparent 65%), rgba(255, 250, 236, .92);
+    box-shadow: 0 3px 10px rgba(200, 150, 44, .15);
 }
 
 .mentorFragmentIndex {
+    position: relative;
+    z-index: 1;
     flex: 0 0 auto;
-    width: 26px;
-    height: 26px;
+    width: 28px;
+    height: 28px;
     display: grid;
     place-items: center;
     border-radius: 50%;
-    background: rgba(58, 47, 34, .08);
-    border: 1px solid rgba(58, 47, 34, .18);
+    background: #f6ead0;
+    border: 1px solid rgba(58, 47, 34, .2);
     font: 700 12px/1 monospace;
-    color: #8a6a3c;
+    color: #a8916c;
 }
 
 .mentorFragmentCard.on .mentorFragmentIndex {
     background: #c8962c;
     border-color: #c8962c;
     color: #fff;
+    box-shadow: 0 0 0 3px rgba(200, 150, 44, .2);
 }
 
 .mentorFragmentCard p {
     margin: 0;
-    padding-top: 3px;
+    padding-top: 4px;
     font-size: 13.5px;
     line-height: 1.6;
     color: #3a2f22;
 }
 
 .mentorFragmentCard:not(.on) p {
-    color: #8a7a5c;
-    letter-spacing: .1em;
+    color: #9c8f76;
+    font-style: italic;
 }

@@ -38,10 +38,10 @@ function mentorRelationBand(value, labels) {
     return labels[3];
 }
 
-function mentorRelationRow(label, value, labels) {
+function mentorRelationRow(icon, label, value, labels) {
     const v = Math.max(0, Math.min(100, Number(value) || 0));
     return '<div class="mentorRelationRow">' +
-        '<div class="mentorRelationHead"><span>' + label + '</span><strong>' + mentorRelationBand(v, labels) + '</strong></div>' +
+        '<div class="mentorRelationHead"><span><i class="mentorRelationIcon">' + icon + '</i>' + label + '</span><strong>' + mentorRelationBand(v, labels) + '</strong></div>' +
         '<div class="mentorRelationBar"><i style="width:' + v + '%"></i></div>' +
         '</div>';
 }
@@ -50,9 +50,9 @@ function renderMentorRelation() {
     if (!mentorRelation) return;
     const mentor = (typeof mainStoryState !== 'undefined' && mainStoryState.mentor) || { trust: 50, agreement: 50, independence: 50 };
     mentorRelation.innerHTML =
-        mentorRelationRow('信任', mentor.trust, ['还在观察你', '开始认你这个人', '信得过你', '把你当自己人']) +
-        mentorRelationRow('想法契合度', mentor.agreement, ['常常唱反调', '偶尔意见不合', '大多数时候想法一致', '几乎心有灵犀']) +
-        mentorRelationRow('你的独立性', mentor.independence, ['还很依赖他的判断', '开始有自己的想法', '能独立拿主意了', '完全能自己扛事']);
+        mentorRelationRow('🤝', '信任', mentor.trust, ['还在观察你', '开始认你这个人', '信得过你', '把你当自己人']) +
+        mentorRelationRow('💭', '想法契合度', mentor.agreement, ['常常唱反调', '偶尔意见不合', '大多数时候想法一致', '几乎心有灵犀']) +
+        mentorRelationRow('🧭', '你的独立性', mentor.independence, ['还很依赖他的判断', '开始有自己的想法', '能独立拿主意了', '完全能自己扛事']);
 }
 
 function renderMentorFragments() {
@@ -61,8 +61,8 @@ function renderMentorFragments() {
     mentorFragments.innerHTML = MENTOR_FRAGMENTS.map((text, i) => {
         const unlocked = stage > i;
         return '<div class="mentorFragmentCard' + (unlocked ? ' on' : '') + '">' +
-            '<span class="mentorFragmentIndex">' + (i + 1) + '</span>' +
-            '<p>' + (unlocked ? text : '？？？') + '</p>' +
+            '<span class="mentorFragmentIndex">' + (unlocked ? (i + 1) : '🔒') + '</span>' +
+            '<p>' + (unlocked ? text : '还没解锁这段记忆') + '</p>' +
             '</div>';
     }).join('');
 }
