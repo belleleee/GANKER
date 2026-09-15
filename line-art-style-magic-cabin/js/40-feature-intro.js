@@ -48,11 +48,17 @@ function markFeatureIntroSeen(id) {
     } catch (err) { }
 }
 
-function showFeatureIntro(id, kicker, title, lines) {
-    if (!featureIntroPanel) return;
+let featureIntroOnClose = null;
+
+/* 返回 true 表示这次真的弹出来了（第一次见到）；返回 false 表示
+   已经看过、没弹——调用方可以据此决定要不要直接往下走（比如进咖啡馆
+   打工这种"看完对话再跳转"的场景，见 29-cafe-entrance.js）。 */
+function showFeatureIntro(id, kicker, title, lines, onClose) {
+    if (!featureIntroPanel) return false;
     const seen = loadFeatureIntroSeen();
-    if (seen[id]) return;
+    if (seen[id]) return false;
     markFeatureIntroSeen(id);
+    featureIntroOnClose = typeof onClose === 'function' ? onClose : null;
     if (featureIntroKicker) featureIntroKicker.textContent = kicker || '经营 · 新功能';
     if (featureIntroTitle) featureIntroTitle.textContent = title || '';
     if (featureIntroBody) {
@@ -66,6 +72,7 @@ function showFeatureIntro(id, kicker, title, lines) {
     window.APP_SHELL_BLOCK_GAME = true;
     window.APP_GAME_MODAL_OPEN = true;
     if (typeof SND !== 'undefined') SND.play('ui');
+    return true;
 }
 
 function closeFeatureIntro() {
@@ -74,6 +81,9 @@ function closeFeatureIntro() {
     window.APP_SHELL_BLOCK_GAME = false;
     window.APP_GAME_MODAL_OPEN = false;
     if (typeof saveGameState === 'function') saveGameState(false);
+    const onClose = featureIntroOnClose;
+    featureIntroOnClose = null;
+    if (onClose) onClose();
 }
 
 if (featureIntroCloseBtn) featureIntroCloseBtn.addEventListener('click', closeFeatureIntro);

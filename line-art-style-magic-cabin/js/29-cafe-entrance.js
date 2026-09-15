@@ -124,13 +124,28 @@
         return tex;
     }
 
+    function goToCafe() {
+        if (typeof window.prepareStoreReturn === 'function') window.prepareStoreReturn();
+        else if (typeof saveGameState === 'function') saveGameState(false);
+        window.location.href = './line-art-cafe/index.html';
+    }
+
     function enterCafe() {
         if (typeof window.noteAchievementEvent === 'function') {
             window.noteAchievementEvent('enterCafe');
         }
-        if (typeof window.prepareStoreReturn === 'function') window.prepareStoreReturn();
-        else if (typeof saveGameState === 'function') saveGameState(false);
-        window.location.href = './line-art-cafe/index.html';
+        /* 第一次进咖啡馆打工，师傅搭一句话再走——side活动也要有他的存在感，
+           不是只有主线章节才能听见他说话。看完对话才真正跳转过去。 */
+        if (typeof window.showFeatureIntro === 'function') {
+            const shown = window.showFeatureIntro('cafeShift', '经营 · 打零工', '线稿咖啡馆', [
+                { speaker: '旁白', text: '仓库旁边这间线稿咖啡馆能打零工，手头紧的时候进去干一班，能换点现钱。' },
+                { speaker: '师傅', text: '打零工不丢人。我当年也不是一开始就有自己的摊子。' },
+                { speaker: '你', text: '那你是从什么开始的？' },
+                { speaker: '师傅', text: '……进去再说，别把工时耗在这儿。' }
+            ], goToCafe);
+            if (shown) return;
+        }
+        goToCafe();
     }
 
     const cafe = new THREE.Group();
