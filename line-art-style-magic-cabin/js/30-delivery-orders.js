@@ -387,6 +387,13 @@ function isDeliveryUnlocked() {
 
 function updateDeliveryOrders(dt, time) {
     if (!isDeliveryUnlocked()) return;
+    if (typeof window.showFeatureIntro === 'function') {
+        window.showFeatureIntro('deliveryOrders', '经营 · 新功能', '代销订单', [
+            { speaker: '旁白', text: '森林里开始有客户蹲点等货了。订单板在小屋右上角，接单后地上会有箭头指路。' },
+            { speaker: '师傅', text: '东西种出来，得卖得出去才算数。' },
+            { speaker: '旁白', text: '手头紧的时候，"预付订金"能先拿到一半货款——多搭点手续费，换一个确定。' }
+        ]);
+    }
     deliverySpawnTimer -= dt || 0;
     if (deliverySpawnTimer <= 0) {
         deliverySpawnTimer = deliverySpawnGap();

@@ -394,7 +394,8 @@
     color: #cbb98c;
 }
 
-#mainStoryNextBtn {
+#mainStoryNextBtn,
+.featureIntroCloseBtn {
     display: block;
     margin-left: auto;
     border: 1px solid #ffd778;
