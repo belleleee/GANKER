@@ -10,6 +10,8 @@ let storyMapReturnFocus = null;
 
 const STORY_MAP_NOTES = [
     '炼金术失败，陌生老人留下来，让你先从种地开始。',
+    '去杂货铺买第一份种子。',
+    '翻地、播种、浇水，收获第一颗萝卜。',
     '第一笔送货只赚几枚金币，但现金开始流动。',
     '采茶、制茶、卖茶，第一次听见宗师傅提起三轮车。',
     '产品能卖以后，才决定广告是不是值得赌。',
@@ -26,10 +28,10 @@ const STORY_MAP_UNLOCKS = {
 };
 
 function storyMapChoice(index) {
-    if (index === 3) return mainStoryState.flags.adGambleWon ? '黄金时段广告' : '低成本广告';
-    if (index === 4) return mainStoryState.flags.factoryBonus ? '有偿兼并' : '联营 / 租赁';
-    if (index === 5) return mainStoryState.flags.ruralNetwork ? '乡镇联销体' : '正面广告战';
-    if (index === 7) {
+    if (index === 5) return mainStoryState.flags.adGambleWon ? '黄金时段广告' : '低成本广告';
+    if (index === 6) return mainStoryState.flags.factoryBonus ? '有偿兼并' : '联营 / 租赁';
+    if (index === 7) return mainStoryState.flags.ruralNetwork ? '乡镇联销体' : '正面广告战';
+    if (index === 9) {
         if (mainStoryState.flags.strictDealerTerms) return '坚持统一规矩';
         if (mainStoryState.flags.dealerGracePeriod) return '给老经销商过渡期';
     }

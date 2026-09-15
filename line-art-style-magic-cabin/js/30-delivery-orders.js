@@ -26,7 +26,9 @@ const DELIVERY_BULK_REWARD_MULT = 2.4;
 const DELIVERY_BULK_EXPIRE_SECONDS = 420;
 
 function isBulkDeliveryUnlocked() {
-    return typeof mainStoryState !== 'undefined' && mainStoryState.stage >= 3;
+    /* 主线插入了"买种子/第一颗萝卜"两章之后，原来对应"广告豪赌"章节的
+       stage>=3 要跟着往后挪两位，不然批发大单会提前很多解锁。 */
+    return typeof mainStoryState !== 'undefined' && mainStoryState.stage >= 5;
 }
 
 /* 广告豪赌押中"黄金时段"、非常可乐选对"乡镇联销体"，会真正改变这套

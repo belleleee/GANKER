@@ -25,6 +25,38 @@ const MAIN_STORY_STAGES = [
         auto: () => typeof isAlchemyIntroStoryStarted === 'function' && isAlchemyIntroStoryStarted()
     },
     {
+        /* 引导仍然靠地图上那圈"光圈"和 questLabel——卡片本身跟其余章节
+           一样，是"事情做完之后"弹出来复盘，不是"事情之前"的说明书。
+           买种子这个动作发生在杂货铺，卡片里由师傅回头点评一句。 */
+        unlocks: null,
+        title: '拿点种子再说',
+        lines: [
+            { speaker: '旁白', text: '你在杂货铺买下了第一份种子——萝卜的，师傅说这个皮实，新手不容易种死。' },
+            { speaker: '师傅', text: '买都买了，还愣着干嘛？回去把地种上。' },
+            { speaker: '你', text: '这就去。' }
+        ],
+        unlockToast: '📖 主线推进：买到第一批种子了',
+        questLabel: '去杂货铺买一份萝卜种子',
+        target: { x: 10, z: -10 },
+        lockedHint: '先去杂货铺买至少一份种子。',
+        auto: () => storyStat('seedBuys') >= 1
+    },
+    {
+        unlocks: null,
+        title: '第一颗萝卜',
+        lines: [
+            { speaker: '旁白', text: '第一颗萝卜从土里挖出来，个头不大，但确实是自己种出来的。' },
+            { speaker: '师傅', text: '不赖。拿去换成钱，才算数。' },
+            { speaker: '你', text: '就这一颗？' },
+            { speaker: '师傅', text: '一颗是一颗。账不是这么算的吗？' }
+        ],
+        unlockToast: '📖 主线推进：收获了第一颗萝卜',
+        questLabel: '翻地、播种、浇水，收获第一颗萝卜',
+        target: { x: 9.0, z: 0.0 },
+        lockedHint: '把地翻好、种上、浇熟，等萝卜成熟再收割。',
+        auto: () => storyStat('totalHarvests') >= 1
+    },
+    {
         unlocks: 'tea',
         title: '第一部分 · 七块钱也是钱',
         lines: [
@@ -682,11 +714,11 @@ function currentMainStoryObjective() {
         label = typeof window.alchemyIntroHint === 'function'
             ? window.alchemyIntroHint()
             : '打开发光的炼金书，取瓶架材料，再启动坩埚';
-    } else if (mainStoryState.stage === 1) {
+    } else if (mainStoryState.stage === 3) {
         const delivered = storyStat('deliveryCount') >= 1;
         if (!delivered) label = '完成第一笔送货（订单板接单），再攒够 110 金币';
         else if (currentCoins() < 110) label = '第一笔送货完成，继续攒到 110 金币';
-    } else if (mainStoryState.stage === 4 || mainStoryState.stage === 5) {
+    } else if (mainStoryState.stage === 6 || mainStoryState.stage === 7) {
         label += '（' + (storyStat('deliveryCount') > storyMilestone('deliveryCount') ? '已完成' : '还需 1 单') + '）';
     }
     if (stage.coinRequirement && !stageCoinsMet(stage)) {
