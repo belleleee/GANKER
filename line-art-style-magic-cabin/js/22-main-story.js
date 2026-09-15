@@ -223,23 +223,31 @@ const MAIN_STORY_STAGES = [
     }
 ];
 
+/* 只删对话/旁白/感想这些文字内容，解锁机制原样保留：stage 推进条件
+   （auto/coinRequirement）、选项的实际效果（coinCost/coinBonus/flag/
+   mentor/marketEvent）都不动。没有选项的章节直接静默推进（不弹卡片）；
+   有选项的章节还是要弹卡片让玩家选，但台词/选项后的感想文字清空，
+   往事闪回也不再跟着章节自动触发。 */
+MAIN_STORY_STAGES.forEach(stage => {
+    stage.lines = [];
+    delete stage.reflection;
+    delete stage.prologuePartAfter;
+    if (Array.isArray(stage.choices)) {
+        stage.choices.forEach(choice => { choice.resultText = ''; });
+    } else {
+        stage.silent = true;
+    }
+});
+
 const ENDINGS = {
     good: {
         title: '结局 · 这块牌子还是你的',
-        lines: [
-            '联销体的新规矩落地后，订单没有立刻变漂亮。有人抱怨，有人观望，也有人像邵老板那样，骂完以后照旧把货接走。',
-            '宗庆后站在仓库门口说：我说什么你都听，那这一路就白走了。你忽然明白，他留给你的不是答案，而是一种看账、看人、看路的方式。',
-            '最后你记住的不是一句“伟大企业家”，而是一个具体的人：能吃苦，会算账，重感情，也固执。你认识了宗庆后。'
-        ],
+        lines: [],
         achievement: 'ending_good'
     },
     bad: {
         title: '结局 · 替别人做的嫁衣',
-        lines: [
-            '那年冬天，"娃哈哈"的招牌被人摘了下来，换上了一块新的牌子。你手里攥着那份签了字的合同，忽然觉得那些绕来绕去的条款，原来早就写好了结局。',
-            '王师傅和田老板还是没走。"东西换了牌子，可账和人没换"——他们这么说的时候，你才知道，有些东西，合同抢不走。',
-            '你没有输给任何人，只是输给了一张没读懂的纸，和当年那点"先签了再说"的侥幸。路还长，摔一跤，才看得更清楚一点。'
-        ],
+        lines: [],
         achievement: 'ending_bad',
         retry: true
     }
@@ -569,6 +577,13 @@ function requestMainStoryAccess(key, proceed) {
     const idx = mainStoryStageIndexFor(key);
     if (idx !== mainStoryState.stage) {
         if (typeof showHintOverride === 'function') showHintOverride('主线还没到这里，先把前面的剧情走完');
+        return;
+    }
+    const stage = MAIN_STORY_STAGES[idx];
+    if (stage && stage.silent) {
+        if (typeof showHintOverride === 'function') {
+            showHintOverride(stage.lockedHint || stage.questLabel || '条件还没达成，先继续经营');
+        }
         return;
     }
     openMainStoryStage(idx, proceed);
