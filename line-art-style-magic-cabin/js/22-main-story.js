@@ -262,6 +262,8 @@ function applyMainStoryMarketEvents(raw) {
     pendingMarketEvents = Array.isArray(raw) ? raw.filter(event => event && typeof event.id === 'string').slice(-16) : [];
 }
 let mainStoryPendingProceed = null;
+/* 台词现在一句一句走对话框，不再一次性把整章台词全甩在卡片里 */
+let mainStoryLineIndex = 0;
 
 const mainStoryPanel = document.getElementById('mainStoryPanel');
 const mainStoryTitle = document.getElementById('mainStoryTitle');
@@ -338,23 +340,33 @@ function mainStoryStageReady(stage) {
     try { return !!stage.auto(); } catch (err) { return false; }
 }
 
+function mainStoryLinesDone(stage) {
+    const lines = stage.lines || [];
+    return mainStoryLineIndex >= lines.length - 1;
+}
+
 function renderMainStoryCard(stage) {
     mainStoryTitle.textContent = stage.title;
     const met = mainStoryStageReady(stage);
-    let html = stage.lines.map(line =>
-        '<p><span class="mainStorySpeaker">' + line.speaker + '</span>' + line.text + '</p>'
-    ).join('');
-    if (stage.coinRequirement) {
-        const coinsMet = stageCoinsMet(stage);
-        html += '<p class="mainStoryCoinNote' + (coinsMet ? ' met' : '') + '">需要攒够 ' + stage.coinRequirement +
-            ' 金币 · 当前 ' + currentCoins() + (coinsMet ? ' · 已达成' : '') + '</p>';
-    }
-    if (!met && stage.lockedHint) {
-        html += '<p class="mainStoryCoinNote">' + stage.lockedHint + '</p>';
+    const lines = stage.lines || [];
+    const linesDone = mainStoryLinesDone(stage);
+    const line = lines[Math.min(mainStoryLineIndex, Math.max(0, lines.length - 1))];
+
+    let html = line ? '<p><span class="mainStorySpeaker">' + line.speaker + '</span>' + line.text + '</p>' : '';
+    if (linesDone) {
+        if (stage.coinRequirement) {
+            const coinsMet = stageCoinsMet(stage);
+            html += '<p class="mainStoryCoinNote' + (coinsMet ? ' met' : '') + '">需要攒够 ' + stage.coinRequirement +
+                ' 金币 · 当前 ' + currentCoins() + (coinsMet ? ' · 已达成' : '') + '</p>';
+        }
+        if (!met && stage.lockedHint) {
+            html += '<p class="mainStoryCoinNote">' + stage.lockedHint + '</p>';
+        }
     }
     mainStoryBody.innerHTML = html;
+    mainStoryBody.classList.toggle('dialogStep', !linesDone);
 
-    if (Array.isArray(stage.choices) && mainStoryChoices) {
+    if (linesDone && Array.isArray(stage.choices) && mainStoryChoices) {
         mainStoryChoices.hidden = false;
         mainStoryChoices.innerHTML = stage.choices.map((choice, i) =>
             '<button type="button" class="mainStoryChoiceBtn" data-choice="' + i + '"' + (met && (!choice.coinCost || currentCoins() >= choice.coinCost) ? '' : ' disabled') + '>' +
@@ -368,8 +380,13 @@ function renderMainStoryCard(stage) {
         }
         if (mainStoryNextBtn) {
             mainStoryNextBtn.hidden = false;
-            mainStoryNextBtn.disabled = !met;
-            mainStoryNextBtn.textContent = met ? '继续' : '尚未完成目标';
+            if (!linesDone) {
+                mainStoryNextBtn.disabled = false;
+                mainStoryNextBtn.textContent = '继续';
+            } else {
+                mainStoryNextBtn.disabled = !met;
+                mainStoryNextBtn.textContent = met ? '继续' : '尚未完成目标';
+            }
         }
     }
 }
@@ -385,6 +402,7 @@ function openMainStoryStage(idx, proceed) {
         return;
     }
     mainStoryPendingProceed = proceed || null;
+    mainStoryLineIndex = 0;
     renderMainStoryCard(stage);
     mainStoryPanel.hidden = false;
     if (typeof window.clearPlayerInputState === 'function') window.clearPlayerInputState();
@@ -433,6 +451,12 @@ function onMainStoryNext() {
     const stage = MAIN_STORY_STAGES[idx];
     if (!stage) {
         closeMainStoryStage(false);
+        return;
+    }
+    if (!mainStoryLinesDone(stage)) {
+        mainStoryLineIndex++;
+        renderMainStoryCard(stage);
+        if (typeof SND !== 'undefined') SND.play('ui');
         return;
     }
     if (Array.isArray(stage.choices)) return;

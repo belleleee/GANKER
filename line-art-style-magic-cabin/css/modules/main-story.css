@@ -81,12 +81,29 @@
 }
 
 .mainStoryBody {
+    position: relative;
     min-height: 90px;
     padding: 14px 16px;
     margin-bottom: 18px;
     background: rgba(255, 253, 242, .55);
     border: 1px dashed rgba(138, 106, 60, .45);
     border-radius: 8px;
+}
+
+/* 台词一句一句走的时候，右下角加个闪动的箭头，提示还能点"继续"翻下一句 */
+.mainStoryBody.dialogStep::after {
+    content: '▼';
+    position: absolute;
+    right: 12px;
+    bottom: 8px;
+    color: #a8763c;
+    font-size: 14px;
+    animation: mainStoryDialogArrow 1s ease-in-out infinite;
+}
+
+@keyframes mainStoryDialogArrow {
+    0%, 100% { transform: translateY(0); opacity: .9; }
+    50% { transform: translateY(4px); opacity: .5; }
 }
 
 .mainStoryBody p {
