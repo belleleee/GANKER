@@ -141,54 +141,6 @@ function setAlchemyRecipeVisible(visible) {
     if (alchemyRecipeBoard) alchemyRecipeBoard.visible = !!visible;
 }
 
-function makeAlchemyRecipeBoard() {
-    const g = new THREE.Group();
-    g.position.set(-3.48, 1.55, -2.58);
-    g.rotation.y = Math.PI / 2;
-    const bg = new THREE.Mesh(
-        new THREE.PlaneGeometry(0.96, 0.55),
-        new THREE.MeshBasicMaterial({
-            color: 0xf6edcf,
-            transparent: true,
-            opacity: 0.92,
-            side: THREE.DoubleSide,
-            depthWrite: false
-        })
-    );
-    bg.userData.noHit = true;
-    g.add(bg);
-    const canvas = document.createElement('canvas');
-    canvas.width = 768;
-    canvas.height = 420;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#f8efd5';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = '#8a6d42';
-    ctx.lineWidth = 10;
-    ctx.strokeRect(18, 18, canvas.width - 36, canvas.height - 36);
-    ctx.fillStyle = '#2d261c';
-    ctx.font = 'bold 46px serif';
-    ctx.fillText('炼金术：一枚变两枚', 70, 105);
-    ctx.fillStyle = '#5f7c4b';
-    ctx.font = 'bold 42px serif';
-    ctx.fillText('旧硬币 + 茶叶 + 星尘', 86, 210);
-    ctx.fillStyle = '#5c5143';
-    ctx.font = '34px serif';
-    ctx.fillText('取下瓶架材料，再启动坩埚。', 92, 305);
-    ctx.fillText('注意：不要把火开太大。', 92, 355);
-    const tex = new THREE.CanvasTexture(canvas);
-    const recipe = new THREE.Mesh(
-        new THREE.PlaneGeometry(0.90, 0.49),
-        new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide, depthWrite: false })
-    );
-    recipe.userData.noHit = true;
-    recipe.position.z = 0.008;
-    g.add(recipe);
-    g.visible = false;
-    scene.add(g);
-    return g;
-}
-
 function createAlchemyIntroBook() {
     const g = new THREE.Group();
     g.position.set(ALCHEMY_INTRO_BOOK.x, 1.43, ALCHEMY_INTRO_BOOK.z);
@@ -327,7 +279,6 @@ function setupAlchemyIntro() {
     ensureAlchemyIntroOverlay();
     ensureAlchemyStageBeacons();
     alchemyBookGlow = createAlchemyIntroBook();
-    alchemyRecipeBoard = makeAlchemyRecipeBoard();
     interactables.push({
         x: ALCHEMY_INTRO_BOOK.x,
         z: ALCHEMY_INTRO_BOOK.z,
