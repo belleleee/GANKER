@@ -277,6 +277,7 @@ const MAIN_STORY_STAGES = [
         unlockToast: '📖 主线推进：材料集齐，可以做最后一次炼金了',
         questLabel: '材料备齐后，回到炼金锅完成最后一次炼金',
         target: { x: -2.35, z: -0.45 },
+        coinRequirement: 3000,
         lockedHint: '钱攒够 3000 金币，材料才备得齐。',
         auto: () => currentCoins() >= 3000,
         choices: [
