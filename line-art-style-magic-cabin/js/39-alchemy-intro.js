@@ -112,18 +112,7 @@ function alchemyIntroTarget() {
 }
 
 function ensureAlchemyIntroOverlay() {
-    if (alchemyIntroOverlay) return;
-    alchemyIntroOverlay = document.createElement('div');
-    alchemyIntroOverlay.id = 'alchemyIntroOverlay';
-    alchemyIntroOverlay.style.cssText = [
-        'position:fixed',
-        'inset:0',
-        'z-index:10000',
-        'pointer-events:auto',
-        'background:rgba(5,8,14,.62)',
-        'transition:opacity .45s ease',
-        'box-shadow:inset 0 0 180px rgba(0,0,0,.72)'
-    ].join(';');
+    if (alchemyIntroBeam) return;
     alchemyIntroBeam = document.createElement('div');
     alchemyIntroBeam.id = 'alchemyIntroBeam';
     alchemyIntroBeam.style.cssText = [
@@ -138,13 +127,11 @@ function ensureAlchemyIntroOverlay() {
         'transform:translate(-50%,-50%)',
         'transition:opacity .25s ease'
     ].join(';');
-    document.body.appendChild(alchemyIntroOverlay);
     document.body.appendChild(alchemyIntroBeam);
 }
 
 function setAlchemyIntroOverlayVisible(visible) {
     ensureAlchemyIntroOverlay();
-    alchemyIntroOverlay.style.opacity = visible ? '1' : '0';
     if (alchemyIntroGuide) alchemyIntroGuide.style.opacity = visible ? '1' : '0';
     if (alchemyIntroDialog) alchemyIntroDialog.style.opacity = visible ? '1' : '0';
     if (alchemyIntroBeam) alchemyIntroBeam.style.opacity = visible ? '1' : '0';
@@ -413,9 +400,6 @@ function updateAlchemyIntro(dt, time) {
             beacon.userData.ring.material.opacity = 0.55 + pulse * 0.35;
             beacon.rotation.y += (dt || 0) * 0.9;
         });
-        if (typeof FILL !== 'undefined' && FILL.uniforms && FILL.uniforms.uDaylight) {
-            FILL.uniforms.uDaylight.value = Math.min(FILL.uniforms.uDaylight.value || 0, 0.05);
-        }
     } else {
         setAlchemyIntroOverlayVisible(false);
         alchemyStageBeacons.forEach(beacon => { beacon.visible = false; });
