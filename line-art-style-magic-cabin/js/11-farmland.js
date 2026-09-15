@@ -809,7 +809,9 @@ function openFarmHireChat() {
             { speaker: '你', text: '一个人种地太累了，要不要雇个人来帮忙？' },
             { speaker: '师傅', text: '你自己先扛过这几十趟，知道地有多沉，招来的人才不会被你糊弄，也不会被人糊弄。' },
             { speaker: '你', text: '那现在呢？' },
-            { speaker: '师傅', text: '现在差不多了。去问问吧。' }
+            { speaker: '师傅', text: '现在差不多了。去问问吧。' },
+            { speaker: '你', text: '万一雇的人不上心怎么办？' },
+            { speaker: '师傅', text: '工钱按时发，活儿按数记——你怎么待人，人怎么待你的地，这事没有捷径。' }
         ], proceed);
         if (shown) return;
     }
