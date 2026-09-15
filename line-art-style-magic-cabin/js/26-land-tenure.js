@@ -181,7 +181,32 @@ function promptRentFirstTime() {
         ],
         [
             { label: '再想想', onClick: () => showHintOverride('想好了随时回来找地主') },
-            { label: 'All-in 租下来（-' + LAND_RENT_COST + ' 金币）', primary: true, onClick: doRentLand }
+            {
+                label: 'All-in 租下来（-' + LAND_RENT_COST + ' 金币）', primary: true, onClick: () => {
+                    doRentLand();
+                    promptAfterFirstRent();
+                }
+            }
+        ]
+    );
+}
+
+/* 地租下来了，但地里空荡荡的什么都没有——趁热打铁指一条明路，
+   别让玩家租完地却愣在原地不知道下一步该干嘛。 */
+function promptAfterFirstRent() {
+    openLandPanel(
+        '第一个决定',
+        '地租下来了，接下来呢？',
+        [
+            { speaker: '旁白', text: '地契揣进兜里，脚下这块地却还是光秃秃的一片——什么都没有，得先有种子才能开始。' },
+            { speaker: '师傅', text: '光租地没用，得有种子下地。西边杂货铺的仓库，货架上有的是，买得起什么就先种什么。' },
+            { speaker: '你', text: '随便买？' },
+            { speaker: '师傅', text: '先别贪多。手头紧，挑一样先种熟了，比什么都买一点更实在。' }
+        ],
+        [
+            {
+                label: '这就去杂货铺', primary: true, onClick: () => showHintOverride('🌱 杂货铺在小屋西边，打开货箱后按 <b>B</b> 购买种子')
+            }
         ]
     );
 }
