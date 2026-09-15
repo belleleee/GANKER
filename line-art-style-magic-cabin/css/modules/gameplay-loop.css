@@ -70,31 +70,39 @@
     font-size: 22px;
 }
 
-.dailySettlementGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 7px;
+.dailySettlementChips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
-.dailySettlementItem {
-    border: 1px solid rgba(138, 106, 60, .28);
-    border-radius: 8px;
-    padding: 8px 9px;
-    background: rgba(255, 255, 255, .5);
-}
-
-.dailySettlementItem strong {
-    display: block;
-    margin-bottom: 2px;
-    font-size: 15px;
-}
-
-.dailySettlementItem span {
-    display: block;
+.dailySettlementChip {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: rgba(138, 106, 60, .08);
+    border: 1px solid rgba(138, 106, 60, .16);
+    font-size: 12.5px;
     color: #6f7667;
-    line-height: 1.35;
-    font-size: 10.5px;
 }
+
+.dailySettlementChip .chipIcon {
+    font-size: 13px;
+    line-height: 1;
+}
+
+.dailySettlementChip .chipValue {
+    font-weight: 800;
+    font-size: 15px;
+    color: #3a3730;
+}
+
+.dailySettlementChip.gain .chipValue { color: #4f8a3f; }
+.dailySettlementChip.loss .chipValue { color: #c15b3f; }
+.dailySettlementChip.gain { background: rgba(143, 174, 110, .14); border-color: rgba(143, 174, 110, .3); }
+.dailySettlementChip.loss { background: rgba(193, 91, 63, .1); border-color: rgba(193, 91, 63, .24); }
 
 .dailySettlementNoteList {
     margin: 10px 0 0;
@@ -129,9 +137,6 @@
 @media (max-width: 720px) {
     .dailyPlanOptions {
         grid-template-columns: 1fr;
-    }
-    .dailySettlementGrid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
     .dailySettlementCard {
         padding: 16px;

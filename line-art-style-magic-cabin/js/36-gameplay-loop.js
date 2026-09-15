@@ -162,20 +162,21 @@ function openDailySettlement(day, ledger) {
     if (dailySettlementKicker) dailySettlementKicker.textContent = '经营日报 · Day ' + day;
     if (dailySettlementTitle) dailySettlementTitle.textContent = net >= 0 ? '今天赚了 ' + net + ' 金币' : '今天亏了 ' + Math.abs(net) + ' 金币';
     const pnlText = pnl >= 0 ? '+' + pnl : String(pnl);
-    /* 只列有动静的数据——今天没发生的事（0批成品茶、0单订单……）
-       不用占一整块地方，日报才能一屏看完，不用来回滚。 */
-    const tiles = [
-        { value: '+' + ledger.income, label: '今日收入', always: true },
-        { value: '-' + ledger.expense, label: '今日支出', always: true },
-        { value: ledger.farmHarvests, label: '农场收获' + (ledger.badWeatherHarvests ? ' · 减产 ' + ledger.badWeatherHarvests : ''), show: ledger.farmHarvests > 0 },
-        { value: ledger.teaBatches, label: '成品茶批次' + (ledger.teaPicks ? ' · 采茶 ' + ledger.teaPicks : ''), show: ledger.teaBatches > 0 || ledger.teaPicks > 0 },
-        { value: ledger.deliveries, label: '完成订单 · +' + ledger.deliveryIncome + ' 金币', show: ledger.deliveries > 0 },
-        { value: pnlText, label: '股票累计盈亏', show: pnl !== 0 }
+    /* 带图标的小圆点，一眼扫过去就知道今天忙了什么——订单量玩家
+       最关心，固定露出来；农场/茶叶/股市这些今天没动静的就不占地方。 */
+    const chips = [
+        { icon: '💰', tone: 'gain', value: '+' + ledger.income, label: '收入', always: true },
+        { icon: '💸', tone: 'loss', value: '-' + ledger.expense, label: '支出', always: true },
+        { icon: '📦', tone: 'neutral', value: ledger.deliveries, label: '送单 · +' + ledger.deliveryIncome, always: true },
+        { icon: '🌾', tone: 'neutral', value: ledger.farmHarvests, label: '收获' + (ledger.badWeatherHarvests ? ' · 减产' + ledger.badWeatherHarvests : ''), show: ledger.farmHarvests > 0 },
+        { icon: '🍵', tone: 'neutral', value: ledger.teaBatches, label: '成品茶' + (ledger.teaPicks ? ' · 采茶' + ledger.teaPicks : ''), show: ledger.teaBatches > 0 || ledger.teaPicks > 0 },
+        { icon: '📈', tone: pnl >= 0 ? 'gain' : 'loss', value: pnlText, label: '股票盈亏', show: pnl !== 0 }
     ].filter(t => t.always || t.show);
     const noteLines = [settlementAdvice(ledger)].concat(ledger.notes).slice(0, 4);
     dailySettlementBody.innerHTML =
-        '<div class="dailySettlementGrid">' +
-        tiles.map(t => '<div class="dailySettlementItem"><strong>' + t.value + '</strong><span>' + t.label + '</span></div>').join('') +
+        '<div class="dailySettlementChips">' +
+        chips.map(t => '<div class="dailySettlementChip ' + t.tone + '"><span class="chipIcon">' + t.icon + '</span>' +
+            '<span class="chipValue">' + t.value + '</span><span class="chipLabel">' + t.label + '</span></div>').join('') +
         '</div>' +
         '<ul class="dailySettlementNoteList">' + noteLines.map(n => '<li>' + n + '</li>').join('') + '</ul>';
     if (typeof window.publishLiveNews === 'function') {
