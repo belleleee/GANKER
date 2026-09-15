@@ -109,7 +109,11 @@ function getFarmCropName(cropId) {
 
 function farmWorkerPlanText() {
     const plan = currentFarmWorkerCropPlan();
-    return plan === 'auto' ? '自己判断' : '种' + getFarmCropName(plan);
+    const daily = typeof window.getDailyPlan === 'function' ? window.getDailyPlan() : 'balanced';
+    const prefix = daily === 'farm' ? '专注农场 · ' :
+        daily === 'orders' ? '订单优先 · ' :
+            daily === 'rest' ? '休整 · ' : '';
+    return prefix + (plan === 'auto' ? '自己判断' : '种' + getFarmCropName(plan));
 }
 
 function currentFarmWorkerCropPlan() {
@@ -153,6 +157,9 @@ function harvestFarmCrop(state, silent) {
     const coins = Math.max(1, Math.round(cropDef.harvestCoins * multiplier));
     if (typeof window.noteAchievementEvent === 'function') {
         window.noteAchievementEvent('farmHarvest', { cropId, multiplier });
+    }
+    if (typeof window.noteDailyEvent === 'function') {
+        window.noteDailyEvent('farmHarvest', { cropId, multiplier, coins });
     }
     if (window.addCabinCoins) {
         if (silent) window.addCabinCoins(coins, false);
@@ -467,7 +474,7 @@ function farmHireLabel() {
     if (farmHireState.playerHarvests < FARM_RESUME_HARVEST_TARGET) {
         return '收割萝卜 ' + farmHireState.playerHarvests + '/' + FARM_RESUME_HARVEST_TARGET + ' 后开放招聘';
     }
-    if (!farmHireState.resumeViewed) return '查看第一份简历';
+    if (!farmHireState.resumeViewed) return '要不要雇个人？';
     return '雇佣农场经营者';
 }
 
@@ -475,7 +482,7 @@ function farmHireSignTitle() {
     if (farmHireState.striking) return '补发工资';
     if (farmHireState.hired) return '经营中';
     if (farmHireState.playerHarvests < FARM_RESUME_HARVEST_TARGET) return '农场招募';
-    if (!farmHireState.resumeViewed) return '查看简历';
+    if (!farmHireState.resumeViewed) return '要不要雇个人？';
     return '雇佣申请人';
 }
 
@@ -485,7 +492,7 @@ function farmHireSignSubtext() {
     if (farmHireState.playerHarvests < FARM_RESUME_HARVEST_TARGET) {
         return '收割 ' + farmHireState.playerHarvests + '/' + FARM_RESUME_HARVEST_TARGET;
     }
-    if (!farmHireState.resumeViewed) return '读完序章后面试';
+    if (!farmHireState.resumeViewed) return '找师傅聊聊';
     return '雇佣费 ' + FARM_WORKER_HIRE_COST + ' 金币';
 }
 
@@ -517,6 +524,7 @@ function farmWorkerCropNote(cropId) {
 
 function renderFarmWorkerPanel() {
     if (!farmWorkerPanel || !farmWorkerCropOptions) return;
+    if (typeof window.renderDailyPlanOptions === 'function') window.renderDailyPlanOptions();
     const plan = currentFarmWorkerCropPlan();
     const chosenText = plan === 'auto'
         ? '当前指令：让员工自己判断。'
@@ -603,7 +611,7 @@ function noteFarmPlayerHarvest(cropId) {
         !farmHireState.hired
     ) {
         farmHireState.resumePrompted = true;
-        showHintOverride('你觉得一个人经营农场太累了，也许该看看第一份求职简历');
+        showHintOverride('你觉得一个人经营农场太累了，也许该找师傅聊聊要不要雇个人');
     }
     updateFarmHireLabel();
     saveFarmHireStateNow();
@@ -738,6 +746,10 @@ function getFarmWorkerAction(plot) {
    会有几天"缓过来"的低效期（trustPenaltyUntilDay）。 */
 function farmWorkerSpeedFactor() {
     let factor = 1 + Math.min(0.3, Math.floor((farmHireState.loyaltyStreak || 0) / 5) * 0.05);
+    const daily = typeof window.getDailyPlan === 'function' ? window.getDailyPlan() : 'balanced';
+    if (daily === 'farm') factor *= 1.28;
+    else if (daily === 'orders') factor *= 0.92;
+    else if (daily === 'rest') factor *= 0.45;
     if (farmHireState.trustPenaltyUntilDay >= 0 && currentFarmDay() < farmHireState.trustPenaltyUntilDay) {
         factor *= 0.7;
     }
@@ -765,33 +777,43 @@ function payFarmWorker(reason) {
     return true;
 }
 
-function openFarmResumeStory() {
-    if (typeof window.openPrologue !== 'function') {
-        showHintOverride('第一份简历已经放在桌上：先阅读序章剧情');
+/* 以前这里是"查看第一份简历"，读完一段跟雇人毫不相干的往事闪回才能
+   继续招聘——现在直接换成跟师傅的一段对话，聊完当场就能雇人，不用
+   再靠"简历"这个别扭的借口牵出剧情。 */
+function performFarmHire() {
+    if (!window.spendCabinCoins) {
+        showHintOverride('金币系统还没准备好，暂时不能雇佣');
         return;
     }
-    if (typeof window.clearPlayerInputState === 'function') window.clearPlayerInputState();
-    if (document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
-    window.APP_SHELL_BLOCK_GAME = true;
-    window.openPrologue();
-}
-
-function closeFarmResumeStory() {
-    const panel = document.getElementById('prologuePanel');
-    if (panel) panel.hidden = true;
-    if (typeof window.clearPlayerInputState === 'function') window.clearPlayerInputState();
-    window.APP_SHELL_BLOCK_GAME = false;
-}
-
-function completeFarmResumeStory() {
-    farmHireState.resumeViewed = true;
-    farmHireState.candidateUnlocked = true;
-    farmHireState.resumePrompted = true;
-    closeFarmResumeStory();
+    if (!window.spendCabinCoins(FARM_WORKER_HIRE_COST, '雇佣农场经营者')) return;
+    farmHireState.hired = true;
+    farmHireState.lastPaidDay = currentFarmDay();
+    farmHireState.phase = 'seek';
     updateFarmHireLabel();
     SND.play('chim');
-    showHintOverride('简历读完了：申请人想来经营农场，帮助家里减轻负担');
+    showHintOverride('已雇佣农场经营者 · 日结工资 ' + FARM_WORKER_DAILY_WAGE);
     saveFarmHireStateNow();
+}
+
+function openFarmHireChat() {
+    const proceed = () => {
+        farmHireState.resumeViewed = true;
+        farmHireState.candidateUnlocked = true;
+        farmHireState.resumePrompted = true;
+        updateFarmHireLabel();
+        saveFarmHireStateNow();
+        performFarmHire();
+    };
+    if (typeof window.showFeatureIntro === 'function') {
+        const shown = window.showFeatureIntro('farmHireChat', '经营 · 雇人', '要不要雇个人', [
+            { speaker: '你', text: '一个人种地太累了，要不要雇个人来帮忙？' },
+            { speaker: '师傅', text: '你自己先扛过这几十趟，知道地有多沉，招来的人才不会被你糊弄，也不会被人糊弄。' },
+            { speaker: '你', text: '那现在呢？' },
+            { speaker: '师傅', text: '现在差不多了。去问问吧。' }
+        ], proceed);
+        if (shown) return;
+    }
+    proceed();
 }
 
 function hireFarmWorker() {
@@ -805,26 +827,12 @@ function hireFarmWorker() {
     }
 
     if (!farmHireState.hired && !farmHireState.resumeViewed) {
-        farmHireState.resumePrompted = true;
-        updateFarmHireLabel();
-        saveFarmHireStateNow();
-        openFarmResumeStory();
+        openFarmHireChat();
         return;
     }
 
     if (!farmHireState.hired) {
-        if (!window.spendCabinCoins) {
-            showHintOverride('金币系统还没准备好，暂时不能雇佣');
-            return;
-        }
-        if (!window.spendCabinCoins(FARM_WORKER_HIRE_COST, '雇佣农场经营者')) return;
-        farmHireState.hired = true;
-        farmHireState.lastPaidDay = currentFarmDay();
-        farmHireState.phase = 'seek';
-        updateFarmHireLabel();
-        SND.play('chim');
-        showHintOverride('已雇佣农场经营者 · 日结工资 ' + FARM_WORKER_DAILY_WAGE);
-        saveFarmHireStateNow();
+        performFarmHire();
         return;
     }
 
@@ -1110,6 +1118,9 @@ function settleFarmWorkerWage() {
     farmHireState.action = null;
     farmHireState.targetPlot = null;
     setWorkerTool(null);
+    if (typeof window.addGoodwillPenalty === 'function') {
+        window.addGoodwillPenalty(5, false);
+    }
     showHintOverride('金币不足，农工罢工了 · 需要补发 ' + FARM_WORKER_DAILY_WAGE + ' 金币');
     saveFarmHireStateNow();
 }
