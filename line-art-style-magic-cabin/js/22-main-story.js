@@ -11,6 +11,7 @@
 const MAIN_STORY_STAGES = [
     {
         unlocks: null,
+        silent: true,
         title: '序章 · 炼金失败之后',
         lines: [
             { speaker: '旁白', text: '你照着《炼金术：如何把一枚硬币变成两枚》把旧硬币、茶叶和星尘丢进锅里。火光一跳，整间小屋黑了下来。' },
@@ -558,7 +559,13 @@ function pollAutoStageAdvance() {
     if (window.APP_GAME_MODAL_OPEN || window.APP_SHELL_BLOCK_GAME) return;
     if (mainStoryAutoCooldown > 0) return;
     if (!window.APP_ONBOARDING_DISMISSED) return;
-    if (mainStoryStageReady(stage)) openMainStoryStage(mainStoryState.stage, null);
+    if (!mainStoryStageReady(stage)) return;
+    /* silent：不弹开局宗师傅那段对话卡片，条件达成直接静默推进主线 */
+    if (stage.silent) {
+        advanceMainStoryStage(stage, stage.unlockToast);
+        return;
+    }
+    openMainStoryStage(mainStoryState.stage, null);
 }
 
 function captureMainStoryState() {
