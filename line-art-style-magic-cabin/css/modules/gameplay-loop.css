@@ -1,0 +1,139 @@
+.dailyPlanOptions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.dailyPlanBtn {
+    min-height: 64px;
+    border: 1px solid rgba(112, 127, 104, .42);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .68);
+    color: #454545;
+    text-align: left;
+    padding: 8px 10px;
+    cursor: pointer;
+    font-weight: 800;
+}
+
+.dailyPlanBtn small {
+    display: block;
+    margin-top: 4px;
+    color: #72806a;
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+.dailyPlanBtn.isActive {
+    border-color: #8fae6e;
+    background: rgba(143, 174, 110, .18);
+    color: #54733f;
+    box-shadow: 0 0 0 3px rgba(143, 174, 110, .12);
+}
+
+.dailySettlementPanel {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: grid;
+    place-items: center;
+    background: rgba(32, 34, 30, .48);
+    backdrop-filter: blur(3px);
+}
+
+.dailySettlementPanel[hidden] {
+    display: none;
+}
+
+.dailySettlementCard {
+    width: min(480px, calc(100vw - 32px));
+    max-height: min(84vh, calc(100vh - 32px));
+    overflow: auto;
+    padding: 18px 20px;
+    border: 1.5px solid #9f865f;
+    border-radius: 12px;
+    background: #fff8e9;
+    color: #2f2b24;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, .24);
+}
+
+.dailySettlementKicker {
+    margin: 0 0 4px;
+    color: #6f7d5c;
+    font: 800 11px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    letter-spacing: 2px;
+}
+
+#dailySettlementTitle {
+    margin: 0 0 12px;
+    font-size: 22px;
+}
+
+.dailySettlementGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 7px;
+}
+
+.dailySettlementItem {
+    border: 1px solid rgba(138, 106, 60, .28);
+    border-radius: 8px;
+    padding: 8px 9px;
+    background: rgba(255, 255, 255, .5);
+}
+
+.dailySettlementItem strong {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 15px;
+}
+
+.dailySettlementItem span {
+    display: block;
+    color: #6f7667;
+    line-height: 1.35;
+    font-size: 10.5px;
+}
+
+.dailySettlementNoteList {
+    margin: 10px 0 0;
+    padding: 8px 10px 8px 24px;
+    border-left: 3px solid #8fae6e;
+    background: rgba(143, 174, 110, .1);
+    line-height: 1.5;
+    font-size: 12px;
+}
+
+.dailySettlementNoteList li {
+    margin: 2px 0;
+}
+
+.dailySettlementActions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 14px;
+}
+
+#dailySettlementCloseBtn {
+    border: 1px solid #7c8f62;
+    border-radius: 999px;
+    background: #8fae6e;
+    color: #fff;
+    padding: 8px 20px;
+    font-weight: 900;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+@media (max-width: 720px) {
+    .dailyPlanOptions {
+        grid-template-columns: 1fr;
+    }
+    .dailySettlementGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .dailySettlementCard {
+        padding: 16px;
+    }
+}

@@ -162,17 +162,22 @@ function openDailySettlement(day, ledger) {
     if (dailySettlementKicker) dailySettlementKicker.textContent = '经营日报 · Day ' + day;
     if (dailySettlementTitle) dailySettlementTitle.textContent = net >= 0 ? '今天赚了 ' + net + ' 金币' : '今天亏了 ' + Math.abs(net) + ' 金币';
     const pnlText = pnl >= 0 ? '+' + pnl : String(pnl);
+    /* 只列有动静的数据——今天没发生的事（0批成品茶、0单订单……）
+       不用占一整块地方，日报才能一屏看完，不用来回滚。 */
+    const tiles = [
+        { value: '+' + ledger.income, label: '今日收入', always: true },
+        { value: '-' + ledger.expense, label: '今日支出', always: true },
+        { value: ledger.farmHarvests, label: '农场收获' + (ledger.badWeatherHarvests ? ' · 减产 ' + ledger.badWeatherHarvests : ''), show: ledger.farmHarvests > 0 },
+        { value: ledger.teaBatches, label: '成品茶批次' + (ledger.teaPicks ? ' · 采茶 ' + ledger.teaPicks : ''), show: ledger.teaBatches > 0 || ledger.teaPicks > 0 },
+        { value: ledger.deliveries, label: '完成订单 · +' + ledger.deliveryIncome + ' 金币', show: ledger.deliveries > 0 },
+        { value: pnlText, label: '股票累计盈亏', show: pnl !== 0 }
+    ].filter(t => t.always || t.show);
+    const noteLines = [settlementAdvice(ledger)].concat(ledger.notes).slice(0, 4);
     dailySettlementBody.innerHTML =
         '<div class="dailySettlementGrid">' +
-        '<div class="dailySettlementItem"><strong>+' + ledger.income + '</strong><span>今日收入</span></div>' +
-        '<div class="dailySettlementItem"><strong>-' + ledger.expense + '</strong><span>今日支出</span></div>' +
-        '<div class="dailySettlementItem"><strong>' + ledger.farmHarvests + '</strong><span>农场收获 · 减产 ' + ledger.badWeatherHarvests + '</span></div>' +
-        '<div class="dailySettlementItem"><strong>' + ledger.teaBatches + '</strong><span>成品茶批次 · 采茶 ' + ledger.teaPicks + '</span></div>' +
-        '<div class="dailySettlementItem"><strong>' + ledger.deliveries + '</strong><span>完成订单 · +' + ledger.deliveryIncome + ' 金币</span></div>' +
-        '<div class="dailySettlementItem"><strong>' + pnlText + '</strong><span>股票累计盈亏</span></div>' +
+        tiles.map(t => '<div class="dailySettlementItem"><strong>' + t.value + '</strong><span>' + t.label + '</span></div>').join('') +
         '</div>' +
-        '<p class="dailySettlementNote">' + settlementAdvice(ledger) + '</p>' +
-        (ledger.notes.length ? '<p class="dailySettlementNote">' + ledger.notes.join('<br>') + '</p>' : '');
+        '<ul class="dailySettlementNoteList">' + noteLines.map(n => '<li>' + n + '</li>').join('') + '</ul>';
     if (typeof window.publishLiveNews === 'function') {
         const headline = net >= 0 ? '今日盈余 ' + net + ' 金币' : '今日亏空 ' + Math.abs(net) + ' 金币';
         const bits = [];
