@@ -407,26 +407,26 @@ function sidebarRows() {
 
 /* ---------------- 基本面：三句话看懂一支股票 ----------------
    不做PE/PB/ROE那一套——玩家判断的是"好公司≠好股票"：
-   稳定度（波动越小越稳）、增长（最近价格趋势）、估值（现价相对近期
-   均价是偏高还是偏低），三项够用了。 */
+   稳定度（波动越小越稳）、增长（最近价格趋势）、估值（现价相对
+   "真实价值"V是偏高还是偏低）。V不是从价格倒推出来的，是
+   stock.fund 里营收/利润/现金/负债这几个真实变量算出来的
+   （见 state.js 的 fairValue()）——消息先改这几个数，再体现到
+   估值和股价上，玩家看基本面才是在看"真东西"，不是在看K线的影子。 */
 function stockFundamentals(stock) {
   const history = (stock.history || []).slice(-12).filter(Number.isFinite);
-  if (history.length < 2) {
-    return { growthPct: 0, stability: 70, valuationLabel: '合理', fairValue: stock.price };
-  }
-  const early = history[0];
+  const early = history.length >= 2 ? history[0] : stock.price;
   const growthPct = early ? (stock.price - early) / early : 0;
   let volSum = 0;
   for (let i = 1; i < history.length; i++) {
     const prev = history[i - 1] || 1;
     volSum += Math.abs((history[i] - prev) / prev);
   }
-  const avgVol = volSum / (history.length - 1);
+  const avgVol = history.length > 1 ? volSum / (history.length - 1) : 0;
   const stability = Math.max(4, Math.min(100, Math.round(100 - avgVol * 1400)));
-  const fairValue = history.reduce((a, b) => a + b, 0) / history.length;
-  const ratio = fairValue ? stock.price / fairValue : 1;
+  const fv = typeof fairValue === 'function' ? fairValue(stock) : stock.price;
+  const ratio = fv ? stock.price / fv : 1;
   const valuationLabel = ratio > 1.12 ? '偏高' : ratio < 0.9 ? '偏低' : '合理';
-  return { growthPct, stability, valuationLabel, fairValue: Math.round(fairValue * 10) / 10 };
+  return { growthPct, stability, valuationLabel, fairValue: Math.round(fv * 10) / 10 };
 }
 
 function fundamentalBar(pct, tone) {
@@ -438,13 +438,31 @@ function stockFundamentalsHtml(stock) {
   const growthPct100 = Math.round(50 + f.growthPct * 250);
   const growthTone = f.growthPct >= 0 ? '#39ff9c' : '#ff5d75';
   const valTone = f.valuationLabel === '偏高' ? '#ff5d75' : f.valuationLabel === '偏低' ? '#39ff9c' : '#ffd666';
-  return '<div class="stockFundamentals">' +
+  let html = '<div class="stockFundamentals">' +
     '<div class="fundRow"><span>稳定度</span>' + fundamentalBar(f.stability, '#5be6ff') + '<b>' + f.stability + '</b></div>' +
     '<div class="fundRow"><span>近期走势</span>' + fundamentalBar(growthPct100, growthTone) +
     '<b style="color:' + growthTone + '">' + (f.growthPct >= 0 ? '+' : '') + Math.round(f.growthPct * 100) + '%</b></div>' +
     '<div class="fundRow"><span>估值</span><b class="fundValuation" style="color:' + valTone + '">' + f.valuationLabel +
-    '（近期均价 ' + f.fairValue + '）</b></div>' +
+    '（真实价值约 ' + f.fairValue + '）</b></div>' +
     '</div>';
+  if (stock.fund) {
+    const fu = stock.fund;
+    html += '<div class="companyFacts">' +
+      '<div class="companyFactRow"><span>营收</span><b>' + Math.round(fu.revenue) + '</b></div>' +
+      '<div class="companyFactRow"><span>利润</span><b class="' + (fu.profit >= 0 ? 'up' : 'down') + '">' + Math.round(fu.profit) + '</b></div>' +
+      '<div class="companyFactRow"><span>现金</span><b>' + Math.round(fu.cash) + '</b></div>' +
+      '<div class="companyFactRow"><span>负债</span><b>' + Math.round(fu.debt) + '</b></div>' +
+      '<div class="companyFactRow"><span>增长率</span><b class="' + (fu.growth >= 0 ? 'up' : 'down') + '">' + (fu.growth >= 0 ? '+' : '') + Math.round(fu.growth * 100) + '%</b></div>' +
+      '</div>';
+  }
+  const myVal = stock.playerValuation || 0;
+  html += '<div class="myValuationBox">' +
+    '<label>你的估值<input type="number" min="0" step="1" id="myValuationInput" value="' + (myVal || '') + '" placeholder="你觉得它值多少？"></label>' +
+    '<button type="button" data-action="setValuation" data-stock="' + stock.id + '">记下判断</button>' +
+    (myVal ? '<p class="myValuationNote">你觉得值 <b>' + myVal + '</b>，市场价 <b>' + Math.round(stock.price) + '</b> —— ' +
+      (myVal > stock.price ? '你认为被低估了' : myVal < stock.price ? '你认为被高估了' : '你觉得价格公道') + '</p>' : '') +
+    '</div>';
+  return html;
 }
 
 function marginPanelHtml() {

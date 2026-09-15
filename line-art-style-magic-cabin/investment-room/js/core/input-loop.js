@@ -28,6 +28,12 @@ dashBody.addEventListener('click', event => {
       repayMargin(button.dataset.amount);
       return;
     }
+    if (button.dataset.action === 'setValuation') {
+      const input = document.getElementById('myValuationInput');
+      setPlayerValuation(button.dataset.stock, input ? input.value : 0);
+      renderScreenPanel(activeScreen);
+      return;
+    }
     const stockId = button.dataset.stock;
     if (!stockId) return;
     const qty = Math.max(1, Math.trunc(Number(button.dataset.qty)) || 1);

@@ -127,6 +127,31 @@ function stockDefinition(id) {
   return STOCKS.find(item => item.id === id) || STOCKS[0];
 }
 
+/* ---------------- 基本面模型：股价不再是纯随机游走 ----------------
+   每支非玩家公司的股票背后挂了几个"看不见"的变量（营收/利润/现金/
+   负债/增长率），算出一个"真实价值"V；股价每天只是慢慢往V靠拢，
+   news/event 的冲击也不再只是吓一下价格，是真的先改营收利润，V变了，
+   价格才跟着变——这样"昨天那条消息"和"今天的涨跌"之间才有因果，
+   而不是开个天窗随机数。 */
+const FUND_BASE = { revenue: 100, profit: 15, cash: 80, debt: 20, growth: .08 };
+const MEAN_REVERT_ALPHA = .15;
+
+function fundFormula(f) {
+  return .3 * f.revenue + 1.5 * f.profit + .2 * f.cash - .3 * f.debt + f.growth * 40;
+}
+
+const FUND_BASE_VALUE = fundFormula(FUND_BASE);
+
+function fundScaleFor(id) {
+  const item = stockDefinition(id);
+  return item.start / FUND_BASE_VALUE;
+}
+
+function fairValue(stock) {
+  if (!stock.fund) return stock.price;
+  return Math.max(1, fundScaleFor(stock.id) * fundFormula(stock.fund));
+}
+
 function stockTemplate(item) {
   return {
     id: item.id,
@@ -135,7 +160,8 @@ function stockTemplate(item) {
     price: item.start,
     prev: item.start,
     history: Array(12).fill(item.start),
-    pressure: 0
+    pressure: 0,
+    fund: item.isPlayerCompany ? null : Object.assign({}, FUND_BASE)
   };
 }
 
@@ -148,6 +174,14 @@ function sanitizeStock(stock, id) {
   const history = Array.isArray(source.history)
     ? source.history.map(value => finiteNumber(value, NaN, 1, 999999)).filter(Number.isFinite).slice(-24)
     : [];
+  const fundSource = source.fund && typeof source.fund === 'object' ? source.fund : {};
+  const fund = item.isPlayerCompany ? null : {
+    revenue: finiteNumber(fundSource.revenue, FUND_BASE.revenue, 10, 99999),
+    profit: finiteNumber(fundSource.profit, FUND_BASE.profit, -9999, 99999),
+    cash: finiteNumber(fundSource.cash, FUND_BASE.cash, 0, 99999),
+    debt: finiteNumber(fundSource.debt, FUND_BASE.debt, 0, 99999),
+    growth: finiteNumber(fundSource.growth, FUND_BASE.growth, -.4, .4)
+  };
   return {
     id: item.id,
     name: item.name,
@@ -155,7 +189,9 @@ function sanitizeStock(stock, id) {
     price,
     prev,
     history: history.length >= 2 ? history : Array(12).fill(price),
-    pressure: finiteNumber(source.pressure, 0, -.2, .2)
+    pressure: finiteNumber(source.pressure, 0, -.2, .2),
+    fund,
+    playerValuation: finiteNumber(source.playerValuation, 0, 0, 999999)
   };
 }
 
@@ -351,6 +387,14 @@ function getStock(id) {
     marketState.stocks[key] = sanitizeStock(current, key);
   }
   return marketState.stocks[key];
+}
+
+/* 玩家自己填的"我认为它值多少"——不用来算任何东西，纯粹是让"形成
+   判断"这一步变成一个具体、能回头对照的数字，而不是只在脑子里想想。 */
+function setPlayerValuation(id, amount) {
+  const stock = getStock(id);
+  stock.playerValuation = Math.max(0, Math.round(finiteNumber(amount, 0, 0, 999999)));
+  saveState();
 }
 
 function getHolding(id) {
@@ -760,8 +804,23 @@ function advanceMarketDay() {
     const stock = getStock(item.id);
     const prevPrice = stock.price;
     const shock = shocks[item.id] || 0;
+    let revert = 0;
+    if (!item.isPlayerCompany && stock.fund) {
+      /* 基本面自己会慢慢漂移（跟着增长率走+一点噪声），消息/事件的
+         冲击这里也先落到营收利润上，而不是只吓一下价格——冲击有多
+         大，"真实价值"就跟着挪多少，股价接下来几天是在往这个新的
+         价值靠拢，不是当天炸一下就完事。 */
+      stock.fund.revenue = Math.max(10, stock.fund.revenue * (1 + stock.fund.growth * .08 + (Math.random() - .5) * .02));
+      stock.fund.profit = stock.fund.profit + (Math.random() - .5) * stock.fund.revenue * .01;
+      if (shock) {
+        stock.fund.revenue = Math.max(10, stock.fund.revenue * (1 + shock * .6));
+        stock.fund.profit = stock.fund.profit + stock.fund.revenue * shock * .15;
+      }
+      const fv = fairValue(stock);
+      revert = MEAN_REVERT_ALPHA * (fv - prevPrice) / prevPrice;
+    }
     const change = item.isPlayerCompany ? shock
-      : baseFluctuation() + newsImpact(item.id, marketState.day) + playerImpact(item.id) + shock;
+      : baseFluctuation() + newsImpact(item.id, marketState.day) + playerImpact(item.id) + shock * .4 + revert;
     stock.prev = prevPrice;
     stock.price = Math.max(1, Math.round(clampPrice(prevPrice * (1 + change), prevPrice, shock ? .32 : .1) * 10) / 10);
     stock.history.push(stock.price);

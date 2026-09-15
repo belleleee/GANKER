@@ -182,3 +182,68 @@
 .fundValuation{min-width:auto!important;white-space:nowrap}
 .fundBar{flex:1;height:7px;border-radius:999px;overflow:hidden;background:rgba(96,244,255,.1)}
 .fundBar i{display:block;height:100%;border-radius:999px}
+
+.companyFacts{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:5px 10px;
+  margin:0 0 14px;
+  padding:9px 10px;
+  border:1px solid rgba(255,214,102,.16);
+  border-radius:7px;
+  background:rgba(6,16,20,.42);
+}
+.companyFactRow{
+  display:flex;
+  justify-content:space-between;
+  gap:6px;
+  font-size:11px;
+  color:#8fd3e6;
+}
+.companyFactRow b{font-family:"Menlo","Consolas",monospace;color:#eafcff}
+.companyFactRow b.up{color:#39ff9c}
+.companyFactRow b.down{color:#ff5d75}
+
+.myValuationBox{
+  margin:0 0 14px;
+  padding:9px 10px;
+  border:1px solid rgba(96,244,255,.14);
+  border-radius:7px;
+  background:rgba(6,16,20,.42);
+}
+.myValuationBox label{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:12px;
+  color:#8fd3e6;
+  margin-bottom:7px;
+}
+.myValuationBox input{
+  flex:1;
+  min-width:0;
+  padding:5px 8px;
+  border:1px solid rgba(96,244,255,.3);
+  border-radius:5px;
+  background:rgba(96,244,255,.06);
+  color:#eafcff;
+  font:700 13px/1.2 "Menlo","Consolas",monospace;
+}
+.myValuationBox button{
+  width:100%;
+  padding:6px;
+  border:1px solid rgba(255,214,102,.5);
+  border-radius:5px;
+  background:rgba(255,214,102,.12);
+  color:#ffd666;
+  font:700 12px/1.2 inherit;
+  cursor:pointer;
+}
+.myValuationBox button:hover{background:rgba(255,214,102,.22)}
+.myValuationNote{
+  margin:8px 0 0;
+  font-size:11px;
+  line-height:1.5;
+  color:#bfeeff;
+}
+.myValuationNote b{color:#ffd666}
