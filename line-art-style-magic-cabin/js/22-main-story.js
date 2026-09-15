@@ -22,7 +22,7 @@ const MAIN_STORY_STAGES = [
         unlockToast: '📖 主线推进：正式开始经营',
         questLabel: '打开发光的炼金书，取瓶架材料，再启动坩埚',
         target: { x: -3.58, z: -3.05 },
-        auto: () => typeof isAlchemyIntroComplete === 'function' && isAlchemyIntroComplete()
+        auto: () => typeof isAlchemyIntroStoryStarted === 'function' && isAlchemyIntroStoryStarted()
     },
     {
         unlocks: 'tea',

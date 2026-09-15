@@ -44,13 +44,11 @@ const ALCHEMY_INTRO_DIALOGUES = {
         { speaker: '你', text: '锅还会不高兴？' },
         { speaker: '???', text: '你马上就知道了。把材料倒进炼金锅。' }
     ],
-    cauldron: [
+    meet: [
         { speaker: '旁白', text: '材料落进锅里，绿色的火光从锅沿爬出来。' },
         { speaker: '你', text: '看起来……好像成功了？' },
         { speaker: '???', text: '别急。赚钱这事，最怕你以为自己已经成功了。' },
-        { speaker: '旁白', text: '下一秒，魔法阵亮得像白昼——砰。' }
-    ],
-    meet: [
+        { speaker: '旁白', text: '下一秒，魔法阵亮得像白昼——砰。' },
         { speaker: '旁白', text: '光散去，屋子第一次被真正照亮。你这才看清自己住的地方，乱糟糟的——而且多了一个人。' },
         { speaker: '你', text: '你……是谁？' },
         { speaker: '???', text: '我还想问你。这是哪儿？' },
@@ -124,13 +122,13 @@ function advanceAlchemyIntroDialogue() {
         return;
     }
     /* "meet" 是最后一幕——台词放完之后再点一下/按一次 Enter，
-       才真正把主线 stage0 静默推进（不弹卡片，故事已经用这段
-       对话讲完了）。 */
+       只标记"开场戏讲完了"，真正推进主线 stage0 交给
+       22-main-story.js 的 pollAutoStageAdvance 在下一帧去做（它就是
+       专门处理"没有实体门可以走进去触发"的静默推进）——这里不再自己
+       直接调 advanceMainStoryStage，避免两条路径抢着推进同一章，
+       把 stage 多推一次。 */
     if (alchemyIntroState.dialogScene === 'meet') {
         alchemyIntroState.startedStory = true;
-        if (typeof advanceMainStoryStage === 'function' && typeof MAIN_STORY_STAGES !== 'undefined' && MAIN_STORY_STAGES[0]) {
-            advanceMainStoryStage(MAIN_STORY_STAGES[0], MAIN_STORY_STAGES[0].unlockToast);
-        }
         if (typeof saveGameState === 'function') saveGameState(false);
     }
 }
@@ -344,7 +342,11 @@ function useAlchemyCauldron() {
     alchemyIntroState.cauldronUsed = true;
     alchemyIntroState.complete = true;
     alchemyFailureFlash = 1.8;
-    setAlchemyIntroDialogScene('cauldron');
+    /* "失败+第一次见面"现在是同一段连续对话（meet），不再拆成
+       cauldron→(950ms定时器)→meet 两段——那个定时器只存在于内存里，
+       玩家中途刷新/重进游戏就会永远丢失，导致对话框卡在失败那句
+       再也翻不动。直接切进 meet，一路点到底。 */
+    setAlchemyIntroDialogScene('meet');
     if (typeof corkOut !== 'undefined') corkOut = true;
     if (typeof stirRun !== 'undefined') stirRun = Math.max(stirRun, 4.5);
     if (typeof fireLit !== 'undefined') fireLit = true;
@@ -352,13 +354,6 @@ function useAlchemyCauldron() {
     if (typeof SND !== 'undefined') SND.play('magic');
     setAlchemyRecipeVisible(false);
     if (typeof saveGameState === 'function') saveGameState(false);
-    /* 失败闪光演完之后，对话框不关——切到 meet 场景接着讲"第一次
-       见面"，讲完那段（玩家点完最后一句）才真正静默推进主线，
-       不再直接弹主线卡片。 */
-    window.setTimeout(() => {
-        if (alchemyIntroState.startedStory) return;
-        setAlchemyIntroDialogScene('meet');
-    }, 950);
 }
 
 function setupAlchemyIntro() {
@@ -472,6 +467,15 @@ function isAlchemyIntroComplete() {
     return !!alchemyIntroState.complete;
 }
 
+/* "谜题解完了"(complete，坩埚一用完就为真) 跟"开场戏讲完了"
+   (startedStory，meet 场景台词点到底才为真) 是两件不同的事——
+   主线 stage0 的推进条件必须用后者，不然坩埚刚响，meet 这场戏
+   还没开始演，主线就已经在背后悄悄推进了，meet 场景再点完一次
+   又会把主线错误地多推一章。 */
+function isAlchemyIntroStoryStarted() {
+    return !!alchemyIntroState.startedStory;
+}
+
 function captureAlchemyIntroState() {
     return Object.assign({}, alchemyIntroState);
 }
@@ -483,9 +487,14 @@ function applyAlchemyIntroState(raw) {
     alchemyIntroState.cauldronUsed = !!raw.cauldronUsed;
     alchemyIntroState.complete = !!raw.complete;
     alchemyIntroState.startedStory = !!raw.startedStory;
-    alchemyIntroState.dialogScene = ALCHEMY_INTRO_DIALOGUES[raw.dialogScene] ? raw.dialogScene : (
-        alchemyIntroState.reagentsTaken ? 'reagents' : (alchemyIntroState.bookRead ? 'book' : 'wake')
-    );
+    /* 自愈：老存档可能卡在已经删掉的 'cauldron' 场景里（坩埚用完了，
+       但开场戏没讲完，又找不到旧场景），统一收敛到 meet 场景重讲一遍
+       "第一次见面"，不会卡死在读不到的场景名上。 */
+    alchemyIntroState.dialogScene = (alchemyIntroState.complete && !alchemyIntroState.startedStory)
+        ? 'meet'
+        : (ALCHEMY_INTRO_DIALOGUES[raw.dialogScene] ? raw.dialogScene : (
+            alchemyIntroState.reagentsTaken ? 'reagents' : (alchemyIntroState.bookRead ? 'book' : 'wake')
+        ));
     const lines = ALCHEMY_INTRO_DIALOGUES[alchemyIntroState.dialogScene] || ALCHEMY_INTRO_DIALOGUES.wake;
     alchemyIntroState.dialogIndex = Math.max(0, Math.min(lines.length - 1, Math.trunc(Number(raw.dialogIndex) || 0)));
     setAlchemyRecipeVisible(alchemyIntroState.bookRead && !alchemyIntroState.complete);
@@ -496,6 +505,7 @@ window.updateAlchemyIntro = updateAlchemyIntro;
 window.alchemyIntroHint = alchemyIntroHint;
 window.placePlayerAtAlchemyIntroStart = placePlayerAtAlchemyIntroStart;
 window.isAlchemyIntroComplete = isAlchemyIntroComplete;
+window.isAlchemyIntroStoryStarted = isAlchemyIntroStoryStarted;
 window.captureAlchemyIntroState = captureAlchemyIntroState;
 window.applyAlchemyIntroState = applyAlchemyIntroState;
 
