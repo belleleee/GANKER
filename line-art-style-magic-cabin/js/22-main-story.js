@@ -451,6 +451,7 @@ function renderMainStoryCard(stage) {
     }
     mainStoryBody.innerHTML = html;
     mainStoryBody.classList.toggle('dialogStep', !linesDone);
+    if (linesDone) mainStoryStageSeen[mainStoryState.stage] = true;
     if (mainStoryPanel) {
         const card = mainStoryPanel.querySelector('.mainStoryCard');
         if (card) card.scrollTop = card.scrollHeight;
@@ -492,7 +493,9 @@ function openMainStoryStage(idx, proceed) {
         return;
     }
     mainStoryPendingProceed = proceed || null;
-    mainStoryLineIndex = 0;
+    /* 之前的台词已经读完过一次的话，重开这一章直接跳到选项/继续按钮，
+       不用每次自动弹窗都从头重新点一遍已经看过的对话。 */
+    mainStoryLineIndex = mainStoryStageSeen[idx] ? Math.max(0, (stage.lines || []).length - 1) : 0;
     renderMainStoryCard(stage);
     mainStoryPanel.hidden = false;
     if (typeof window.clearPlayerInputState === 'function') window.clearPlayerInputState();
@@ -507,7 +510,7 @@ function closeMainStoryStage(unlocked) {
     mainStoryPanel.hidden = true;
     window.APP_SHELL_BLOCK_GAME = false;
     window.APP_GAME_MODAL_OPEN = false;
-    if (!unlocked) mainStoryAutoCooldown = 6;
+    if (!unlocked) mainStoryAutoCooldown = mainStoryStageSeen[mainStoryState.stage] ? 45 : 6;
     const proceed = mainStoryPendingProceed;
     mainStoryPendingProceed = null;
     if (unlocked && typeof proceed === 'function') proceed();
@@ -672,6 +675,9 @@ function requestMainStoryAccess(key, proceed) {
 }
 
 let mainStoryAutoCooldown = 0;
+/* 这一章的台词是不是已经完整读过一遍——只在这次会话里记，重开
+   游戏会重置，但足够避免"关掉又弹、每次都从头念一遍"的烦躁感。 */
+const mainStoryStageSeen = {};
 
 /**
  * 有些章节没有实体的门可以走进去触发（比如序章：种地+雇人），
@@ -763,6 +769,20 @@ if (questArrow) {
         event.stopPropagation();
         setQuestGuideCollapsed(!questGuideCollapsed);
         if (typeof SND !== 'undefined') SND.play('ui');
+    });
+}
+if (questText) {
+    /* 目标已经达成、只差一个决定的时候，点一下任务栏文字就能随时
+       手动把对话叫回来，不用干等自动弹窗的冷却时间。 */
+    questText.style.cursor = 'pointer';
+    questText.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        const idx = mainStoryState.stage;
+        const stage = MAIN_STORY_STAGES[idx];
+        if (!stage || (mainStoryPanel && !mainStoryPanel.hidden) || !mainStoryStageReady(stage)) return;
+        mainStoryAutoCooldown = 0;
+        openMainStoryStage(idx, null);
     });
 }
 applyQuestGuideCollapsed();
