@@ -120,6 +120,18 @@
     font: 800 12px/1.6 monospace;
 }
 
+/* 师傅/宗庆后说话的时候，名字前带个小头像——不管出现在主线卡片、
+   租地对话还是新功能提示里，都是同一套样式，一眼认出是他。 */
+.mainStorySpeakerMentor {
+    background: #ffd778 !important;
+}
+
+.mentorAvatar {
+    display: inline-block;
+    margin-right: 3px;
+    transform: translateY(-1px);
+}
+
 .mainStoryCoinNote {
     margin-top: 10px !important;
     padding: 8px 10px;

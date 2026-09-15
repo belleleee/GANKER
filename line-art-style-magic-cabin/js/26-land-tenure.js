@@ -77,7 +77,7 @@ function renderLandPanel() {
     if (!landBody) return;
     const linesDone = landLinesDone();
     const line = landLines[Math.min(landLineIndex, Math.max(0, landLines.length - 1))];
-    landBody.innerHTML = line ? '<p><span class="mainStorySpeaker">' + line.speaker + '</span>' + line.text + '</p>' : '';
+    landBody.innerHTML = line ? '<p>' + (typeof speakerPillHtml === 'function' ? speakerPillHtml(line.speaker) : '<span class="mainStorySpeaker">' + line.speaker + '</span>') + line.text + '</p>' : '';
     landBody.classList.toggle('dialogStep', !linesDone);
     if (landActions) landActions.hidden = !linesDone;
 }

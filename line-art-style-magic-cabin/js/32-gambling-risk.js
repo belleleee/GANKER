@@ -41,7 +41,7 @@ function pollGamblingRisk() {
             gamblingRiskState.bankruptciesSinceLock = 0;
             if (typeof showGuideCard === 'function') {
                 showGuideCard(
-                    '钱包连着输光好几回了——这次不是提醒，是真管不住自己了。钱滚钱商店这几天先进不去，冷静冷静。',
+                    '师傅：钱包连着输光好几回了——这次不是提醒，是真管不住自己了。这几天先别进那屋子，冷静冷静。',
                     9
                 );
             }

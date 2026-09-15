@@ -50,11 +50,23 @@
                 if (typeof updateDeliveryOrders === 'function') {
                     updateDeliveryOrders(dt, time);
                 }
+                if (typeof updateCashFlow === 'function') {
+                    updateCashFlow();
+                }
                 if (typeof pollGamblingRisk === 'function') {
                     pollGamblingRisk();
                 }
+                if (typeof updateMentorAmbient === 'function') {
+                    updateMentorAmbient(dt);
+                }
                 if (typeof updateWorldMapGuide === 'function') {
                     updateWorldMapGuide(dt);
+                }
+                if (typeof updateGameplayLoop === 'function') {
+                    updateGameplayLoop(dt);
+                }
+                if (typeof updateAlchemyIntro === 'function') {
+                    updateAlchemyIntro(dt, time);
                 }
                 
                 FILL.uniforms.uTime.value = time;

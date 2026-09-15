@@ -63,7 +63,7 @@ function showFeatureIntro(id, kicker, title, lines, onClose) {
     if (featureIntroTitle) featureIntroTitle.textContent = title || '';
     if (featureIntroBody) {
         featureIntroBody.innerHTML = (lines || []).map(line =>
-            '<p><span class="mainStorySpeaker">' + line.speaker + '</span>' + line.text + '</p>'
+            '<p>' + (typeof speakerPillHtml === 'function' ? speakerPillHtml(line.speaker) : '<span class="mainStorySpeaker">' + line.speaker + '</span>') + line.text + '</p>'
         ).join('');
     }
     featureIntroPanel.hidden = false;

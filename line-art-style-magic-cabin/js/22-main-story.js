@@ -427,7 +427,7 @@ function renderMainStoryCard(stage) {
     const linesDone = mainStoryLinesDone(stage);
     const line = lines[Math.min(mainStoryLineIndex, Math.max(0, lines.length - 1))];
 
-    let html = line ? '<p><span class="mainStorySpeaker">' + line.speaker + '</span>' + line.text + '</p>' : '';
+    let html = line ? '<p>' + (typeof speakerPillHtml === 'function' ? speakerPillHtml(line.speaker) : '<span class="mainStorySpeaker">' + line.speaker + '</span>') + line.text + '</p>' : '';
     if (linesDone) {
         if (stage.coinRequirement) {
             const coinsMet = stageCoinsMet(stage);

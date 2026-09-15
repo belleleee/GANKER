@@ -27,13 +27,20 @@ function weatherAttemptCost() {
     return WEATHER_ATTEMPT_BASE_COST + weatherFarmState.attemptsToday * WEATHER_ATTEMPT_STEP_COST;
 }
 
+function weatherAttemptChance() {
+    const luck = typeof window.getCabinLuck === 'function' ? Number(window.getCabinLuck()) : 50;
+    const luckBias = Number.isFinite(luck) ? ((Math.max(0, Math.min(100, luck)) - 50) / 50) * 0.12 : 0;
+    return Math.max(0.35, Math.min(0.75, WEATHER_ATTEMPT_SUCCESS_CHANCE + luckBias));
+}
+
 function renderWeatherStatus() {
     if (!weatherStatusEl || typeof wx === 'undefined' || typeof WX_NAME === 'undefined') return;
     const cost = weatherAttemptCost();
+    const chance = weatherAttemptChance();
     weatherStatusEl.innerHTML =
         '今日天气：<b>' + WX_NAME[wx.type] + '</b>' +
         '<br>点上面的天气按钮可以花 <b>' + cost + '</b> 金币祈天改天气（成功率 ' +
-        Math.round(WEATHER_ATTEMPT_SUCCESS_CHANCE * 100) + '%，不管成不成钱都要花掉）';
+        Math.round(chance * 100) + '%，幸运值会略微影响结果）';
 }
 
 function ensureDailyWeatherRoll() {
@@ -62,18 +69,26 @@ function attemptWeatherChange(target) {
         return;
     }
     if (typeof spendCabinCoins !== 'function' || !spendCabinCoins(cost, false)) return;
+    if (typeof window.showFeatureIntro === 'function') {
+        window.showFeatureIntro('weatherPrayer', '经营 · 花钱求天', '祈天', [
+            { speaker: '你', text: '花钱就能求天变一变？' },
+            { speaker: '师傅', text: '求得来的是运气，不是本事。信一半就够，别当成正经买卖来算。' }
+        ]);
+    }
     weatherFarmState.attemptsToday++;
     if (typeof window.noteAchievementEvent === 'function') {
         window.noteAchievementEvent('weatherAttempt', { target });
     }
-    const success = Math.random() < WEATHER_ATTEMPT_SUCCESS_CHANCE;
+    const success = Math.random() < weatherAttemptChance();
     if (success) {
         setWeather(target);
+        if (typeof window.addCabinLuck === 'function') window.addCabinLuck(1, false);
         if (typeof window.noteAchievementEvent === 'function') {
             window.noteAchievementEvent('weatherSuccess', { target });
         }
         showHintOverride('祈天成功——天说变就变，今天变成了 <b>' + WX_NAME[target] + '</b>（花费 ' + cost + ' 金币）');
     } else {
+        if (typeof window.addCabinLuck === 'function') window.addCabinLuck(-1, false);
         showHintOverride('祈天没成，' + cost + ' 金币打了水漂——天不随人愿，今天还是 <b>' + WX_NAME[wx.type] + '</b>');
         renderWeatherStatus();
     }
