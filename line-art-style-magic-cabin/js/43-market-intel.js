@@ -12,11 +12,54 @@
 
 const MARKET_INTEL_DAILY_LIMIT = 3;
 
+/* cx/cz 是每个场景的大致中心（农场周边、咖啡馆门口、杂货铺附近），
+   roam 是每天重新撒点的范围——位置不再钉死在一个坐标，每天换一次，
+   逼玩家真的在场景里走一圈找人，而不是记住固定点位直接怼过去。 */
 const MARKET_INTEL_SPOTS = [
-    { id: 'farm', x: 9.0, z: 6.5, r: 3.5, label: '找农场主打听消息' },
-    { id: 'cafe', x: 16.25, z: -13.5, r: 3.5, label: '找咖啡馆顾客打听消息' },
-    { id: 'store', x: 10, z: -13.5, r: 3.5, label: '看看杂货铺的库存' }
+    { id: 'farm', cx: 9.0, cz: 6.5, roam: 4.5, r: 3.2, label: '找农场主打听消息' },
+    { id: 'cafe', cx: 16.25, cz: -13.5, roam: 4, r: 3.2, label: '找咖啡馆顾客打听消息' },
+    { id: 'store', cx: 10, cz: -13.5, roam: 4, r: 3.2, label: '看看杂货铺的库存' }
 ];
+
+/* 每天为每个地点随机撒点后实际落地的坐标，存档里带着走——同一天
+   刷新页面/重进游戏，人不会瞬移，只有跨天才会换新位置。 */
+let marketIntelPositions = {};
+/* 每个地点对应的互动区（interactables 条目）和史莱姆网格引用，
+   换位置的时候直接改这两样东西的坐标，不用整个重建。 */
+let marketIntelEntities = {};
+
+function randomPointInZone(spot) {
+    const angle = Math.random() * Math.PI * 2;
+    const dist = Math.sqrt(Math.random()) * spot.roam;
+    return { x: spot.cx + Math.cos(angle) * dist, z: spot.cz + Math.sin(angle) * dist };
+}
+
+function intelPositionFor(spot) {
+    const saved = marketIntelPositions[spot.id];
+    if (saved && Number.isFinite(saved.x) && Number.isFinite(saved.z)) return saved;
+    return { x: spot.cx, z: spot.cz };
+}
+
+function applyIntelPositionToEntities(spot) {
+    const pos = intelPositionFor(spot);
+    const entities = marketIntelEntities[spot.id];
+    if (!entities) return;
+    if (entities.interactable) {
+        entities.interactable.x = pos.x;
+        entities.interactable.z = pos.z;
+    }
+    if (entities.slime) {
+        const groundY = typeof groundAt === 'function' ? groundAt(pos.x, pos.z, 0) : 0;
+        entities.slime.position.set(pos.x, groundY, pos.z);
+    }
+}
+
+function reshuffleMarketIntelPositions() {
+    MARKET_INTEL_SPOTS.forEach(spot => {
+        marketIntelPositions[spot.id] = randomPointInZone(spot);
+        applyIntelPositionToEntities(spot);
+    });
+}
 
 const MARKET_INTEL_TIPS = {
     farm: [
@@ -54,6 +97,7 @@ function ensureIntelDayReset() {
     if (day !== marketIntelState.day) {
         marketIntelState.day = day;
         marketIntelState.usedToday = 0;
+        reshuffleMarketIntelPositions();
     }
 }
 
@@ -90,11 +134,14 @@ function gatherMarketIntel(spotId) {
 
 MARKET_INTEL_SPOTS.forEach(spot => {
     if (typeof interactables === 'undefined') return;
-    interactables.push({
-        x: spot.x, z: spot.z, r: spot.r,
+    const pos = intelPositionFor(spot);
+    const entry = {
+        x: pos.x, z: pos.z, r: spot.r,
         label: spot.label,
         act: () => gatherMarketIntel(spot.id)
-    });
+    };
+    interactables.push(entry);
+    marketIntelEntities[spot.id] = Object.assign({}, marketIntelEntities[spot.id], { interactable: entry });
 });
 
 /* ================================================================
@@ -142,14 +189,19 @@ function buildMarketIntelSlime(spot) {
     g.add(icon);
     g.userData.icon = icon;
     g.userData.phase = Math.random() * Math.PI * 2;
-    const groundY = typeof groundAt === 'function' ? groundAt(spot.x, spot.z, 0) : 0;
-    g.position.set(spot.x, groundY, spot.z);
+    const pos = intelPositionFor(spot);
+    const groundY = typeof groundAt === 'function' ? groundAt(pos.x, pos.z, 0) : 0;
+    g.position.set(pos.x, groundY, pos.z);
     if (typeof scene !== 'undefined') scene.add(g);
     return g;
 }
 
 const marketIntelSlimes = (typeof scene !== 'undefined')
-    ? MARKET_INTEL_SPOTS.map(spot => ({ spot, mesh: buildMarketIntelSlime(spot) }))
+    ? MARKET_INTEL_SPOTS.map(spot => {
+        const mesh = buildMarketIntelSlime(spot);
+        marketIntelEntities[spot.id] = Object.assign({}, marketIntelEntities[spot.id], { slime: mesh });
+        return { spot, mesh };
+    })
     : [];
 
 function updateMarketIntelSlimes(dt, time) {
@@ -171,9 +223,15 @@ window.updateMarketIntelSlimes = updateMarketIntelSlimes;
 
 function captureMarketIntelState() {
     ensureIntelDayReset();
+    const positions = {};
+    MARKET_INTEL_SPOTS.forEach(spot => {
+        const pos = marketIntelPositions[spot.id];
+        if (pos) positions[spot.id] = { x: pos.x, z: pos.z };
+    });
     return {
         day: marketIntelState.day,
-        usedToday: marketIntelState.usedToday
+        usedToday: marketIntelState.usedToday,
+        positions
     };
 }
 
@@ -182,6 +240,14 @@ function applyMarketIntelState(raw) {
         day: Number.isFinite(Number(raw && raw.day)) ? Math.trunc(Number(raw.day)) : -1,
         usedToday: Math.max(0, Math.trunc(Number(raw && raw.usedToday) || 0))
     };
+    const rawPositions = raw && raw.positions && typeof raw.positions === 'object' ? raw.positions : {};
+    MARKET_INTEL_SPOTS.forEach(spot => {
+        const pos = rawPositions[spot.id];
+        if (pos && Number.isFinite(pos.x) && Number.isFinite(pos.z)) {
+            marketIntelPositions[spot.id] = { x: pos.x, z: pos.z };
+        }
+        applyIntelPositionToEntities(spot);
+    });
 }
 
 function captureMarketTips() {
