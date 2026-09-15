@@ -49,6 +49,29 @@ function markFeatureIntroSeen(id) {
 }
 
 let featureIntroOnClose = null;
+let featureIntroLines = [];
+let featureIntroLineIndex = 0;
+
+function dialogueLineHtmlFallback(line) {
+    return '<p>' + (typeof speakerPillHtml === 'function' ? speakerPillHtml(line.speaker) : '<span class="mainStorySpeaker">' + line.speaker + '</span>') + line.text + '</p>';
+}
+
+/* 一句一句往下"继续"，不是把整段台词一次性甩出来——跟主线对话框
+   （mainStoryPanel）同一个节奏，读起来才像在跟人说话，不是在看
+   一整块说明文档。 */
+function renderFeatureIntroStep() {
+    if (!featureIntroBody) return;
+    const lines = featureIntroLines;
+    const idx = Math.min(featureIntroLineIndex, Math.max(0, lines.length - 1));
+    const shown = lines.slice(0, idx + 1);
+    featureIntroBody.innerHTML = shown.map(dialogueLineHtmlFallback).join('');
+    const linesDone = idx >= lines.length - 1;
+    if (featureIntroCloseBtn) featureIntroCloseBtn.textContent = linesDone ? '知道了' : '继续';
+    if (featureIntroPanel) {
+        const card = featureIntroPanel.querySelector('.mainStoryCard');
+        if (card) card.scrollTop = card.scrollHeight;
+    }
+}
 
 /* 返回 true 表示这次真的弹出来了（第一次见到）；返回 false 表示
    已经看过、没弹——调用方可以据此决定要不要直接往下走（比如进咖啡馆
@@ -61,11 +84,9 @@ function showFeatureIntro(id, kicker, title, lines, onClose) {
     featureIntroOnClose = typeof onClose === 'function' ? onClose : null;
     if (featureIntroKicker) featureIntroKicker.textContent = kicker || '经营 · 新功能';
     if (featureIntroTitle) featureIntroTitle.textContent = title || '';
-    if (featureIntroBody) {
-        featureIntroBody.innerHTML = (lines || []).map(line =>
-            '<p>' + (typeof speakerPillHtml === 'function' ? speakerPillHtml(line.speaker) : '<span class="mainStorySpeaker">' + line.speaker + '</span>') + line.text + '</p>'
-        ).join('');
-    }
+    featureIntroLines = Array.isArray(lines) ? lines : [];
+    featureIntroLineIndex = 0;
+    renderFeatureIntroStep();
     featureIntroPanel.hidden = false;
     if (typeof window.clearPlayerInputState === 'function') window.clearPlayerInputState();
     if (document.pointerLockElement) document.exitPointerLock();
@@ -86,7 +107,17 @@ function closeFeatureIntro() {
     if (onClose) onClose();
 }
 
-if (featureIntroCloseBtn) featureIntroCloseBtn.addEventListener('click', closeFeatureIntro);
+function advanceFeatureIntro() {
+    if (featureIntroLineIndex >= featureIntroLines.length - 1) {
+        closeFeatureIntro();
+        return;
+    }
+    featureIntroLineIndex++;
+    renderFeatureIntroStep();
+    if (typeof SND !== 'undefined') SND.play('ui');
+}
+
+if (featureIntroCloseBtn) featureIntroCloseBtn.addEventListener('click', advanceFeatureIntro);
 if (featureIntroPanel) {
     featureIntroPanel.addEventListener('click', event => {
         if (event.target === featureIntroPanel) closeFeatureIntro();
@@ -94,7 +125,8 @@ if (featureIntroPanel) {
 }
 addEventListener('keydown', event => {
     if (!featureIntroPanel || featureIntroPanel.hidden) return;
-    if (event.key === 'Enter' || event.key === 'Escape') closeFeatureIntro();
+    if (event.key === 'Enter') advanceFeatureIntro();
+    if (event.key === 'Escape') closeFeatureIntro();
 });
 
 window.showFeatureIntro = showFeatureIntro;
