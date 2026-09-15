@@ -169,3 +169,23 @@
     color: #9c8f76;
     font-style: italic;
 }
+
+.mentorFragmentsSubhead {
+    margin: 12px 0 -2px;
+    padding-top: 12px;
+    border-top: 1px dashed rgba(58, 47, 34, .22);
+    color: #a8763c;
+    font: 700 11px/1.6 monospace;
+    letter-spacing: .08em;
+}
+
+.mentorFragmentCard--hidden.on {
+    border-color: rgba(91, 143, 168, .55);
+    background: linear-gradient(135deg, rgba(91, 143, 168, .14), transparent 65%), rgba(255, 250, 236, .92);
+}
+
+.mentorFragmentCard--hidden.on .mentorFragmentIndex {
+    background: #5b8fa8;
+    border-color: #5b8fa8;
+    box-shadow: 0 0 0 3px rgba(91, 143, 168, .2);
+}
