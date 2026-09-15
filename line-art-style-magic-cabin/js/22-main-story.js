@@ -420,14 +420,21 @@ function mainStoryLinesDone(stage) {
     return mainStoryLineIndex >= lines.length - 1;
 }
 
+function dialogueLineHtml(line) {
+    return '<p>' + (typeof speakerPillHtml === 'function' ? speakerPillHtml(line.speaker) : '<span class="mainStorySpeaker">' + line.speaker + '</span>') + line.text + '</p>';
+}
+
 function renderMainStoryCard(stage) {
     mainStoryTitle.textContent = stage.title;
     const met = mainStoryStageReady(stage);
     const lines = stage.lines || [];
     const linesDone = mainStoryLinesDone(stage);
-    const line = lines[Math.min(mainStoryLineIndex, Math.max(0, lines.length - 1))];
+    /* 之前只显示当前这一句，翻页就把上一句擦掉，看着信息量很少。
+       现在保留这一幕已经讲过的台词（从头到当前这句），新的一句
+       追加在最下面，翻旧账不用回忆——跟真的聊天记录一样。 */
+    const shownLines = lines.slice(0, Math.min(mainStoryLineIndex, Math.max(0, lines.length - 1)) + 1);
 
-    let html = line ? '<p>' + (typeof speakerPillHtml === 'function' ? speakerPillHtml(line.speaker) : '<span class="mainStorySpeaker">' + line.speaker + '</span>') + line.text + '</p>' : '';
+    let html = shownLines.map(dialogueLineHtml).join('');
     if (linesDone) {
         if (stage.coinRequirement) {
             const coinsMet = stageCoinsMet(stage);
@@ -440,6 +447,10 @@ function renderMainStoryCard(stage) {
     }
     mainStoryBody.innerHTML = html;
     mainStoryBody.classList.toggle('dialogStep', !linesDone);
+    if (mainStoryPanel) {
+        const card = mainStoryPanel.querySelector('.mainStoryCard');
+        if (card) card.scrollTop = card.scrollHeight;
+    }
 
     if (linesDone && Array.isArray(stage.choices) && mainStoryChoices) {
         mainStoryChoices.hidden = false;

@@ -76,10 +76,16 @@ function landLinesDone() {
 function renderLandPanel() {
     if (!landBody) return;
     const linesDone = landLinesDone();
-    const line = landLines[Math.min(landLineIndex, Math.max(0, landLines.length - 1))];
-    landBody.innerHTML = line ? '<p>' + (typeof speakerPillHtml === 'function' ? speakerPillHtml(line.speaker) : '<span class="mainStorySpeaker">' + line.speaker + '</span>') + line.text + '</p>' : '';
+    /* 保留这一幕讲过的台词，不是只看当前一句——参考 22-main-story.js
+       同样的改动。 */
+    const shownLines = landLines.slice(0, Math.min(landLineIndex, Math.max(0, landLines.length - 1)) + 1);
+    landBody.innerHTML = shownLines.map(line =>
+        '<p>' + (typeof speakerPillHtml === 'function' ? speakerPillHtml(line.speaker) : '<span class="mainStorySpeaker">' + line.speaker + '</span>') + line.text + '</p>'
+    ).join('');
     landBody.classList.toggle('dialogStep', !linesDone);
     if (landActions) landActions.hidden = !linesDone;
+    const card = landPanel && landPanel.querySelector('.landCard');
+    if (card) card.scrollTop = card.scrollHeight;
 }
 
 function advanceLandDialogue() {

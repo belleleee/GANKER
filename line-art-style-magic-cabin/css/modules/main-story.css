@@ -133,9 +133,9 @@
 
 .mentorAvatar {
     display: inline-block;
-    width: 30px;
-    height: 30px;
-    margin-right: 6px;
+    width: 48px;
+    height: 48px;
+    margin-right: 7px;
     border-radius: 50%;
     object-fit: cover;
     object-position: 50% 15%;
