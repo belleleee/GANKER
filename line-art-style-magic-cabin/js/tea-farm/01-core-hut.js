@@ -62,7 +62,14 @@ const TEA_PICK_DISTANCE = 1.15;
    默认 timeScale=60 的日夜节奏，大概相当于游戏内10小时才能再采一轮。
 */
 const TEA_REGROW_SECONDS = 600;
-const TEA_PICK_COINS = 8;
+/* 4×6=24 棵茶树，摘一轮几乎是走一圈的事——原来 8 金币/片，扫一整片
+   地就是近200金币，比送货、卖萝卜都快。更关键的是：摘的时候立刻
+   给钱（03-harvest-workers.js 里 addCabinCoins），这片叶子随后还会
+   算进 teaProcessState.raw 继续走晒茶/炒茶/装袋、再挣一次批次钱——
+   同一片叶子被算了两遍钱，这才是"收入太快"的根子。跟"一片叶子能
+   值多少钱"那条主线台词（鲜叶卖不上价，加工过的才值钱）也对不上。
+   降到2，摘的时候只当个"有反馈"的零钱，真正的收入留给加工链。 */
+const TEA_PICK_COINS = 2;
 const TEA_WORKER_DAILY_WAGE = 90;
 const TEA_WEATHER_GOOD = ['fog', 'cloudy'];
 const TEA_WEATHER_BAD = ['storm', 'blizzard'];
