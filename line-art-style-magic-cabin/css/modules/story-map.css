@@ -102,17 +102,19 @@
     justify-self: center;
     display: grid;
     place-items: center;
-    width: 36px;
-    height: 36px;
+    width: 46px;
+    height: 46px;
     box-sizing: border-box;
     border: 2px solid #7a9183;
     border-radius: 50%;
     background: #f5f3eb;
     color: #4d6658;
-    font: 700 15px/1 monospace;
+    font: 700 20px/1 monospace;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, .1);
 }
 
 .storyMapStopBody {
+    position: relative;
     grid-column: 1;
     grid-row: 1;
     min-width: 0;
@@ -122,6 +124,36 @@
     border-left: 4px solid #8ca594;
     border-radius: 6px;
     background: #fffefa;
+    overflow: hidden;
+}
+
+/* 卡片右上角一个大号淡色图标水印，跟主线地图之前"全是文字"的观感
+   拉开距离，一眼能感觉到"这里有画面感" */
+.storyMapStopBody::after {
+    content: var(--stopIcon, '');
+    position: absolute;
+    right: -6px;
+    top: -14px;
+    font-size: 68px;
+    line-height: 1;
+    opacity: .1;
+    filter: grayscale(1);
+    pointer-events: none;
+}
+
+.storyMapStatusRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.storyMapMentorAvatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: 50% 15%;
+    box-shadow: 0 0 0 2px rgba(184, 91, 61, .55);
 }
 
 .storyMapStop--right .storyMapStopBody {
@@ -207,7 +239,7 @@
     .storyMapRoute { padding: 14px 14px 22px; }
     .storyMapRoute::before { left: 33px; }
     .storyMapStop { grid-template-columns: 38px minmax(0, 1fr); min-height: 0; }
-    .storyMapMarker { grid-column: 1; width: 32px; height: 32px; }
+    .storyMapMarker { grid-column: 1; width: 32px; height: 32px; font-size: 15px; }
     .storyMapStopBody,
     .storyMapStop--right .storyMapStopBody { grid-column: 2; margin: 7px 0 7px 8px; padding: 11px 12px; }
 }

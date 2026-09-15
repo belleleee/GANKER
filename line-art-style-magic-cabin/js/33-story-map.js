@@ -21,6 +21,10 @@ const STORY_MAP_NOTES = [
     '材料集齐，回到最初的小屋，准备最后一次炼金。'
 ];
 
+/* 每章配一个系统图标，对应它主要发生在哪个场景——地图之前全靠文字，
+   一眼看过去很单调，加个图标让每段路一眼能认出"这是在哪儿发生的"。 */
+const STORY_MAP_ICONS = ['🏠', '🌱', '🚚', '🚲', '🍵', '🏪', '✨', '💰', '📈', '🔮'];
+
 const STORY_MAP_UNLOCKS = {
     investment: '股市小屋',
     tea: '茶场',
@@ -64,12 +68,24 @@ function renderStoryMap() {
         stop.setAttribute('aria-label', stage.title + '，' +
             (status === 'done' ? '已完成' : status === 'current' ? '当前目标' : '尚未到达'));
 
-        const marker = storyMapText(stop, 'span', 'storyMapMarker', status === 'done' ? '✓' : String(index + 1));
+        const marker = storyMapText(stop, 'span', 'storyMapMarker', status === 'future' ? '🔒' : (STORY_MAP_ICONS[index] || '•'));
         marker.setAttribute('aria-hidden', 'true');
         const content = document.createElement('div');
         content.className = 'storyMapStopBody';
-        storyMapText(content, 'span', 'storyMapStatus',
+        content.style.setProperty('--stopIcon', '"' + (STORY_MAP_ICONS[index] || '') + '"');
+        const statusRow = document.createElement('div');
+        statusRow.className = 'storyMapStatusRow';
+        storyMapText(statusRow, 'span', 'storyMapStatus',
             status === 'done' ? '已完成' : status === 'current' ? '正在进行' : '尚未到达');
+        if (status === 'current') {
+            const avatar = document.createElement('img');
+            avatar.className = 'storyMapMentorAvatar';
+            avatar.src = 'assets/ui/mentor-avatar.webp';
+            avatar.alt = '';
+            avatar.setAttribute('aria-hidden', 'true');
+            statusRow.appendChild(avatar);
+        }
+        content.appendChild(statusRow);
         storyMapText(content, 'h3', 'storyMapStopTitle', stage.title);
         storyMapText(content, 'p', 'storyMapNote', STORY_MAP_NOTES[index]);
 
