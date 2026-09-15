@@ -21,10 +21,7 @@ let alchemyBookLight = null;
 let alchemyRecipeBoard = null;
 let alchemyIntroPulse = 0;
 let alchemyFailureFlash = 0;
-let alchemyIntroOverlay = null;
-let alchemyIntroGuide = null;
 let alchemyIntroBeam = null;
-let alchemyIntroTaskCard = null;
 let alchemyIntroDialog = null;
 let alchemyStageBeacons = [];
 const alchemyIntroProjector = new THREE.Vector3();
@@ -36,9 +33,9 @@ const ALCHEMY_INTRO_DIALOGUES = {
         { speaker: '???', text: '去打开它吧。或许这里有改变现状的方法。' }
     ],
     book: [
-        { speaker: '旁白', text: '书页自动翻到最后一页，纸边像被火燎过，正中画着一个圈。' },
-        { speaker: '旁白', text: '圈里写着两个字——召唤。' },
-        { speaker: '你', text: '召唤？我只是想把一枚金币变成两枚。' },
+        { speaker: '旁白', text: '书页自动翻到最后一页，纸边像被火燎过。封面这时才看清标题——《炼金术入门》。' },
+        { speaker: '旁白', text: '扉页上写着一句话：将微不足道之物，炼成更有价值之物。' },
+        { speaker: '你', text: '把一枚硬币变成两枚，应该也算"更有价值"吧。' },
         { speaker: '旁白', text: '配方下面浮出一行小字：旧硬币、茶叶、星尘。墙上的瓶架似乎刚好有这些东西。' }
     ],
     reagents: [
@@ -51,7 +48,24 @@ const ALCHEMY_INTRO_DIALOGUES = {
         { speaker: '旁白', text: '材料落进锅里，绿色的火光从锅沿爬出来。' },
         { speaker: '你', text: '看起来……好像成功了？' },
         { speaker: '???', text: '别急。赚钱这事，最怕你以为自己已经成功了。' },
-        { speaker: '旁白', text: '下一秒，魔法阵亮得像白昼。' }
+        { speaker: '旁白', text: '下一秒，魔法阵亮得像白昼——砰。' }
+    ],
+    meet: [
+        { speaker: '旁白', text: '光散去，屋子第一次被真正照亮。你这才看清自己住的地方，乱糟糟的——而且多了一个人。' },
+        { speaker: '你', text: '你……是谁？' },
+        { speaker: '???', text: '我还想问你。这是哪儿？' },
+        { speaker: '旁白', text: '他打量了一圈：炼金锅、魔法阵、墙上瓶瓶罐罐的材料，像是从没见过这些东西。' },
+        { speaker: '旁白', text: '你把"炼金失控"这件事解释了一遍，他没听懂"魔法"是什么；你也说不清他从哪来。' },
+        { speaker: '你', text: '那……我再炼一次，把你变回去？' },
+        { speaker: '旁白', text: '可再来一次，需要材料。材料要买。你翻了翻钱包。' },
+        { speaker: '你', text: '……金币：100。' },
+        { speaker: '旁白', text: '两个人沉默了一会儿。' },
+        { speaker: '???', text: '先挣钱。' },
+        { speaker: '你', text: '怎么挣？' },
+        { speaker: '旁白', text: '他看向窗外那块荒地。' },
+        { speaker: '???', text: '不是有地吗？' },
+        { speaker: '你', text: '那我先叫你"师傅"了——总不能一直喊"喂"。' },
+        { speaker: '???', text: '随你。' }
     ]
 };
 
@@ -95,11 +109,22 @@ function setAlchemyIntroDialogScene(sceneName) {
 }
 
 function advanceAlchemyIntroDialogue() {
-    if (alchemyIntroState.complete) return;
+    if (alchemyIntroState.startedStory) return;
     const lines = ALCHEMY_INTRO_DIALOGUES[alchemyIntroState.dialogScene] || ALCHEMY_INTRO_DIALOGUES.wake;
     if (alchemyIntroState.dialogIndex < lines.length - 1) {
         alchemyIntroState.dialogIndex += 1;
         if (typeof SND !== 'undefined') SND.play('ui');
+        if (typeof saveGameState === 'function') saveGameState(false);
+        return;
+    }
+    /* "meet" 是最后一幕——台词放完之后再点一下/按一次 Enter，
+       才真正把主线 stage0 静默推进（不弹卡片，故事已经用这段
+       对话讲完了）。 */
+    if (alchemyIntroState.dialogScene === 'meet') {
+        alchemyIntroState.startedStory = true;
+        if (typeof advanceMainStoryStage === 'function' && typeof MAIN_STORY_STAGES !== 'undefined' && MAIN_STORY_STAGES[0]) {
+            advanceMainStoryStage(MAIN_STORY_STAGES[0], MAIN_STORY_STAGES[0].unlockToast);
+        }
         if (typeof saveGameState === 'function') saveGameState(false);
     }
 }
@@ -191,13 +216,6 @@ function ensureAlchemyIntroOverlay() {
     alchemyIntroDialog.appendChild(arrow);
     alchemyIntroDialog.addEventListener('click', advanceAlchemyIntroDialogue);
     document.body.appendChild(alchemyIntroDialog);
-}
-
-function setAlchemyIntroOverlayVisible(visible) {
-    ensureAlchemyIntroOverlay();
-    if (alchemyIntroGuide) alchemyIntroGuide.style.opacity = visible ? '1' : '0';
-    if (alchemyIntroDialog) alchemyIntroDialog.style.opacity = visible ? '1' : '0';
-    if (alchemyIntroBeam) alchemyIntroBeam.style.opacity = visible ? '1' : '0';
 }
 
 function setAlchemyRecipeVisible(visible) {
@@ -324,16 +342,16 @@ function useAlchemyCauldron() {
     if (typeof corkOut !== 'undefined') corkOut = true;
     if (typeof stirRun !== 'undefined') stirRun = Math.max(stirRun, 4.5);
     if (typeof fireLit !== 'undefined') fireLit = true;
-    if (typeof showHintOverride === 'function') showHintOverride('砰！炼金失败了。屋里一黑，角落里多了一个老人。');
+    if (typeof showHintOverride === 'function') showHintOverride('砰！炼金失败了。屋里一黑，角落里多了一个人。');
     if (typeof SND !== 'undefined') SND.play('magic');
     setAlchemyRecipeVisible(false);
-    setAlchemyIntroOverlayVisible(false);
     if (typeof saveGameState === 'function') saveGameState(false);
+    /* 失败闪光演完之后，对话框不关——切到 meet 场景接着讲"第一次
+       见面"，讲完那段（玩家点完最后一句）才真正静默推进主线，
+       不再直接弹主线卡片。 */
     window.setTimeout(() => {
         if (alchemyIntroState.startedStory) return;
-        alchemyIntroState.startedStory = true;
-        if (typeof openMainStoryStage === 'function') openMainStoryStage(0, null);
-        if (typeof saveGameState === 'function') saveGameState(false);
+        setAlchemyIntroDialogScene('meet');
     }, 950);
 }
 
@@ -367,38 +385,35 @@ function setupAlchemyIntro() {
 
 function updateAlchemyIntro(dt, time) {
     alchemyIntroPulse += dt || 0;
-    const introActive = !alchemyIntroState.complete;
-    if (introActive) {
-        setAlchemyIntroOverlayVisible(true);
-        if (alchemyIntroTaskCard) {
-            alchemyIntroTaskCard.innerHTML = '<div style="font-size:21px;color:#2d2118;margin:6px 0 8px">' +
-                alchemyIntroTaskTitle() + '</div><div>' +
-                (alchemyIntroDialogueDone() ? alchemyIntroHint() : '点击下方对话框继续') +
-                '</div><div style="margin-top:8px;color:#80623f;font-size:14px">' +
-                '也可以按 Enter 继续对话' +
-                '</div>';
-        }
+    const guidingActive = !alchemyIntroState.complete;
+    const dialogActive = !alchemyIntroState.startedStory;
+
+    /* 对话框的显示/关闭跟着"故事讲完了没"走，不再跟着"谜题解完了没"——
+       坩埚用完谜题就算解完了，但 meet 那段台词还没讲，对话框不能关。 */
+    if (dialogActive) {
+        ensureAlchemyIntroOverlay();
+        if (alchemyIntroDialog) alchemyIntroDialog.style.opacity = '1';
         const dialogText = alchemyIntroDialog && alchemyIntroDialog.querySelector('.alchemy-intro-dialog-text');
         const nameTag = alchemyIntroDialog && alchemyIntroDialog.querySelector('div');
         const arrow = alchemyIntroDialog && alchemyIntroDialog.querySelector('.alchemy-intro-dialog-arrow');
         const line = alchemyIntroNarration();
         if (nameTag && line) nameTag.textContent = line.speaker || '???';
         if (dialogText && line) {
-            dialogText.innerHTML = line.text.replace(/(右侧的书架|微光的书|旧硬币、茶叶、星尘|墙上的瓶架|炼金锅|魔法阵|召唤|一枚金币变成两枚|赚钱|成功)/g, '<span style="color:#ffd56b;font-weight:800">$1</span>');
+            dialogText.innerHTML = line.text.replace(/(右侧的书架|微光的书|旧硬币、茶叶、星尘|墙上的瓶架|炼金锅|魔法阵|炼金失控|一枚金币变成两枚|赚钱|成功|100|先挣钱|不是有地吗)/g, '<span style="color:#ffd56b;font-weight:800">$1</span>');
         }
         if (arrow) arrow.style.opacity = alchemyIntroDialogueDone() ? '0.35' : '1';
+    } else if (alchemyIntroDialog) {
+        alchemyIntroDialog.style.opacity = '0';
+    }
+
+    if (guidingActive) {
         const target = alchemyIntroTarget();
         alchemyIntroProjector.set(target.x, target.y, target.z).project(camera);
         const sx = (alchemyIntroProjector.x * 0.5 + 0.5) * window.innerWidth;
         const sy = (-alchemyIntroProjector.y * 0.5 + 0.5) * window.innerHeight;
         const pulse = 0.5 + Math.sin((time || 0) * 3.4) * 0.5;
-        const radius = target.radius + pulse * 28;
-        if (alchemyIntroOverlay) {
-            alchemyIntroOverlay.style.background =
-                'radial-gradient(circle ' + radius + 'px at ' + sx + 'px ' + sy + 'px, ' +
-                'rgba(255,226,132,.08) 0%, rgba(5,8,14,.18) 36%, rgba(5,8,14,.62) 68%, rgba(2,4,8,.76) 100%)';
-        }
         if (alchemyIntroBeam) {
+            alchemyIntroBeam.style.opacity = '1';
             alchemyIntroBeam.style.left = sx + 'px';
             alchemyIntroBeam.style.top = sy + 'px';
         }
@@ -415,7 +430,7 @@ function updateAlchemyIntro(dt, time) {
             beacon.rotation.y += (dt || 0) * 0.9;
         });
     } else {
-        setAlchemyIntroOverlayVisible(false);
+        if (alchemyIntroBeam) alchemyIntroBeam.style.opacity = '0';
         alchemyStageBeacons.forEach(beacon => { beacon.visible = false; });
     }
     if (alchemyBookGlow) {
@@ -484,7 +499,7 @@ if (typeof scene !== 'undefined' && typeof interactables !== 'undefined') {
 
 addEventListener('keydown', event => {
     if (event.key !== 'Enter') return;
-    if (!alchemyIntroState.complete && alchemyIntroDialog && alchemyIntroDialog.style.opacity !== '0') {
+    if (!alchemyIntroState.startedStory && alchemyIntroDialog && alchemyIntroDialog.style.opacity !== '0') {
         advanceAlchemyIntroDialogue();
     }
 });
