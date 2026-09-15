@@ -790,6 +790,86 @@ const ACHIEVEMENTS = [
     }
 ];
 
+/* 每达成一个成就，师傅搭一句话——跟成就墙的小勋章不一样，这是他这个
+   人对这件事的态度，不是系统在恭喜你。结局两个成就（ending_good/
+   ending_bad）本身已经有专门的结局面板演这段戏，这里不重复插话。 */
+const MENTOR_ACHIEVEMENT_QUOTES = {
+    first_turnip: '头一颗，记住这个感觉。',
+    turnip_farmer: '五十颗了？地没白伺候。',
+    first_cabbage: '换个种也能出芽，不错。',
+    first_rice: '水稻娇气，你伺候明白了。',
+    first_potato: '土豆耐放，屯着不亏。',
+    cabbage_farmer: '白菜堆成这样，够开个摊了。',
+    rice_farmer: '稻子这么多，仓库该压秤了。',
+    potato_farmer: '土豆放地窖，能过一冬。',
+    four_crop_farmer: '四样都种过，手上有准头了。',
+    weather_misread: '看错天，交学费了。',
+    weather_lessons: '五次了，天气不会陪你犯第六次错。',
+    weather_reader: '会看天色了，这是本事。',
+    grain_keeper: '仓满了，别忘了东西是要卖的。',
+    first_gold: '200，够买第二批种子了。',
+    small_fortune: '1000，手头能松口气了。',
+    comfortable_cash: '5000，说明这条路走对了。',
+    ten_thousand_coins: '万元户——当年这四个字，能上报纸。',
+    tea_master: '茶采多了，手也麻利了。',
+    story_chapter1: '序章过了，往后路长，慢慢走。',
+    story_chapter2: '走到这儿，算是入行了。',
+    story_chapter3: '主线全走完了——但日子还得接着过。',
+    first_employee: '雇人容易，管好人难。',
+    first_trade: '买进第一支股票，往后多看看它背后的生意。',
+    farm_hire: '有人分担了，你能喘口气。',
+    turnip_tycoon: '200颗，这买卖做实了。',
+    star_relic: '运气这东西，信一半就够。',
+    coin_bankrupt: '输光了？记住这感觉，别忘。',
+    coin_tycoon: '赚了1000，见好收一收也不丢人。',
+    coin_full_house: '四个都雇满了，摊子铺开了。',
+    invest_profit: '赚了500，不错，但别飘。',
+    invest_loss: '亏300，认账，别硬扛。',
+    explore_fire: '屋里暖和点，日子才像日子。',
+    explore_cat: '猫醒了，你倒是比它勤快。',
+    explore_book: '书翻开了，字自己会说话。',
+    explore_chest: '箱子里那点旧物件，留着也好。',
+    explore_all: '屋子摸熟了，出门也该顺了。',
+    first_interaction: '碰一碰，总比干看着强。',
+    interaction_habit: '到处试试，是好习惯。',
+    interaction_collector: '什么都要碰一下——好奇心不是坏事。',
+    magic_touch: '魔法这东西，多摸摸就顺手了。',
+    well_keeper: '打水这活，看着简单，天天干才知道累。',
+    newspaper_reader: '报纸多看看，消息不会白来。',
+    seed_shopper: '种子买这么多，地够种吗？',
+    weather_prayer: '花钱求天，图个心安。',
+    weather_bargain: '天随人愿三次，算你运气好。',
+    tool_cycle: '翻、种、浇、收，一样不少，像个庄稼人了。',
+    went_to_work: '咖啡馆走一趟，见识见识也好。',
+    risk_room_visit: '那屋子进去容易，出来难，你心里有数就行。',
+    market_room_visit: '第一次看盘，别急着下手。',
+    steady_farmer: '不靠那些花活，攒到1500，这才叫稳。',
+    two_hands_working: '两头都有人帮你，别忘了亲自去看看。',
+    gambler_warned: '警示都拦不住，是你自己也松口气了吧。',
+    paper_rich: '账面好看，兜里没落地，别高兴太早。',
+    cash_out_in_time: '见好就收，这四个字，说着容易。',
+    one_track_mind: '500颗萝卜——一根筋，也是本事。',
+    back_from_the_edge: '输光了还能爬回来，这才是真本事。',
+    burned_by_pitch: '坑三次了，学费交够了没？',
+    ad_taxed: '广告这东西，防不胜防。',
+    ad_resistant: '五次了，你倒是越扣越皮实。',
+    lucky_pitch: '这次是运气，别当成本事。',
+    tea_first_batch: '晒炒装一条龙走完了，这才叫做产品。',
+    tea_batch_master: '十批了，手艺是真练出来了。',
+    charity_starter: '100块捐出去，不算多，但是个开始。',
+    charity_regular: '500了，看得出你是真上心。',
+    charity_first_choice: '第一次舍得给，不容易。',
+    charity_three_times: '三次了，不是一时兴起。',
+    charity_big_gift: '500一笔，出手不小。',
+    cafe_first_shift: '第一班打工钱到手，滋味不一样吧。',
+    cafe_barista: '500了，咖啡馆都快养熟了。',
+    land_allin: '兜里没剩几个钱还敢租，是有点胆子。',
+    land_owner: '地是自己的了，往后不用看人脸色。',
+    charity_grand: '2000——赚钱是本事，给得出去，是更大的本事。',
+    first_delivery: '头一单送完，往后就顺了。',
+    delivery_regular: '十单了，这手艺，我熟。'
+};
+
 let achievementState = { unlocked: {}, stats: makeAchievementStats(null) };
 let achievementStatsDirty = false;
 let achievementPollTimer = 0;
@@ -854,6 +934,10 @@ function pollAchievements() {
             changed = true;
             if (typeof showHintOverride === 'function') {
                 showHintOverride('🏆 达成成就：' + a.title);
+            }
+            const quote = MENTOR_ACHIEVEMENT_QUOTES[a.id];
+            if (quote && typeof showGuideCard === 'function') {
+                showGuideCard('师傅：' + quote, 6);
             }
             if (typeof SND !== 'undefined') SND.play('chim');
         }
