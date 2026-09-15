@@ -1,12 +1,14 @@
+/* 对话框式：跟开局炼金对话/租地对话同一套底部深色对话框，
+   不再是屏幕正中央的羊皮纸卡片。 */
 .mainStoryPanel {
     position: fixed;
     inset: 0;
     z-index: 27;
-    display: grid;
-    place-items: center;
-    padding: 24px;
-    background: rgba(20, 16, 10, .5);
-    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0 24px 42px;
+    background: rgba(10, 8, 4, .28);
 }
 
 .mainStoryPanel[hidden] {
@@ -15,17 +17,16 @@
 
 .mainStoryCard {
     position: relative;
-    width: min(560px, 94vw);
-    max-height: min(80vh, 560px);
+    width: min(1120px, calc(100vw - 60px));
+    max-height: min(70vh, 560px);
     overflow: auto;
-    padding: 26px 30px 24px;
-    color: #3a2f22;
-    background: repeating-linear-gradient(45deg, rgba(58, 47, 34, .05) 0 10px, rgba(58, 47, 34, 0) 10px 20px),
-        linear-gradient(180deg, #fbf3df 0%, #efe0bd 100%);
-    border: 2px dashed rgba(138, 106, 60, .55);
-    border-radius: 10px;
-    box-shadow: 0 22px 70px rgba(20, 14, 6, .35);
-    font-family: 'Segoe Print', Georgia, 'Times New Roman', serif;
+    padding: 22px 30px 24px;
+    color: #f7f0dc;
+    background: linear-gradient(180deg, rgba(18, 22, 28, .92), rgba(8, 11, 16, .95));
+    border: 1px solid rgba(255, 255, 255, .32);
+    border-radius: 12px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, .4);
+    font: 500 17px/1.7 system-ui, -apple-system, BlinkMacSystemFont, "Microsoft YaHei", sans-serif;
 }
 
 .mainStoryClose {
@@ -34,10 +35,10 @@
     right: 12px;
     width: 30px;
     height: 30px;
-    border: 1px solid rgba(138, 106, 60, .45);
+    border: 1px solid rgba(255, 255, 255, .3);
     border-radius: 50%;
-    background: rgba(255, 253, 242, .7);
-    color: #6b4f2c;
+    background: rgba(255, 255, 255, .08);
+    color: #f7f0dc;
     font-size: 17px;
     line-height: 1;
     cursor: pointer;
@@ -45,9 +46,9 @@
 }
 
 .mainStoryClose:hover {
-    background: #fff;
-    color: #3a2f22;
-    border-color: #a8763c;
+    background: rgba(255, 255, 255, .18);
+    color: #fff;
+    border-color: rgba(255, 255, 255, .5);
 }
 
 @keyframes mainStoryShake {
@@ -68,36 +69,35 @@
 
 .mainStoryKicker {
     margin: 0;
-    letter-spacing: .28em;
+    letter-spacing: .24em;
     text-transform: uppercase;
-    color: #a8763c;
-    font: 700 12px/1.3 monospace;
+    color: #ffd778;
+    font: 700 11px/1.3 monospace;
 }
 
 #mainStoryTitle {
-    margin: 6px 0 14px;
-    font-size: clamp(22px, 5vw, 30px);
-    line-height: 1.15;
+    margin: 5px 0 14px;
+    font-size: clamp(18px, 3.6vw, 22px);
+    line-height: 1.2;
+    color: #fff;
+    font-family: 'Noto Serif SC', serif;
 }
 
 .mainStoryBody {
     position: relative;
-    min-height: 90px;
-    padding: 14px 16px;
-    margin-bottom: 18px;
-    background: rgba(255, 253, 242, .55);
-    border: 1px dashed rgba(138, 106, 60, .45);
-    border-radius: 8px;
+    min-height: 64px;
+    padding: 4px 34px 4px 2px;
+    margin-bottom: 16px;
 }
 
 /* 台词一句一句走的时候，右下角加个闪动的箭头，提示还能点"继续"翻下一句 */
 .mainStoryBody.dialogStep::after {
     content: '▼';
     position: absolute;
-    right: 12px;
-    bottom: 8px;
-    color: #a8763c;
-    font-size: 14px;
+    right: 6px;
+    bottom: 2px;
+    color: #ffd778;
+    font-size: 15px;
     animation: mainStoryDialogArrow 1s ease-in-out infinite;
 }
 
@@ -107,14 +107,7 @@
 }
 
 .mainStoryBody p {
-    margin: 0 0 10px;
-    font-size: 16px;
-    line-height: 1.8;
-    text-align: justify;
-}
-
-.mainStoryBody p:last-child {
-    margin-bottom: 0;
+    margin: 0;
 }
 
 .mainStoryBody .mainStorySpeaker {
@@ -122,32 +115,32 @@
     margin-right: 8px;
     padding: 2px 10px;
     border-radius: 999px;
-    background: #a8763c;
-    color: #fbf3df;
-    font: 700 12px/1.6 monospace;
+    background: rgba(222, 199, 154, .92);
+    color: #211a14;
+    font: 800 12px/1.6 monospace;
 }
 
 .mainStoryCoinNote {
     margin-top: 10px !important;
     padding: 8px 10px;
-    border: 1px dashed rgba(184, 84, 47, .55);
+    border: 1px dashed rgba(255, 148, 110, .5);
     border-radius: 6px;
-    background: rgba(184, 84, 47, .08);
-    color: #8a4326;
+    background: rgba(255, 148, 110, .1);
+    color: #ffb595;
     font: 700 13px/1.5 monospace !important;
     text-align: left !important;
 }
 
 .mainStoryCoinNote.met {
-    border-color: rgba(111, 168, 79, .6);
-    background: rgba(111, 168, 79, .12);
-    color: #4a7a34;
+    border-color: rgba(139, 224, 106, .55);
+    background: rgba(139, 224, 106, .12);
+    color: #bdf09a;
 }
 
 #mainStoryNextBtn[disabled] {
-    background: #cfc3ac;
-    border-color: #cfc3ac;
-    color: #6b5f4a;
+    background: rgba(255, 255, 255, .1);
+    border-color: rgba(255, 255, 255, .2);
+    color: rgba(247, 240, 220, .45);
     cursor: not-allowed;
 }
 
@@ -165,22 +158,22 @@
     appearance: none;
     text-align: left;
     padding: 12px 14px;
-    border: 2px dashed rgba(138, 106, 60, .55);
+    border: 1px solid rgba(255, 255, 255, .28);
     border-radius: 8px;
-    background: rgba(255, 253, 242, .55);
-    color: #3a2f22;
-    font: 600 14px/1.5 'Segoe Print', Georgia, 'Times New Roman', serif;
+    background: rgba(255, 255, 255, .06);
+    color: #f7f0dc;
+    font: 600 14px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Microsoft YaHei", sans-serif;
     cursor: pointer;
     transition: background .15s ease, border-color .15s ease;
 }
 
 .mainStoryChoiceBtn:hover:not([disabled]) {
-    background: rgba(184, 118, 60, .16);
-    border-color: #a8763c;
+    background: rgba(255, 215, 120, .14);
+    border-color: #ffd778;
 }
 
 .mainStoryChoiceBtn[disabled] {
-    opacity: .55;
+    opacity: .45;
     cursor: not-allowed;
 }
 
@@ -404,11 +397,11 @@
 #mainStoryNextBtn {
     display: block;
     margin-left: auto;
-    border: 1px solid #a8763c;
+    border: 1px solid #ffd778;
     border-radius: 999px;
     padding: 9px 20px;
-    background: #a8763c;
-    color: #fbf3df;
+    background: #ffd778;
+    color: #211a14;
     font: 700 13px/1 monospace;
     cursor: pointer;
 }
