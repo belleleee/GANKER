@@ -14,7 +14,7 @@
 function speakerPillHtml(speaker) {
     const isMentor = speaker === '师傅' || speaker === '宗庆后';
     return '<span class="mainStorySpeaker' + (isMentor ? ' mainStorySpeakerMentor' : '') + '">' +
-        (isMentor ? '<span class="mentorAvatar" aria-hidden="true">👴</span>' : '') +
+        (isMentor ? '<img class="mentorAvatar" src="assets/ui/mentor-avatar.webp" alt="" aria-hidden="true">' : '') +
         speaker + '</span>';
 }
 window.speakerPillHtml = speakerPillHtml;
