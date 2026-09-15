@@ -399,7 +399,10 @@ function updateDeliveryBanner() {
 /* ---------------- 主循环：生成、倒计时、飘浮动画 ---------------- */
 
 function isDeliveryUnlocked() {
-    return typeof mainStoryState !== 'undefined' && mainStoryState.stage >= 1;
+    if (typeof mainStoryState === 'undefined' || mainStoryState.stage < 1) return false;
+    /* 手上还没收成的时候，"接单送货"这套东西没东西可送，弹出来也是
+       白弹——等玩家真的收获过一次作物，代销订单才有意义。 */
+    return typeof storyStat === 'function' && storyStat('totalHarvests') >= 1;
 }
 
 function updateDeliveryOrders(dt, time) {
