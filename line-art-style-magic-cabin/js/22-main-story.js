@@ -232,20 +232,25 @@ const MAIN_STORY_STAGES = [
         unlocks: null,
         title: '这一次，我不听你的',
         lines: [
-            { speaker: '旁白', text: '股市小屋里出现一家新公司：高速增长，暂时亏损，重研发，商业模式你从没见过。' },
-            { speaker: '你', text: '这家我想跟一点。' },
+            { speaker: '旁白', text: '魔法道具铺这几天像换了个公司——广告打得凶，账上却是净亏损。你翻着基本面，翻了老半天。' },
+            { speaker: '旁白', text: '你把自己算的估值填了上去，比现价还高一截。' },
+            { speaker: '你', text: '我觉得这家还能再涨。' },
             { speaker: '宗庆后', text: '我不投。' },
-            { speaker: '你', text: '为什么？' },
-            { speaker: '宗庆后', text: '看不懂。' },
-            { speaker: '你', text: '你不是什么都能算明白吗？' },
-            { speaker: '宗庆后', text: '算得明白的，是我干过的生意。这种东西，我没干过，不该装懂。' },
-            { speaker: '旁白', text: '这是他第一次，没能替你拿主意。' }
+            { speaker: '你', text: '为什么？你不是看两眼就能算明白吗？' },
+            { speaker: '宗庆后', text: '算得明白的，是我干过的生意——种地、送货、开店，这些账我闭着眼都能算。这种烧钱换增长的路数，我没干过，不该装懂。' },
+            { speaker: '你', text: '那我这估值……' },
+            { speaker: '宗庆后', text: '你自己填的，你自己担。这次我不替你拿主意。' },
+            { speaker: '旁白', text: '这是他第一次，没能——或者说，没打算——替你做这个决定。' }
         ],
         unlockToast: '📖 主线推进：这次你自己做了判断',
-        questLabel: '自己判断要不要投这家看不懂的新公司',
+        questLabel: '去股市小屋，给"魔法道具铺"记一次你自己的估值',
         target: { x: -12.0, z: 8.5 },
-        lockedHint: '先去股市小屋看看那家新公司。',
-        auto: () => storyStat('investmentEntries') >= 1,
+        lockedHint: '先去股市小屋，看完魔法道具铺的基本面，记一次你自己的估值。',
+        auto: () => {
+            const inv = typeof readSavedInvestmentState === 'function' ? readSavedInvestmentState() : null;
+            const stock = inv && inv.market && inv.market.stocks && inv.market.stocks.MAGIC;
+            return !!(stock && Number(stock.playerValuation) > 0);
+        },
         choices: [
             {
                 label: '跟投（相信自己这些天攒下的判断）',
