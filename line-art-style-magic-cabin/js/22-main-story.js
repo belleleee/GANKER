@@ -276,6 +276,7 @@ const MAIN_STORY_STAGES = [
         title: '最后一次炼金',
         lines: [
             { speaker: '旁白', text: '材料终于凑齐了——月银、星尘、灵魂石，都摆在了当年那口坩埚旁边。屋子里的一切，和第一天几乎一模一样。' },
+            { speaker: '旁白', text: '你顺手又翻开了书架上那本旧书——还是第一天翻开的那几页，只是这次，你已经看得懂了。' },
             { speaker: '你', text: '（习惯性地）这次怎么做？' },
             { speaker: '宗庆后', text: '你不是会了吗？' },
             { speaker: '你', text: '我问的是炼金。' },
@@ -287,11 +288,12 @@ const MAIN_STORY_STAGES = [
             { speaker: '旁白', text: '他没接话，只是把手背在身后，等着你动手。真正送走他之前，还有最后一件事要想清楚。' }
         ],
         unlockToast: '📖 主线推进：材料集齐，可以做最后一次炼金了',
-        questLabel: '材料备齐后，回到炼金锅完成最后一次炼金',
+        questLabel: '钱攒够 10000 金币，再回书架前把那本旧书重新翻开',
         target: { x: -2.35, z: -0.45 },
-        coinRequirement: 3000,
-        lockedHint: '钱攒够 3000 金币，材料才备得齐。',
-        auto: () => currentCoins() >= 3000,
+        coinRequirement: 10000,
+        lockedHint: '钱攒够 10000 金币，再回书架前把那本旧书重新翻开。',
+        auto: () => currentCoins() >= 10000 &&
+            typeof wasAlchemyBookReopened === 'function' && wasAlchemyBookReopened(),
         choices: [
             {
                 label: '把这段情分放在心上，体面地送他走',

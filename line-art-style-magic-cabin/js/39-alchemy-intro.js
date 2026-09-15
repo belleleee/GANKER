@@ -13,7 +13,10 @@ const alchemyIntroState = {
     complete: false,
     startedStory: false,
     dialogScene: 'wake',
-    dialogIndex: 0
+    dialogIndex: 0,
+    /* 结局那一章要求玩家回到这本书架前，把这本已经读过的书重新打开
+       一次——呼应"回到开局那口坩埚"的收尾，不是单纯攒够金币就行。 */
+    finalBookReopened: false
 };
 
 let alchemyBookGlow = null;
@@ -298,6 +301,10 @@ function ensureAlchemyStageBeacons() {
 function openAlchemyIntroBook() {
     if (alchemyIntroState.complete) {
         setAlchemyRecipeVisible(!alchemyRecipeBoard || !alchemyRecipeBoard.visible);
+        if (!alchemyIntroState.finalBookReopened) {
+            alchemyIntroState.finalBookReopened = true;
+            if (typeof saveGameState === 'function') saveGameState(false);
+        }
         return;
     }
     alchemyIntroState.bookRead = true;
@@ -509,6 +516,10 @@ function isAlchemyIntroStoryStarted() {
     return !!alchemyIntroState.startedStory;
 }
 
+function wasAlchemyBookReopened() {
+    return !!alchemyIntroState.finalBookReopened;
+}
+
 function captureAlchemyIntroState() {
     return Object.assign({}, alchemyIntroState);
 }
@@ -520,6 +531,7 @@ function applyAlchemyIntroState(raw) {
     alchemyIntroState.cauldronUsed = !!raw.cauldronUsed;
     alchemyIntroState.complete = !!raw.complete;
     alchemyIntroState.startedStory = !!raw.startedStory;
+    alchemyIntroState.finalBookReopened = !!raw.finalBookReopened;
     /* 自愈：老存档可能卡在已经删掉的 'cauldron' 场景里（坩埚用完了，
        但开场戏没讲完，又找不到旧场景），统一收敛到 meet 场景重讲一遍
        "第一次见面"，不会卡死在读不到的场景名上。 */
@@ -539,6 +551,7 @@ window.alchemyIntroHint = alchemyIntroHint;
 window.placePlayerAtAlchemyIntroStart = placePlayerAtAlchemyIntroStart;
 window.isAlchemyIntroComplete = isAlchemyIntroComplete;
 window.isAlchemyIntroStoryStarted = isAlchemyIntroStoryStarted;
+window.wasAlchemyBookReopened = wasAlchemyBookReopened;
 window.captureAlchemyIntroState = captureAlchemyIntroState;
 window.applyAlchemyIntroState = applyAlchemyIntroState;
 
