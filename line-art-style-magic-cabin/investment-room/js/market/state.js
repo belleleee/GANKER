@@ -2,7 +2,7 @@ const SESSION_KEY = 'magicCabin.session.v1';
 const GUEST_ID = 'guest';
 const SAVE_SCHEMA = 1;
 const CONTENT_ID = 'magic-cabin-local-2026';
-const state = { coins: 1200, investment: { jobLevel: 1, lastSalaryDay: -1, totalWages: 0, realizedGain: 0, realizedLoss: 0, reputation: 60, lastRumorDay: -1, lastCoffeeDay: -1, holdings: {}, shorts: {}, company: null }, save: null };
+const state = { coins: 2600, investment: { jobLevel: 1, lastSalaryDay: -1, totalWages: 0, realizedGain: 0, realizedLoss: 0, reputation: 60, lastRumorDay: -1, lastCoffeeDay: -1, marginDebt: 0, holdings: {}, shorts: {}, company: null }, save: null };
 const screenPanel = document.getElementById('screenPanel');
 const dashClock = document.getElementById('dashClock');
 const dashRep = document.getElementById('dashRep');
@@ -16,18 +16,19 @@ const dashBody = document.querySelector('.dashBody');
 const closeScreenPanel = document.getElementById('closeScreenPanel');
 const screenMeshes = [];
 const screenTextures = [];
-/* 股价整体 ×3：起始资金也从100提到1200，配合之前加的1/5/20批量交易，
-   现在买卖、涨跌、K线波动才会是"几百几百"地动，不再是个位数的零钱游戏。 */
+/* 股价再往上调一轮（大约再 ×1.7），起始资金从1200提到2600，配合新加
+   的50股批量交易和融资杠杆，"股市是主要玩法"这件事在金额上要真正
+   立得住——买卖、涨跌、K线波动应该是成百上千地动，而不是零钱游戏。 */
 const STOCKS = [
-  { id: 'TEA', name: '茶业合作社', start: 117, sector: 'tea' },
-  { id: 'FARM', name: '农场经营', start: 102, sector: 'farm' },
-  { id: 'SHIP', name: '城镇货运', start: 141, sector: 'freight' },
-  { id: 'BOOK', name: '书籍工坊', start: 84, sector: 'book' },
-  { id: 'COIN', name: '硬币商店', start: 156, sector: 'coin' },
-  { id: 'LIGHT', name: '灯具作坊', start: 93, sector: 'light' },
-  { id: 'CAFE', name: '线稿咖啡馆', start: 78, sector: 'cafe' },
-  { id: 'MAGIC', name: '魔法道具铺', start: 183, sector: 'magic' },
-  { id: 'WAHA', name: '娃哈哈', start: 120, sector: 'company', isPlayerCompany: true }
+  { id: 'TEA', name: '茶业合作社', start: 200, sector: 'tea' },
+  { id: 'FARM', name: '农场经营', start: 175, sector: 'farm' },
+  { id: 'SHIP', name: '城镇货运', start: 240, sector: 'freight' },
+  { id: 'BOOK', name: '书籍工坊', start: 145, sector: 'book' },
+  { id: 'COIN', name: '硬币商店', start: 265, sector: 'coin' },
+  { id: 'LIGHT', name: '灯具作坊', start: 160, sector: 'light' },
+  { id: 'CAFE', name: '线稿咖啡馆', start: 135, sector: 'cafe' },
+  { id: 'MAGIC', name: '魔法道具铺', start: 310, sector: 'magic' },
+  { id: 'WAHA', name: '娃哈哈', start: 205, sector: 'company', isPlayerCompany: true }
 ];
 const NEWS_POOL = [
   { title: '茶场订单增长', targetStock: 'TEA', impact: .065, delay: 1 },
@@ -213,6 +214,7 @@ function normalizeInvestment(raw) {
     reputation: intValue(raw && raw.reputation, 60, 0, 100),
     lastRumorDay: intValue(raw && raw.lastRumorDay, -1, -1, 999999),
     lastCoffeeDay: intValue(raw && raw.lastCoffeeDay, -1, -1, 999999),
+    marginDebt: intValue(raw && raw.marginDebt, 0, 0, 9999999),
     market: normalizeMarket(raw && raw.market),
     company: normalizeCompanyState(raw && raw.company),
     holdings,
@@ -431,6 +433,66 @@ function investmentPnlSummary() {
     realized,
     totalPnl: realized + longPnl + shortPnl
   };
+}
+
+/* ---------------- 融资杠杆：新玩法，比单纯买卖更有分量 ----------------
+   借钱买股票，赚了翻倍赚，亏了也翻倍亏，每天还要计利息——这是"股市
+   是主要玩法"里真正加深度、加刺激的一块：赢面更大，代价也更真实。
+   权益（现金+持仓市值-欠款）跌破欠款的30%，直接触发强制平仓，把
+   持仓全部按市价卖掉抵债，声誉也会受重创，不是嘴上说说的风险。 */
+const MARGIN_INTEREST_RATE = .015;
+const MARGIN_MAX_LEVERAGE = 1;
+const MARGIN_CALL_RATIO = .3;
+
+function marginDebt() {
+  return intValue(state.investment.marginDebt, 0, 0, 9999999);
+}
+
+function setMarginDebt(value) {
+  state.investment.marginDebt = Math.max(0, Math.round(finiteNumber(value, 0, 0, 9999999)));
+}
+
+function marginBorrowLimit() {
+  state.coins = intValue(state.coins, 2600, 0, 999999);
+  return Math.max(0, Math.round(state.coins * MARGIN_MAX_LEVERAGE) - marginDebt());
+}
+
+function portfolioEquity() {
+  const pnl = investmentPnlSummary();
+  return state.coins + pnl.longValue - marginDebt();
+}
+
+function forceLiquidateMargin() {
+  let recovered = 0;
+  for (const item of STOCKS) {
+    const holding = getHolding(item.id);
+    if (!holding.qty) continue;
+    const stock = getStock(item.id);
+    const income = Math.floor(stock.price * holding.qty);
+    recovered += income;
+    const profit = income - holding.cost;
+    if (profit >= 0) state.investment.realizedGain += profit;
+    else state.investment.realizedLoss += Math.abs(profit);
+    setHolding(item.id, { qty: 0, cost: 0 });
+  }
+  state.coins = Math.min(999999, state.coins + recovered);
+  const debt = marginDebt();
+  const payoff = Math.min(debt, state.coins);
+  state.coins -= payoff;
+  setMarginDebt(debt - payoff);
+  state.investment.reputation = Math.max(0, state.investment.reputation - 20);
+  marketState.news.push({
+    title: '融资爆仓：权益跌破维持担保比例，持仓被强制平仓',
+    targetStock: 'EVENT', isEvent: true, bad: true, delay: 0, day: marketState.day
+  });
+  marketState.news = marketState.news.slice(-8);
+  if (typeof showMarketFeedback === 'function' && payoff > 0) {
+    showMarketFeedback(-payoff, '融资爆仓', '权益跌破维持担保比例，系统把全部持仓按市价卖出抵债 ' + payoff + ' 金币，声誉也受了重创。', {
+      countMilestone: false, toastLabel: '强平 -'
+    });
+  } else if (typeof showToast === 'function') {
+    showToast('融资爆仓：持仓已被强制平仓抵债，声誉受损。', 3200);
+  }
 }
 
 const RUMOR_IMPACT = .09;
@@ -709,6 +771,15 @@ function advanceMarketDay() {
   if (marketState.news.length < 6 || Math.random() < .45) {
     marketState.news.push(makeNewsEvent(0));
     marketState.news = marketState.news.slice(-8);
+  }
+  /* 融资欠款每天计一次利息，再检查权益有没有跌破维持担保比例——
+   * 顺序很重要：先算完利息、再用当天收盘后的最新价算权益，才是
+   * 玩家实际会看到的那个数。 */
+  if (marginDebt() > 0) {
+    setMarginDebt(marginDebt() * (1 + MARGIN_INTEREST_RATE));
+    if (portfolioEquity() < marginDebt() * MARGIN_CALL_RATIO) {
+      forceLiquidateMargin();
+    }
   }
   redrawScreens();
   if (!screenPanel.hidden) renderScreenPanel(activeScreen);

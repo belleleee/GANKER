@@ -22,7 +22,29 @@
 .dashTradeActions button.rumor:hover{background:rgba(255,214,102,.22);box-shadow:0 0 16px rgba(255,214,102,.3)}
 .dashTradeActions button.rumor.ghost{border-color:#ff6f91;background:rgba(255,111,145,.1);color:#ffbdd0;text-shadow:0 0 8px rgba(255,111,145,.45)}
 .dashTradeActions button.rumor.ghost:hover{background:rgba(255,111,145,.22);box-shadow:0 0 16px rgba(255,111,145,.3)}
+.dashTradeActions button.margin{border-color:#ff9f5b;background:rgba(255,159,91,.12);color:#ffd9b8;text-shadow:0 0 8px rgba(255,159,91,.5)}
+.dashTradeActions button.margin:hover{background:rgba(255,159,91,.26);box-shadow:0 0 16px rgba(255,159,91,.35)}
 .dashTradeActions button[disabled]{opacity:.35;cursor:not-allowed;box-shadow:none}
+
+.dashMarginBox{
+  margin:0 0 14px;
+  padding:10px 12px;
+  border:1px dashed rgba(255,159,91,.4);
+  border-radius:8px;
+  background:rgba(255,159,91,.05);
+}
+.dashMarginBox.danger{
+  border-color:rgba(255,93,117,.6);
+  background:rgba(255,93,117,.08);
+}
+.dashMarginRow{
+  display:flex;
+  justify-content:space-between;
+  font-size:12px;
+  padding:3px 0;
+  color:#ffd9b8;
+}
+.dashMarginRow strong{color:#fff;text-shadow:0 0 6px rgba(255,159,91,.4)}
 .dashRumor{margin:2px 0 14px}
 .dashRumorHint{margin:0 0 8px;font-size:11px;color:#d7f7ff;line-height:1.5;text-shadow:0 0 6px rgba(96,244,255,.32)}
 .dashRumorHint.warn{color:#ffb04d;text-shadow:0 0 8px rgba(255,176,77,.45)}

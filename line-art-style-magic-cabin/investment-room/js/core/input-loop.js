@@ -24,10 +24,15 @@ dashBody.addEventListener('click', event => {
       founderEmergencySale(button.dataset.shares);
       return;
     }
+    if (button.dataset.action === 'repayMargin') {
+      repayMargin(button.dataset.amount);
+      return;
+    }
     const stockId = button.dataset.stock;
     if (!stockId) return;
     const qty = Math.max(1, Math.trunc(Number(button.dataset.qty)) || 1);
     if (button.dataset.action === 'buy') buyStock(stockId, qty);
+    if (button.dataset.action === 'marginBuy') buyStockOnMargin(stockId, qty);
     if (button.dataset.action === 'sell') sellStock(stockId, qty);
     if (button.dataset.action === 'short') shortStock(stockId, qty);
     if (button.dataset.action === 'cover') coverShort(stockId, qty);

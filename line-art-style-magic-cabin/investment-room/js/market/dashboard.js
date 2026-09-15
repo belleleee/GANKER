@@ -108,6 +108,65 @@ function buyStock(id, count) {
   saveState();
 }
 
+function buyStockOnMargin(id, count) {
+  const stock = safeStockForTrade(id);
+  if (stock.id === 'WAHA' && !companyState().listed) {
+    if (typeof showToast === 'function') showToast('娃哈哈还没上市，先选择发行方案。');
+    return;
+  }
+  if (typeof showInvestTipOnce === 'function') {
+    showInvestTipOnce('marginBuy',
+      '融资买入：借钱放大仓位，也放大风险',
+      '融资买的部分是借来的，每天要计利息；一旦权益（现金+持仓市值-欠款）跌破欠款的30%，系统会强制把持仓全部卖掉抵债，还会扣声誉。赚的时候翻倍赚，亏的时候也翻倍亏——别把全部身家都押在杠杆上。');
+  }
+  const qty = Math.max(1, Math.trunc(Number(count)) || 1);
+  state.coins = Math.trunc(safeMoney(state.coins, 2600));
+  const cost = Math.ceil(stock.price * qty);
+  if (!Number.isFinite(cost)) return;
+  const cashPart = Math.min(state.coins, cost);
+  const borrowPart = cost - cashPart;
+  if (borrowPart > marginBorrowLimit()) {
+    if (typeof showToast === 'function') showToast('融资额度不够了，先还一部分融资款或减少数量');
+    return;
+  }
+  state.coins -= cashPart;
+  if (borrowPart > 0) setMarginDebt(marginDebt() + borrowPart);
+  const holding = getHolding(id);
+  holding.qty += qty;
+  holding.cost += cost;
+  stock.pressure += .012 * qty;
+  setHolding(id, holding);
+  showMarketFeedback(-cost, '融资建仓', '买入 ' + stock.name + ' ×' + qty +
+    (borrowPart ? '，其中融资 ' + borrowPart + ' 金币（欠款合计 ' + marginDebt() + '）' : '') + '。', {
+      countMilestone: false, toastLabel: '现金 -'
+    });
+  redrawScreens();
+  renderScreenPanel(activeScreen);
+  saveState();
+}
+
+function repayMargin(amount) {
+  const debt = marginDebt();
+  if (!debt) {
+    if (typeof showToast === 'function') showToast('没有融资欠款需要偿还');
+    return;
+  }
+  state.coins = Math.trunc(safeMoney(state.coins, 2600));
+  const pay = Math.min(Math.max(1, Math.trunc(Number(amount)) || 0), debt, state.coins);
+  if (pay <= 0) {
+    if (typeof showToast === 'function') showToast('金币不够还款');
+    return;
+  }
+  state.coins -= pay;
+  setMarginDebt(debt - pay);
+  showMarketFeedback(-pay, '偿还融资', '还掉 ' + pay + ' 金币融资欠款，剩余欠款 ' + marginDebt() + '。', {
+    countMilestone: false, toastLabel: '现金 -'
+  });
+  redrawScreens();
+  renderScreenPanel(activeScreen);
+  saveState();
+}
+
 function sellStock(id, count) {
   const stock = safeStockForTrade(id);
   if (stock.id === 'WAHA' && !companyState().listed) {
@@ -388,6 +447,26 @@ function stockFundamentalsHtml(stock) {
     '</div>';
 }
 
+function marginPanelHtml() {
+  const debt = marginDebt();
+  const limit = marginBorrowLimit();
+  const equity = Math.round(portfolioEquity());
+  const callLine = Math.round(debt * MARGIN_CALL_RATIO);
+  if (!debt && !limit) return '';
+  return '<div class="dashMarginBox' + (debt ? ' danger' : '') + '">' +
+    '<div class="dashMarginRow"><span>融资欠款</span><strong>' + debt + '</strong></div>' +
+    '<div class="dashMarginRow"><span>剩余融资额度</span><strong>' + limit + '</strong></div>' +
+    (debt ? '<div class="dashMarginRow"><span>当前权益（现金+持仓-欠款）</span><strong class="' + (equity >= callLine * 1.3 ? 'up' : 'down') + '">' + equity + '</strong></div>' +
+      '<div class="dashMarginRow"><span>强平线（欠款×30%）</span><strong>' + callLine + '</strong></div>' +
+      '<p class="dashRumorHint warn">每天按 ' + Math.round(MARGIN_INTEREST_RATE * 1000) / 10 + '% 计利息，权益跌破强平线会被强制平仓。</p>' +
+      '<div class="dashTradeActions dashTradeActionsWrap">' +
+      [Math.min(debt, 100), Math.min(debt, 500), debt].filter((v, i, arr) => v > 0 && arr.indexOf(v) === i).map(n =>
+        '<button class="ghost" data-action="repayMargin" data-amount="' + n + '"' + (state.coins >= n ? '' : ' disabled') + '>还 ' + n + '</button>'
+      ).join('') +
+      '</div>' : '') +
+    '</div>';
+}
+
 function tradePanelHtml(stock) {
   if (stock.id === 'WAHA') return wahaCompanyPanelHtml(stock);
   if (typeof showInvestTipOnce === 'function') {
@@ -409,10 +488,17 @@ function tradePanelHtml(stock) {
   const canSell = holding.qty > 0;
   const canShort = shortExposure() + Math.floor(stock.price) <= shortLimit();
   const canCover = short.qty > 0 && state.coins >= Math.ceil(stock.price);
-  const TRADE_TIERS = [1, 5, 20];
+  const TRADE_TIERS = [1, 5, 20, 50];
   const buyBtns = TRADE_TIERS.map(n =>
     '<button data-action="buy" data-stock="' + stock.id + '" data-qty="' + n + '"' + (state.coins >= buyCost * n ? '' : ' disabled') + '>买 ' + n + '</button>'
   ).join('');
+  const marginLimit = marginBorrowLimit();
+  const marginBtns = TRADE_TIERS.map(n => {
+    const cost = buyCost * n;
+    const borrowNeeded = Math.max(0, cost - state.coins);
+    return '<button class="margin" data-action="marginBuy" data-stock="' + stock.id + '" data-qty="' + n + '"' +
+      (borrowNeeded <= marginLimit ? '' : ' disabled') + '>融资买 ' + n + '</button>';
+  }).join('');
   const sellBtns = TRADE_TIERS.map(n =>
     '<button class="ghost" data-action="sell" data-stock="' + stock.id + '" data-qty="' + n + '"' + (holding.qty >= n ? '' : ' disabled') + '>卖 ' + n + '</button>'
   ).join('') + '<button class="ghost" data-action="sell" data-stock="' + stock.id + '" data-qty="999999"' + (canSell ? '' : ' disabled') + '>清仓</button>';
@@ -430,6 +516,8 @@ function tradePanelHtml(stock) {
     '<div class="dashTradeActions dashTradeActionsWrap">' + sellBtns + '</div>' +
     '<div class="dashTradeActions dashTradeActionsWrap">' + shortBtns + '</div>' +
     '<div class="dashTradeActions dashTradeActionsWrap">' + coverBtns + '</div>' +
+    '<div class="dashTradeActions dashTradeActionsWrap">' + marginBtns + '</div>' +
+    marginPanelHtml() +
     '<div class="dashTradeInfo">' +
     '<div><span>现金</span><strong>' + state.coins + '</strong></div>' +
     '<div><span>持仓成本均价</span><strong>' + avg + '</strong></div>' +
