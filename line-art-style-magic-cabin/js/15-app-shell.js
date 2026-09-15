@@ -671,9 +671,11 @@ function resumeFromStoreIfNeeded() {
     const coinGameReturn = readCoinGameReturnState();
     const latestSave = validateSave(readJson(cabinSaveKey(), null));
     const latestMarketEvents = latestSave && latestSave.pendingMarketEvents;
+    const latestMarketTips = latestSave && latestSave.marketTips;
     const snapshot = validateSave(readJson(APP_STORE_RETURN_KEY, null));
     if (snapshot) applySaveState(snapshot);
     if (typeof applyMainStoryMarketEvents === 'function') applyMainStoryMarketEvents(latestMarketEvents);
+    if (typeof applyMarketTips === 'function') applyMarketTips(latestMarketTips);
     const restoredCoinGame = applyCoinGameReturnState(coinGameReturn);
     try {
         localStorage.removeItem(APP_STORE_RETURN_KEY);
@@ -852,6 +854,8 @@ function captureSaveState() {
         mainStory: typeof captureMainStoryState === 'function' ? captureMainStoryState() : null,
         alchemyIntro: typeof captureAlchemyIntroState === 'function' ? captureAlchemyIntroState() : null,
         pendingMarketEvents: typeof captureMainStoryMarketEvents === 'function' ? captureMainStoryMarketEvents() : [],
+        marketTips: typeof captureMarketTips === 'function' ? captureMarketTips() : [],
+        marketIntel: typeof captureMarketIntelState === 'function' ? captureMarketIntelState() : null,
         achievements: typeof captureAchievementState === 'function' ? captureAchievementState() : null,
         wealthEvents: typeof captureWealthEventsState === 'function' ? captureWealthEventsState() : null,
         land: typeof captureLandState === 'function' ? captureLandState() : null,
@@ -1163,6 +1167,12 @@ function applySaveState(save) {
     }
     if (typeof applyMainStoryMarketEvents === 'function') {
         applyMainStoryMarketEvents(save.pendingMarketEvents);
+    }
+    if (typeof applyMarketTips === 'function') {
+        applyMarketTips(save.marketTips);
+    }
+    if (typeof applyMarketIntelState === 'function') {
+        applyMarketIntelState(save.marketIntel);
     }
     if (typeof applyWealthEventsState === 'function') {
         applyWealthEventsState(save.wealthEvents);

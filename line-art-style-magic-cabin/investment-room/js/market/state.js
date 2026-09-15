@@ -45,7 +45,11 @@ const NEWS_SOURCES = [
   { id: 'insider', label: '内部消息', tone: '#ffd666', min: .5, max: .88 },
   { id: 'reporter', label: '财经记者', tone: '#5be6ff', min: .45, max: .78 },
   { id: 'rival', label: '同行放话', tone: '#ff9f5b', min: .22, max: .55 },
-  { id: 'forum', label: '论坛传闻', tone: '#ff5d75', min: .08, max: .42 }
+  { id: 'forum', label: '论坛传闻', tone: '#ff5d75', min: .08, max: .42 },
+  /* 玩家亲自去农场/咖啡馆/杂货铺打听到的——不是随机生成，是小屋那边
+     真实场景喂过来的消息，可信度比论坛传闻高，但也不是官方公告，
+     用同一套"可信度加权"逻辑处理，不用另起一套判定。 */
+  { id: 'field', label: '亲耳听说', tone: '#a8e06a', min: .45, max: .75 }
 ];
 let marketState = null;
 let activeScreen = 'market';
@@ -281,12 +285,39 @@ function loadState() {
   const save = readJson(saveKey(), null);
   state.save = save && save.schema === SAVE_SCHEMA && save.content === CONTENT_ID ? save : null;
   const economy = state.save && state.save.economy || {};
-  state.coins = intValue(economy.coins, 1200, 0, 999999);
+  state.coins = intValue(economy.coins, 2600, 0, 999999);
   state.investment = normalizeInvestment(economy.investment);
   marketState = state.investment.market;
   applyExternalMarketNews();
   queueStoryMarketEvents();
+  queueMarketTips();
   saveState();
+}
+
+/* 小屋那边"打听消息"攒下的情报（save.marketTips），读进来直接变成一条
+   带可信度的新闻，走已有的 newsImpact() 可信度加权逻辑——不用另起
+   一套判定，玩家亲耳听说的消息和财经记者、论坛传闻是同一套处理方式，
+   只是可信度区间不一样。 */
+function queueMarketTips() {
+  const pending = state.save && Array.isArray(state.save.marketTips) ? state.save.marketTips : [];
+  if (!pending.length) return;
+  for (const tip of pending) {
+    if (!tip || typeof tip.id !== 'string' || !Number.isFinite(tip.impact)) continue;
+    if (!STOCKS.some(item => item.id === tip.targetStock)) continue;
+    if (marketState.news.some(news => news.intelId === tip.id)) continue;
+    marketState.news.push({
+      title: String(tip.label || '打听到的消息').slice(0, 80),
+      targetStock: tip.targetStock,
+      impact: Math.max(-.2, Math.min(.2, tip.impact)),
+      credibility: finiteNumber(tip.credibility, .55, .2, .9),
+      source: 'field',
+      intelId: tip.id,
+      delay: 1,
+      day: marketState.day
+    });
+  }
+  marketState.news = marketState.news.slice(-8);
+  if (state.save) state.save.marketTips = [];
 }
 
 function queueStoryMarketEvents() {
@@ -357,7 +388,7 @@ function saveState() {
   const save = state.save || { schema: SAVE_SCHEMA, content: CONTENT_ID, savedAt: new Date().toISOString(), economy: {} };
   save.savedAt = new Date().toISOString();
   save.economy = save.economy || {};
-  state.coins = intValue(state.coins, 1200, 0, 999999);
+  state.coins = intValue(state.coins, 2600, 0, 999999);
   save.economy.coins = state.coins;
   marketState = normalizeMarket(marketState);
   state.investment.market = marketState;
@@ -445,7 +476,7 @@ function reputation() {
 
 function shortLimit() {
   const repFactor = .7 + reputation() / 200;
-  state.coins = intValue(state.coins, 1200, 0, 999999);
+  state.coins = intValue(state.coins, 2600, 0, 999999);
   return Math.round(state.coins * 1.5 * repFactor);
 }
 
@@ -557,7 +588,7 @@ function canSpreadRumor() {
 function spreadRumor(stockId, bad) {
   if (!canSpreadRumor()) return;
   const cost = rumorCost();
-  state.coins = intValue(state.coins, 1200, 0, 999999);
+  state.coins = intValue(state.coins, 2600, 0, 999999);
   if (state.coins < cost) return;
   const stock = STOCKS.find(item => item.id === stockId);
   if (!stock || stock.isPlayerCompany) return;
