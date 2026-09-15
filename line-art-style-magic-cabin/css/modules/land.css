@@ -75,6 +75,24 @@
     text-align: justify;
 }
 
+.landBody p {
+    margin: 0 0 10px;
+}
+
+.landBody p:last-child {
+    margin-bottom: 0;
+}
+
+.landBody .mainStorySpeaker {
+    display: inline-block;
+    margin-right: 8px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: #8a5a26;
+    color: #fbf1de;
+    font: 700 12px/1.6 monospace;
+}
+
 .landActions {
     display: flex;
     flex-wrap: wrap;

@@ -124,9 +124,9 @@ function promptRentFirstTime() {
     openLandPanel(
         '第一个决定',
         '要不要 all-in 租下这块地？',
-        '屋子东边这片荒地，地主愿意租给你，开价 <b>' + LAND_RENT_COST + '</b> 金币——你手里满打满算也就 <b>' + landCoins() + '</b> 金币，这几乎是全部家当。' +
-        '<br>租下来，才能翻地种萝卜，走出发家的第一步；不租，就只能在屋子里继续晃荡。' +
-        '<br>钱攒到 <b>' + LAND_BUYOUT_COST + '</b> 金币以上，还能把这块地直接买断，从此不用再交租。',
+        '<p><span class="mainStorySpeaker">旁白</span>屋子东边这片荒地，地主愿意租给你，开价 <b>' + LAND_RENT_COST + '</b> 金币——你手里满打满算也就 <b>' + landCoins() + '</b> 金币，这几乎是全部家当。</p>' +
+        '<p><span class="mainStorySpeaker">师傅</span>租下来，才能翻地种萝卜，走出第一步；不租，就只能在屋子里接着晃荡。</p>' +
+        '<p><span class="mainStorySpeaker">旁白</span>钱攒到 <b>' + LAND_BUYOUT_COST + '</b> 金币以上，还能把这块地直接买断，从此不用再交租。</p>',
         [
             { label: '再想想', onClick: () => showHintOverride('想好了随时回来找地主') },
             { label: 'All-in 租下来（-' + LAND_RENT_COST + ' 金币）', primary: true, onClick: doRentLand }
@@ -145,7 +145,8 @@ function promptRenew() {
     openLandPanel(
         '租期到了',
         '地主上门收地了',
-        '当初租的那 ' + LAND_RENT_DAYS + ' 天期限到了。地主说，要么续租接着种，要么——你手头要是宽裕，不如直接买断，以后再也不用看人脸色。',
+        '<p><span class="mainStorySpeaker">旁白</span>当初租的那 ' + LAND_RENT_DAYS + ' 天期限到了，地主上门了。</p>' +
+        '<p><span class="mainStorySpeaker">地主</span>要么续租接着种，要么——你手头要是宽裕，不如直接买断，以后再也不用看人脸色。</p>',
         buttons
     );
 }
