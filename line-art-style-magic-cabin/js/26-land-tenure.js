@@ -193,6 +193,48 @@ function promptRenew() {
     );
 }
 
+/* 租期没到，但钱已经够了——之前唯一能买断的入口是"租期到了"那个
+   弹窗，等于逼着玩家干等到期。现在点左上角的地契HUD随时能买断。 */
+function promptBuyoutEarly() {
+    const buttons = [
+        { label: '再想想', onClick: () => { } }
+    ];
+    const afford = landCoins() >= LAND_BUYOUT_COST;
+    if (afford) {
+        buttons.push({ label: '直接买断（-' + LAND_BUYOUT_COST + ' 金币）', primary: true, onClick: doBuyoutLand });
+    }
+    openLandPanel(
+        '地契',
+        '要不要现在就买断？',
+        [
+            { speaker: '旁白', text: '地还在租期内，还剩 ' + landDaysLeft() + ' 天。不用等到期——凑够 ' + LAND_BUYOUT_COST + ' 金币，随时可以提前买断。' },
+            { speaker: '师傅', text: afford ? '够了，买断吧，往后不用再看人脸色。' : '还差 ' + Math.max(0, LAND_BUYOUT_COST - landCoins()) + ' 金币，再攒攒。' }
+        ],
+        buttons
+    );
+}
+
+function openLandStatusPanel() {
+    if (landPanelOpen) return;
+    if (landState.owned) {
+        showHintOverride('地契 · 已经买断了，这块地是你自己的');
+        return;
+    }
+    if (landNeverRented()) {
+        promptRentFirstTime();
+        return;
+    }
+    if (landExpired()) {
+        promptRenew();
+        return;
+    }
+    promptBuyoutEarly();
+}
+
+if (landHud) {
+    landHud.addEventListener('click', openLandStatusPanel);
+}
+
 /* 返回 true 表示这块地现在可以正常操作（翻地/播种/浇水/收获）；
    返回 false 表示这次点击被拦下来了，弹窗会引导玩家先解决地契问题。 */
 function requestLandAccess() {

@@ -9,9 +9,14 @@
     z-index: 5;
     box-shadow: 0 1px 7px rgba(138, 90, 38, .14);
     user-select: none;
-    pointer-events: none;
+    cursor: pointer;
     white-space: nowrap;
-    transition: color .18s ease, border-color .18s ease;
+    transition: color .18s ease, border-color .18s ease, background .15s ease;
+}
+
+#landHud:hover {
+    background: #fff;
+    border-color: #8a5a26;
 }
 
 #landHud.owned {

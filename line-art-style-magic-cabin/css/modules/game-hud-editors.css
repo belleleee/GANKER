@@ -108,7 +108,8 @@
         }
 
         #hudStack .cashFlowPanel,
-        #hudStack .statsPanel {
+        #hudStack .statsPanel,
+        #hudStack #landHud {
             pointer-events: auto;
         }
 
