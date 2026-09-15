@@ -292,6 +292,7 @@ const MAIN_STORY_STAGES = [
         target: { x: -2.35, z: -0.45 },
         coinRequirement: 10000,
         lockedHint: '钱攒够 10000 金币，再回书架前把那本旧书重新翻开。',
+        readyHint: '💰 钱已经攒够 10000 了——回书架前，把那本旧书重新翻开，就能做最后一次炼金了。',
         auto: () => currentCoins() >= 10000 &&
             typeof wasAlchemyBookReopened === 'function' && wasAlchemyBookReopened(),
         choices: [
@@ -698,6 +699,23 @@ let mainStoryAutoCooldown = 0;
    游戏会重置，但足够避免"关掉又弹、每次都从头念一遍"的烦躁感。 */
 const mainStoryStageSeen = {};
 
+/* 有的章节除了金币门槛还有一个"额外条件"（比如最后一章还要求
+   重新翻开那本旧书）——金币攒够了，但那个额外条件没做，玩家光看
+   HUD 不一定想得起来该去干嘛。这里只在"钱够了、章节还没触发"的
+   那一刻提醒一次，不会每帧刷屏。 */
+const mainStoryReadyHintShown = {};
+
+function maybeShowStageReadyHint(stage) {
+    if (!stage.readyHint || !stage.coinRequirement) return;
+    if (!stageCoinsMet(stage)) return;
+    if (stage.auto()) return;
+    const key = mainStoryState.stage;
+    if (mainStoryReadyHintShown[key]) return;
+    mainStoryReadyHintShown[key] = true;
+    if (typeof showHintOverride === 'function') showHintOverride(stage.readyHint);
+    if (typeof SND !== 'undefined') SND.play('chim');
+}
+
 /**
  * 有些章节没有实体的门可以走进去触发（比如序章：种地+雇人），
  * 靠这个每帧轮询一次，达成条件就自动弹出主线卡片。
@@ -709,6 +727,7 @@ function pollAutoStageAdvance() {
     if (window.APP_GAME_MODAL_OPEN || window.APP_SHELL_BLOCK_GAME) return;
     if (mainStoryAutoCooldown > 0) return;
     if (!window.APP_ONBOARDING_DISMISSED) return;
+    maybeShowStageReadyHint(stage);
     if (!mainStoryStageReady(stage)) return;
     /* silent：不弹开局宗师傅那段对话卡片，条件达成直接静默推进主线 */
     if (stage.silent) {
