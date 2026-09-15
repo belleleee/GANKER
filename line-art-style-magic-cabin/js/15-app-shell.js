@@ -977,7 +977,20 @@ if (checkpointListEl) {
     });
 }
 
+/* 主线地图上点"回到这里"用的：按章节号找最近一次记录的存档点，
+   没有就提示一句，不用先跳到菜单"存档"页去找。 */
+function restoreCheckpointForStage(stageIndex) {
+    const cp = loadCheckpoints().find(item => item.stageIndex === stageIndex);
+    if (!cp) {
+        showHintOverride('这一章还没有存档点，没法回退');
+        return;
+    }
+    restoreCheckpoint(cp.id);
+}
+
 window.recordMainStoryCheckpoint = recordMainStoryCheckpoint;
+window.restoreCheckpointForStage = restoreCheckpointForStage;
+window.hasCheckpointForStage = stageIndex => loadCheckpoints().some(item => item.stageIndex === stageIndex);
 
 function saveGameState(manual) {
     const ok = writeJson(cabinSaveKey(), captureSaveState());

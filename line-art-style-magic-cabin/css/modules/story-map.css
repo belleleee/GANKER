@@ -155,6 +155,27 @@
 .storyMapDecision { color: #79532c; font-weight: 700; }
 .storyMapObjective { color: #8b4a2c; font-weight: 700; }
 
+.storyMapRewindBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 10px;
+    padding: 6px 12px;
+    border: 1px solid rgba(63, 120, 100, .45);
+    border-radius: 999px;
+    background: rgba(63, 120, 100, .08);
+    color: #3f7864;
+    font: 700 12px/1.2 'Noto Sans SC', monospace;
+    cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s;
+}
+
+.storyMapRewindBtn:hover {
+    background: #3f7864;
+    border-color: #3f7864;
+    color: #fff;
+}
+
 .storyMapStop--done .storyMapMarker { background: #3f7864; border-color: #3f7864; color: white; }
 .storyMapStop--current .storyMapMarker { background: #b85b3d; border-color: #b85b3d; color: white; }
 .storyMapStop--current .storyMapStopBody { border-color: #c98b72; border-left-color: #b85b3d; background: #fff9f3; }
