@@ -235,6 +235,23 @@ function removeDeliveryOrder(order, expired) {
         if (order.accepted && typeof window.addGoodwillPenalty === 'function') {
             window.addGoodwillPenalty(3, '接下的订单没送到，客户信任受损');
         }
+        /* 预付订金拿了钱不送货，之前是白赚——只扣3点口碑，订金留在
+           兜里，等于"接单立刻拿钱，随便放鸽子"的无限刷钱漏洞。
+           现在过期时要把预付款吐回去；手头不够就多扣口碑顶账，
+           跟现金流那边"还不起就扣信用"是同一套逻辑。 */
+        if (order.accepted && order.prepaidAmount) {
+            const clawback = order.prepaidAmount;
+            if (typeof window.spendCabinCoins === 'function' && window.spendCabinCoins(clawback, '预付订单违约 · 退还订金')) {
+                showHintOverride('森林里那位客户等不及，先走了——订单错过了，预付的 ' + clawback + ' 金币也退了回去');
+            } else {
+                if (typeof window.addGoodwillPenalty === 'function') {
+                    window.addGoodwillPenalty(5, '拿了预付款却没送货，还赔不起订金');
+                }
+                showHintOverride('森林里那位客户等不及，先走了——订金退不出来，口碑又扣了不少');
+            }
+            renderDeliveryBoard();
+            return;
+        }
         showHintOverride('森林里那位客户等不及，先走了——订单错过了');
     }
     renderDeliveryBoard();
