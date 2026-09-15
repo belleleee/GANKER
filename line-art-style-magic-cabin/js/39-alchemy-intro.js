@@ -24,6 +24,7 @@ let alchemyFailureFlash = 0;
 let alchemyIntroBeam = null;
 let alchemyIntroDialog = null;
 let alchemyStageBeacons = [];
+let alchemyFarmGuideBeacon = null;
 const alchemyIntroProjector = new THREE.Vector3();
 
 const ALCHEMY_INTRO_DIALOGUES = {
@@ -60,7 +61,7 @@ const ALCHEMY_INTRO_DIALOGUES = {
         { speaker: '???', text: '你不是会魔法吗？' },
         { speaker: '你', text: '可以查书！应该有灵魂召回或者逆向召唤之类的……' },
         { speaker: '旁白', text: '你翻开那本《炼金术入门》，一页新的配方浮了出来。' },
-        { speaker: '旁白', text: '「归魂炼金术」<br>月银 ×1　星尘 ×3　灵魂石 ×1<br>预计材料费用：3000 金币' },
+        { speaker: '旁白', text: '「归魂炼金术」<br>。。。。。。（总之就是很多材料）<br>预计材料费用：10000 金币' },
         { speaker: '旁白', text: '你翻了翻钱包。' },
         { speaker: '你', text: '……金币：100。' },
         { speaker: '旁白', text: '两个人沉默了一会儿。' },
@@ -450,6 +451,30 @@ function updateAlchemyIntro(dt, time) {
         if (typeof orbOn !== 'undefined') orbOn = true;
         if (typeof lampLit !== 'undefined') lampLit = Math.sin((time || 0) * 24) > -0.25;
     }
+    updateAlchemyFarmGuide(dt, time);
+}
+
+/* 开场对话讲完之后，屋里的谜题就结束了，但玩家还得知道"先去种地"——
+   在农田那片空地上摆一圈跟书架/瓶架/坩埚同款的光圈，锄头一解锁
+   （走到农田附近）就消失，不需要玩家自己瞎逛着找。 */
+function updateAlchemyFarmGuide(dt, time) {
+    const storyStarted = typeof isAlchemyIntroStoryStarted === 'function' && isAlchemyIntroStoryStarted();
+    const farmingUnlocked = typeof window.isToolUnlocked === 'function' && window.isToolUnlocked(3);
+    const active = storyStarted && !farmingUnlocked && typeof FARMLAND_CENTER !== 'undefined';
+    if (!active) {
+        if (alchemyFarmGuideBeacon) alchemyFarmGuideBeacon.visible = false;
+        return;
+    }
+    if (!alchemyFarmGuideBeacon) {
+        const groundY = typeof groundAt === 'function' ? groundAt(FARMLAND_CENTER.x, FARMLAND_CENTER.z, 0) : 0;
+        alchemyFarmGuideBeacon = makeAlchemyBeacon(FARMLAND_CENTER.x, groundY + 0.05, FARMLAND_CENTER.z, 0xa8e06a, 2.4);
+    }
+    alchemyFarmGuideBeacon.visible = true;
+    const pulse = 0.5 + Math.sin((time || 0) * 2.2) * 0.5;
+    alchemyFarmGuideBeacon.scale.setScalar(0.9 + pulse * 0.18);
+    alchemyFarmGuideBeacon.userData.halo.material.opacity = 0.12 + pulse * 0.1;
+    alchemyFarmGuideBeacon.userData.ring.material.opacity = 0.5 + pulse * 0.32;
+    alchemyFarmGuideBeacon.rotation.y += (dt || 0) * 0.5;
 }
 
 function placePlayerAtAlchemyIntroStart(force) {
