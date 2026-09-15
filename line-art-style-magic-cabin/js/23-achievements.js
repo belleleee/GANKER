@@ -951,6 +951,10 @@ function pollAchievements() {
 }
 
 function updateAchievements(dt) {
+    /* 跟师傅的第一次对话（开局炼金失败那场戏）结束之前，成就不开始
+       轮询——不然玩家还在看开场剧情，"唤醒猫咪""翻开魔法书"这些
+       弹窗就抢着冒出来，把第一次见面的注意力抢走了。 */
+    if (typeof mainStoryState === 'undefined' || mainStoryState.stage < 1) return;
     achievementPollTimer -= dt || 0;
     if (achievementPollTimer > 0) return;
     achievementPollTimer = 1.5;
