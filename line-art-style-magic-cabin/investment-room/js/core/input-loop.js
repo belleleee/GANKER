@@ -24,6 +24,14 @@ dashBody.addEventListener('click', event => {
       founderEmergencySale(button.dataset.shares);
       return;
     }
+    if (button.dataset.action === 'secondaryOffering') {
+      launchSecondaryOffering(button.dataset.shares);
+      return;
+    }
+    if (button.dataset.action === 'acquireCompany') {
+      acquireCompany(button.dataset.stock);
+      return;
+    }
     if (button.dataset.action === 'repayMargin') {
       repayMargin(button.dataset.amount);
       return;

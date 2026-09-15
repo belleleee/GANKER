@@ -151,6 +151,10 @@ function buyStock(id, count) {
     if (typeof showToast === 'function') showToast('娃哈哈还没上市，先选择发行方案。');
     return;
   }
+  if (stock.acquired) {
+    if (typeof showToast === 'function') showToast(stock.name + '已经被娃哈哈收购，不再是独立上市公司了。');
+    return;
+  }
   if (typeof showInvestTipOnce === 'function') {
     showInvestTipOnce('firstBuy',
       '买入之后，你自己也成了影响价格的一份子',
@@ -438,6 +442,148 @@ function launchWahaIpo(planId) {
   saveState();
 }
 
+/* ---------------- 公司增发 ----------------
+   跟"创始人套现"正好相反：卖的是公司新发行的股份，钱进公司账上
+   （company.treasury），不是玩家个人腰包。创始人手里的股数没变，
+   但总股数变多了，持股比例被动稀释——这才是真正的"上市再融资"。 */
+const SECONDARY_OFFERING_TIERS = [.08, .15, .25];
+
+function secondaryOfferingHtml(company, stock) {
+  if (!company.listed) return '';
+  const sentimentMult = typeof sentimentIpoMultiplier === 'function' ? sentimentIpoMultiplier() : 1;
+  const price = Math.max(1, Math.round(stock.price * .94 * sentimentMult));
+  const founderPctNow = wahaFounderPct(company);
+  const rows = SECONDARY_OFFERING_TIERS.map(frac => {
+    const newShares = Math.max(1, Math.round(company.totalShares * frac));
+    const raised = newShares * price;
+    const totalAfter = company.totalShares + newShares;
+    const founderPctAfter = Math.round((company.founderShares / totalAfter) * 1000) / 10;
+    return '<div class="founderChoiceRow">' +
+      '<b>增发' + Math.round(frac * 100) + '%股本</b>' +
+      '<span>公司融资 <em>+' + raised + '</em></span>' +
+      '<span>创始人持股 <em>' + founderPctNow + '% → ' + founderPctAfter + '%</em></span>' +
+      '<span>新增流通 <em>' + newShares + ' 股</em></span>' +
+      '<span>发行价 <em>' + price + '</em></span>' +
+      '<button class="ghost founderSaleBtn" data-action="secondaryOffering" data-shares="' + newShares + '">就这么办</button>' +
+      '</div>';
+  }).join('');
+  return '<div class="founderEmergencyBox">' +
+    '<p class="founderEmergencyTitle">公司增发 · 钱进公司账上，创始人持股会被稀释：</p>' +
+    '<div class="founderChoiceTable">' + rows + '</div>' +
+    '</div>';
+}
+
+function launchSecondaryOffering(newShares) {
+  const company = companyState();
+  if (!company.listed) return;
+  const shares = Math.max(1, Math.trunc(Number(newShares)) || 0);
+  const stock = getStock('WAHA');
+  const sentimentMult = typeof sentimentIpoMultiplier === 'function' ? sentimentIpoMultiplier() : 1;
+  const price = Math.max(1, Math.round(stock.price * .94 * sentimentMult));
+  const raised = shares * price;
+  company.totalShares += shares;
+  company.publicShares += shares;
+  company.treasury += raised;
+  stock.pressure -= Math.min(.06, shares / Math.max(1, company.totalShares) * .3);
+  if (typeof showMarketFeedback === 'function') {
+    showMarketFeedback(raised, '公司增发',
+      '新发行 ' + shares + ' 股 · 定价 ' + price + ' · 公司现金 +' + raised + ' · 创始人持股稀释到 ' + wahaFounderPct(company) + '%', {
+        toastLabel: '公司融资 +'
+      });
+  }
+  redrawScreens();
+  renderScreenPanel(activeScreen);
+  saveState();
+}
+
+/* ---------------- 并购 ----------------
+   花公司账上的钱，把一家其他上市公司整个买下来——跟"买它的股票"
+   完全不同：股票是玩家个人持仓的一部分，并购是公司资产的一部分，
+   花的是 company.treasury，买完目标公司直接退市（不能再交易），
+   玩家自己手里原本持有的那部分也按收购价一并结清。 */
+const ACQUIRE_SHARE_BASE = 10000;
+const ACQUIRE_PREMIUM = 1.3;
+
+function acquisitionCost(stock) {
+  return Math.round(stock.price * ACQUIRE_SHARE_BASE * ACQUIRE_PREMIUM);
+}
+
+function acquisitionTargetsHtml(company) {
+  if (!company.listed) return '';
+  const targets = STOCKS.filter(item => !item.isPlayerCompany).map(item => getStock(item.id)).filter(s => !s.acquired);
+  if (!targets.length) {
+    return '<div class="founderEmergencyBox"><p class="founderEmergencyTitle">市面上能并购的公司都已经收入囊中了。</p></div>';
+  }
+  const rows = targets.map(stock => {
+    const cost = acquisitionCost(stock);
+    const affordable = company.treasury >= cost;
+    return '<div class="founderChoiceRow">' +
+      '<b>' + stock.name + '</b>' +
+      '<span>并购成本 <em>' + cost + '</em></span>' +
+      '<span>当前股价 <em>' + stock.price.toFixed(1) + '</em></span>' +
+      '<span>公司现金 <em>' + company.treasury + '</em></span>' +
+      '<span></span>' +
+      '<button class="ghost founderSaleBtn" data-action="acquireCompany" data-stock="' + stock.id + '"' +
+      (affordable ? '' : ' disabled') + '>收购</button>' +
+      '</div>';
+  }).join('');
+  return '<div class="founderEmergencyBox">' +
+    '<p class="founderEmergencyTitle">并购 · 溢价' + Math.round((ACQUIRE_PREMIUM - 1) * 100) +
+    '%整体买下，目标公司买完直接退市：</p>' +
+    '<div class="founderChoiceTable">' + rows + '</div>' +
+    '</div>';
+}
+
+function acquireCompany(targetId) {
+  const company = companyState();
+  if (!company.listed) return;
+  const target = STOCKS.find(item => item.id === targetId && !item.isPlayerCompany);
+  if (!target) return;
+  const stock = getStock(targetId);
+  if (stock.acquired) {
+    if (typeof showToast === 'function') showToast(stock.name + '已经被收购过了');
+    return;
+  }
+  const cost = acquisitionCost(stock);
+  if (company.treasury < cost) {
+    if (typeof showToast === 'function') showToast('公司现金不够，并购 ' + stock.name + ' 需要 ' + cost);
+    return;
+  }
+  /* 玩家自己手里如果原本就持有这家公司的股票，收购生效时一并按
+     当前价格结清——买下整家公司，不能只买公司、剩下玩家自己的仓位。 */
+  const holding = getHolding(targetId);
+  let payoutNote = '';
+  if (holding.qty > 0) {
+    const payout = Math.round(holding.qty * stock.price);
+    state.coins = Math.min(999999, state.coins + payout);
+    setHolding(targetId, { qty: 0, cost: 0 });
+    payoutNote = '，你原本持有的 ' + holding.qty + ' 股按市价结清 +' + payout;
+  }
+  company.treasury -= cost;
+  stock.acquired = true;
+  company.acquisitions = Array.isArray(company.acquisitions) ? company.acquisitions.concat(target.id) : [target.id];
+  const waha = getStock('WAHA');
+  waha.pressure = Math.min(.2, waha.pressure + .05);
+  marketState.news.push({
+    title: '娃哈哈完成并购："' + stock.name + '"并入版图',
+    targetStock: 'WAHA',
+    isStoryEvent: true,
+    impact: .1,
+    delay: 0,
+    day: marketState.day
+  });
+  marketState.news = marketState.news.slice(-8);
+  if (typeof showMarketFeedback === 'function') {
+    showMarketFeedback(-cost, '完成并购',
+      '花 ' + cost + ' 金币公司现金收购 ' + stock.name + '，对方退市' + payoutNote, {
+        countMilestone: false, toastLabel: '公司现金 -'
+      });
+  }
+  redrawScreens();
+  renderScreenPanel(activeScreen);
+  saveState();
+}
+
 function marketIndexSummary() {
   const tradeStocks = STOCKS.filter(item => !item.isPlayerCompany);
   const diffs = tradeStocks.map(item => {
@@ -461,6 +607,12 @@ function sidebarRows() {
     const diff = stock.price - stock.prev;
     const cls = diff >= 0 ? 'up' : 'down';
     const selected = activeScreen !== 'company' && item.id === marketState.selectedStock;
+    if (stock.acquired) {
+      return '<button class="dashStockRow acquired' + (selected ? ' on' : '') + '" data-stock="' + item.id + '">' +
+        '<span class="dashStockName">' + item.name + '<small>已被娃哈哈收购 · 退市</small></span>' +
+        '<span class="dashStockPrice">' + stock.price.toFixed(1) + '</span>' +
+        '</button>';
+    }
     return '<button class="dashStockRow' + (selected ? ' on' : '') + '" data-stock="' + item.id + '">' +
       '<span class="dashStockName">' + item.name + '<small>' + item.id + '</small></span>' +
       '<span class="dashStockPrice">' + stock.price.toFixed(1) + '<small class="' + cls + '">' + formatPct(diff / Math.max(1, stock.prev)) + '</small></span>' +
@@ -558,6 +710,9 @@ function marginPanelHtml() {
 
 function tradePanelHtml(stock) {
   if (stock.id === 'WAHA') return wahaCompanyPanelHtml(stock);
+  if (stock.acquired) {
+    return '<div class="dashTradeHead"><h3>' + stock.name + '</h3><p>已经被娃哈哈整体收购，退市了，不能再交易。</p></div>';
+  }
   if (typeof showInvestTipOnce === 'function') {
     showInvestTipOnce('fundamentals',
       '看基本面，不是只看涨跌',
@@ -660,6 +815,8 @@ function wahaCompanyPanelHtml(stock) {
     '<button class="ghost" data-action="sell" data-stock="WAHA"' + (canSell ? '' : ' disabled') + '>卖公开股 1</button>' +
     '</div>' +
     founderEmergencySaleHtml(company, stock) +
+    secondaryOfferingHtml(company, stock) +
+    acquisitionTargetsHtml(company) +
     '<button class="dashNextDay" data-action="nextDay">下一交易日 · Day ' + (marketState.day + 1) + '</button>';
 }
 
@@ -774,6 +931,11 @@ function wahaCompanyDashboardHtml(stock) {
     '<div class="wahaEquityLegend"><span>创始人股 ' + company.founderShares + '</span><span>公开股 ' + company.publicShares + '</span></div>' +
     '</section>' +
     '<p class="wahaNextStep">' + nextStep + '</p>' +
+    (company.acquisitions.length
+      ? '<section class="wahaAcquired"><small>已收购</small><strong>' +
+        company.acquisitions.map(id => { const s = STOCKS.find(item => item.id === id); return s ? s.name : id; }).join(' · ') +
+        '</strong></section>'
+      : '') +
     '</div>';
 }
 

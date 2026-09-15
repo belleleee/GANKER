@@ -73,6 +73,8 @@
 }
 .dashStockRow:hover{background:rgba(96,244,255,.1)}
 .dashStockRow.on{border-color:#5be6ff;background:rgba(96,244,255,.14);box-shadow:0 0 12px rgba(96,244,255,.25)}
+.dashStockRow.acquired{opacity:.55;border-style:dashed;cursor:default}
+.dashStockRow.acquired:hover{background:rgba(96,244,255,.04)}
 .dashCompanyRow{
   display:flex;justify-content:space-between;align-items:center;gap:8px;
   border:1px solid rgba(255,214,102,.34);border-radius:6px;padding:9px 10px;

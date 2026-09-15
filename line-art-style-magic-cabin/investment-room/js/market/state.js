@@ -195,7 +195,10 @@ function sanitizeStock(stock, id) {
     history: history.length >= 2 ? history : Array(12).fill(price),
     pressure: finiteNumber(source.pressure, 0, -.2, .2),
     fund,
-    playerValuation: finiteNumber(source.playerValuation, 0, 0, 999999)
+    playerValuation: finiteNumber(source.playerValuation, 0, 0, 999999),
+    /* 被娃哈哈并购之后就不再是独立上市公司了——价格定格在被收购那天，
+       侧栏还看得到，但不能再买卖，跟"退市"是一回事。 */
+    acquired: !!source.acquired
   };
 }
 
@@ -302,7 +305,10 @@ function normalizeCompanyState(raw) {
     offerPrice: intValue(raw && raw.offerPrice, 0, 0, 999999),
     offerTarget: typeof (raw && raw.offerTarget) === 'string' ? raw.offerTarget.slice(0, 40) : '',
     ipoDay: intValue(raw && raw.ipoDay, -1, -1, 999999),
-    lockupUntilDay: intValue(raw && raw.lockupUntilDay, -1, -1, 999999)
+    lockupUntilDay: intValue(raw && raw.lockupUntilDay, -1, -1, 999999),
+    acquisitions: Array.isArray(raw && raw.acquisitions)
+      ? raw.acquisitions.filter(id => STOCKS.some(item => item.id === id && !item.isPlayerCompany)).slice(0, 8)
+      : []
   };
 }
 
@@ -971,6 +977,7 @@ function advanceMarketDay() {
   }
   for (const item of STOCKS) {
     const stock = getStock(item.id);
+    if (stock.acquired) continue;
     const prevPrice = stock.price;
     const shock = shocks[item.id] || 0;
     let revert = 0;
