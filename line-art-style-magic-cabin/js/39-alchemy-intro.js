@@ -128,6 +128,69 @@ function ensureAlchemyIntroOverlay() {
         'transition:opacity .25s ease'
     ].join(';');
     document.body.appendChild(alchemyIntroBeam);
+
+    /* 看书/取材料/搅拌这三步的引导台词，用大号对话框呈现——不再是容易
+       被忽略的角落小提示。不遮挡操作（pointer-events:none），点一下或
+       按 Enter 只是翻到下一句，不点也不影响交互本身。 */
+    alchemyIntroDialog = document.createElement('div');
+    alchemyIntroDialog.id = 'alchemyIntroDialog';
+    alchemyIntroDialog.style.cssText = [
+        'position:fixed',
+        'left:50%',
+        'bottom:42px',
+        'transform:translateX(-50%)',
+        'z-index:10001',
+        'pointer-events:auto',
+        'cursor:pointer',
+        'width:min(1120px,calc(100vw - 170px))',
+        'min-height:128px',
+        'padding:28px 42px 26px 96px',
+        'border:1px solid rgba(255,255,255,.38)',
+        'border-radius:12px',
+        'background:linear-gradient(180deg,rgba(18,22,28,.88),rgba(8,11,16,.92))',
+        'color:#f7f0dc',
+        'font:500 24px/1.7 system-ui,-apple-system,BlinkMacSystemFont,\"Microsoft YaHei\",sans-serif',
+        'box-shadow:0 18px 40px rgba(0,0,0,.38)',
+        'opacity:0',
+        'transition:opacity .3s ease'
+    ].join(';');
+    const nameTag = document.createElement('div');
+    nameTag.textContent = '???';
+    nameTag.style.cssText = [
+        'position:absolute',
+        'left:34px',
+        'top:-30px',
+        'min-width:160px',
+        'height:42px',
+        'display:flex',
+        'align-items:center',
+        'justify-content:center',
+        'border-radius:13px 13px 4px 4px',
+        'background:rgba(222,199,154,.92)',
+        'color:#211a14',
+        'font-weight:800'
+    ].join(';');
+    const sparkle = document.createElement('div');
+    sparkle.textContent = '✦';
+    sparkle.style.cssText = 'position:absolute;left:34px;top:36px;color:#ffd778;font-size:38px;text-shadow:0 0 18px rgba(255,215,120,.9)';
+    const text = document.createElement('div');
+    text.className = 'alchemy-intro-dialog-text';
+    const arrow = document.createElement('div');
+    arrow.className = 'alchemy-intro-dialog-arrow';
+    arrow.textContent = '▼';
+    arrow.style.cssText = 'position:absolute;right:28px;bottom:18px;color:#ffffff;font-size:25px;animation:alchemyIntroArrow 1s ease-in-out infinite';
+    if (!document.getElementById('alchemyIntroStyle')) {
+        const style = document.createElement('style');
+        style.id = 'alchemyIntroStyle';
+        style.textContent = '@keyframes alchemyIntroArrow{0%,100%{transform:translateY(0);opacity:.95}50%{transform:translateY(6px);opacity:.55}}';
+        document.head.appendChild(style);
+    }
+    alchemyIntroDialog.appendChild(nameTag);
+    alchemyIntroDialog.appendChild(sparkle);
+    alchemyIntroDialog.appendChild(text);
+    alchemyIntroDialog.appendChild(arrow);
+    alchemyIntroDialog.addEventListener('click', advanceAlchemyIntroDialogue);
+    document.body.appendChild(alchemyIntroDialog);
 }
 
 function setAlchemyIntroOverlayVisible(visible) {
