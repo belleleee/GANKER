@@ -426,6 +426,9 @@ function closeMainStoryStage(unlocked) {
 
 function advanceMainStoryStage(stage, resultText) {
     const idx = mainStoryState.stage;
+    if (typeof window.recordMainStoryCheckpoint === 'function') {
+        window.recordMainStoryCheckpoint(idx, stage.title);
+    }
     mainStoryState.milestones = {
         deliveryCount: storyStat('deliveryCount'),
         investmentEntries: storyStat('investmentEntries'),

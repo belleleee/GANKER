@@ -12,6 +12,31 @@ const APP_JOURNAL_RELIC_KEY = 'magicCabin.journeyRelicReward.v1';
 const APP_JOURNEY_RELIC_OBTAINED_KEY = 'journeyRelicObtained';
 const APP_GUEST_ID = 'guest';
 
+function wipeAllMagicCabinStorageIfRequested() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('wipe') !== '1' && params.get('resetAllSaves') !== '1') return false;
+    const removed = [];
+    try {
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+            const key = localStorage.key(i);
+            if (key && (key.indexOf('magicCabin.') === 0 || key === APP_JOURNEY_RELIC_OBTAINED_KEY)) {
+                removed.push(key);
+                localStorage.removeItem(key);
+            }
+        }
+        sessionStorage.clear();
+    } catch (err) {
+        console.warn('Failed to wipe MagicCabin storage', err);
+    }
+    if (window.history && window.history.replaceState) {
+        window.history.replaceState(null, '', window.location.pathname);
+    }
+    window.__MAGIC_CABIN_WIPED__ = removed;
+    return true;
+}
+
+const MAGIC_CABIN_STORAGE_WIPED = wipeAllMagicCabinStorageIfRequested();
+
 const landingScreen = document.getElementById('landingScreen');
 const membersModal = document.getElementById('membersModal');
 const memberListView = document.getElementById('memberListView');
@@ -448,7 +473,12 @@ function setCurrentUser(user, loadAfterSwitch) {
     if (user) writeJson(APP_SESSION_KEY, { id: user.id });
     updateAuthMessage(user ? '已登录：' + user.name + '，存档会绑定到这个账号。' : '未登录也可以游客进入，登录后会使用独立存档。');
     updateSaveStatus();
-    if (loadAfterSwitch) autoLoadGameState(false);
+    if (loadAfterSwitch) {
+        const loaded = autoLoadGameState(false);
+        if (!loaded && typeof placePlayerAtAlchemyIntroStart === 'function') {
+            placePlayerAtAlchemyIntroStart(true);
+        }
+    }
 }
 
 function updateAuthMessage(text) {
@@ -820,6 +850,7 @@ function captureSaveState() {
         newspaper: typeof captureNewspaperState === 'function' ? captureNewspaperState() : null,
         liveNews: typeof captureLiveNewsState === 'function' ? captureLiveNewsState() : null,
         mainStory: typeof captureMainStoryState === 'function' ? captureMainStoryState() : null,
+        alchemyIntro: typeof captureAlchemyIntroState === 'function' ? captureAlchemyIntroState() : null,
         pendingMarketEvents: typeof captureMainStoryMarketEvents === 'function' ? captureMainStoryMarketEvents() : [],
         achievements: typeof captureAchievementState === 'function' ? captureAchievementState() : null,
         wealthEvents: typeof captureWealthEventsState === 'function' ? captureWealthEventsState() : null,
@@ -845,6 +876,7 @@ function setSaveStatus(text) {
 }
 
 function updateSaveStatus() {
+    if (typeof renderCheckpointList === 'function') renderCheckpointList();
     const save = validateSave(readJson(cabinSaveKey(), null));
     if (!save) {
         setSaveStatus((currentCabinUser ? currentCabinUser.name : '游客') + '：尚未存档');
@@ -854,6 +886,80 @@ function updateSaveStatus() {
     const label = Number.isNaN(when.getTime()) ? '有可用存档' : when.toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
     setSaveStatus((currentCabinUser ? currentCabinUser.name : '游客') + '：' + label);
 }
+
+/* ---------------- 剧情存档点：主线每推进一章，先留一份"回退用"的快照 ----------------
+   之前的存档只有一个槽位，剧情一旦推过去就没法回头。现在每次
+   advanceMainStoryStage 真正把 stage+1 之前，先把当时的完整存档快照存一份，
+   按章节号去重（同一章重复触发只保留最新一次），玩家在菜单"存档"页可以
+   挑一个点"回到这里"，把当前进度整体换成那个快照。 */
+const CHECKPOINT_MAX = 16;
+const checkpointListEl = document.getElementById('checkpointList');
+
+function checkpointStorageKey() {
+    return 'magicCabin.checkpoints.' + (currentCabinUser ? currentCabinUser.id : APP_GUEST_ID) + '.v1';
+}
+
+function loadCheckpoints() {
+    const raw = readJson(checkpointStorageKey(), []);
+    return Array.isArray(raw) ? raw.filter(cp => cp && typeof cp === 'object' && cp.id && cp.save) : [];
+}
+
+function saveCheckpoints(list) {
+    writeJson(checkpointStorageKey(), list.slice(-CHECKPOINT_MAX));
+}
+
+function recordMainStoryCheckpoint(stageIndex, title) {
+    const list = loadCheckpoints().filter(cp => cp.stageIndex !== stageIndex);
+    list.push({
+        id: 'cp_' + stageIndex + '_' + Date.now(),
+        stageIndex,
+        title: boundedText(title || ('第 ' + (stageIndex + 1) + ' 章'), 40),
+        timestamp: new Date().toISOString(),
+        save: captureSaveState()
+    });
+    saveCheckpoints(list);
+    renderCheckpointList();
+}
+
+function renderCheckpointList() {
+    if (!checkpointListEl) return;
+    const list = loadCheckpoints().slice().sort((a, b) => (a.stageIndex || 0) - (b.stageIndex || 0));
+    if (!list.length) {
+        checkpointListEl.innerHTML = '<div class="checkpointEmpty">还没有剧情存档点——主线每推进一章会自动留一个。</div>';
+        return;
+    }
+    checkpointListEl.innerHTML = list.map(cp => {
+        const when = new Date(cp.timestamp);
+        const label = Number.isNaN(when.getTime()) ? '' : when.toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+        return '<div class="checkpointItem">' +
+            '<span class="checkpointMeta"><span class="checkpointTitle">' + cp.title + '</span>' +
+            '<span class="checkpointTime">' + label + '</span></span>' +
+            '<button type="button" class="checkpointRestoreBtn" data-checkpoint="' + cp.id + '">回到这里</button>' +
+            '</div>';
+    }).join('');
+}
+
+function restoreCheckpoint(id) {
+    const cp = loadCheckpoints().find(item => item.id === id);
+    if (!cp || !cp.save) return;
+    if (!window.confirm('回到"' + cp.title + '"这个存档点吗？现在还没存的进度会丢失。')) return;
+    applySaveState(cp.save);
+    saveGameState(false);
+    updateSaveStatus();
+    showHintOverride('已回到剧情存档点：' + cp.title);
+    const menuPanelEl = document.getElementById('menuPanel');
+    if (menuPanelEl) menuPanelEl.classList.remove('open');
+}
+
+if (checkpointListEl) {
+    checkpointListEl.addEventListener('click', event => {
+        const btn = event.target.closest('[data-checkpoint]');
+        if (!btn) return;
+        restoreCheckpoint(btn.dataset.checkpoint);
+    });
+}
+
+window.recordMainStoryCheckpoint = recordMainStoryCheckpoint;
 
 function saveGameState(manual) {
     const ok = writeJson(cabinSaveKey(), captureSaveState());
@@ -1021,6 +1127,9 @@ function applySaveState(save) {
     if (typeof applyMainStoryState === 'function') {
         applyMainStoryState(save.mainStory);
     }
+    if (typeof applyAlchemyIntroState === 'function') {
+        applyAlchemyIntroState(save.alchemyIntro);
+    }
     if (typeof applyMainStoryMarketEvents === 'function') {
         applyMainStoryMarketEvents(save.pendingMarketEvents);
     }
@@ -1165,9 +1274,13 @@ bindClick('showcaseMenuBtn', () => { window.location.href = 'index.html'; });
     });
 })();
 bindClick('investmentMenuBtn', () => {
-    if (typeof prepareStoreReturn === 'function') prepareStoreReturn();
-    else saveGameState(false);
-    window.location.href = 'investment-room/index.html';
+    const go = () => {
+        if (typeof prepareStoreReturn === 'function') prepareStoreReturn();
+        else saveGameState(false);
+        window.location.href = 'investment-room/index.html';
+    };
+    if (typeof window.requestMainStoryAccess === 'function') window.requestMainStoryAccess('investment', go);
+    else go();
 });
 bindClick('closeMembersBtn', closeMembers);
 bindClick('backToMembersBtn', showMemberList);
@@ -1245,7 +1358,10 @@ renderBackpack(false);
 setStatsPanelCollapsed(statsPanelCollapsed);
 renderStatsPanel();
 if (!resumeFromStoreIfNeeded() && !resumeFromJournalIfNeeded()) {
-    if (!loadRequestedSaveIfNeeded()) autoLoadGameState(false);
+    const loadedSave = loadRequestedSaveIfNeeded() || autoLoadGameState(false);
+    if (!loadedSave && typeof placePlayerAtAlchemyIntroStart === 'function') {
+        placePlayerAtAlchemyIntroStart(true);
+    }
     const cafeRevenue = claimCafeRevenue();
     if (cafeRevenue) {
         showHintOverride('咖啡馆收入 +' + cafeRevenue + ' 金币已入小金库');
