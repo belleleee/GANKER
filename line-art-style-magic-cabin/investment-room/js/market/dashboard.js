@@ -1144,6 +1144,7 @@ function renderScreenPanel(key) {
     marketState.selectedStock = 'TEA';
   }
   screenPanel.hidden = false;
+  if (typeof maybeAutoShowMarketGuide === 'function') maybeAutoShowMarketGuide();
   state.coins = Math.trunc(safeMoney(state.coins, 100));
   const isCompanyPage = activeScreen === 'company';
   const stock = safeStockForTrade(isCompanyPage ? 'WAHA' : marketState.selectedStock);

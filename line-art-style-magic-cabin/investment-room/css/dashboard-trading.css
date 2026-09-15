@@ -224,6 +224,41 @@
 }
 .mentorReasonBtn:hover{background:rgba(255,214,102,.18);border-color:#ffd666}
 
+.marketGuideLayer{
+  position:fixed;inset:0;z-index:62;
+  display:flex;align-items:flex-end;justify-content:center;
+  padding:0 0 64px;
+  background:rgba(8,10,16,.5);
+}
+.marketGuideCard{
+  width:min(520px,90vw);
+  padding:16px 20px;
+  border-radius:12px;
+  border:1px solid rgba(96,244,255,.45);
+  background:#101722;
+  box-shadow:0 18px 48px rgba(0,0,0,.5);
+}
+.marketGuideKicker{
+  margin:0 0 8px;color:#5be6ff;font-size:10px;letter-spacing:.14em;
+  text-shadow:0 0 8px rgba(91,230,255,.5);
+}
+.marketGuideLine{margin:0 0 14px;color:#e8f7ff;font-size:13.5px;line-height:1.6}
+.marketGuideSpeaker{
+  display:inline-block;margin-right:8px;padding:2px 8px;border-radius:999px;
+  background:rgba(255,214,102,.16);color:#ffd666;font-size:11px;font-weight:700;
+}
+.marketGuideActions{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.marketGuideSkip{
+  border:none;background:none;color:#7c8a94;font-size:11.5px;
+  cursor:pointer;text-decoration:underline;padding:4px;
+}
+.marketGuideSkip:hover{color:#aebac2}
+.marketGuideNext{
+  border:1px solid #5be6ff;border-radius:999px;background:rgba(96,244,255,.14);
+  color:#eafcff;padding:7px 20px;font-weight:700;font-size:12.5px;cursor:pointer;
+}
+.marketGuideNext:hover{background:rgba(96,244,255,.24);box-shadow:0 0 14px rgba(96,244,255,.3)}
+
 .stockFundamentals{
   margin:0 0 14px;
   padding:9px 10px;

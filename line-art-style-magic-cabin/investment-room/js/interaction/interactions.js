@@ -260,7 +260,9 @@ if (knowledgePanel) {
    翻书——操作层数一多，帮助入口得跟操作本身在同一屏才有用。 */
 const dashHelpBtn = document.getElementById('dashHelpBtn');
 if (dashHelpBtn) {
-  dashHelpBtn.addEventListener('click', () => openKnowledgeCard('menu-guide'));
+  dashHelpBtn.addEventListener('click', () => {
+    if (typeof openMarketGuide === 'function') openMarketGuide();
+  });
 }
 
 function interactStool(target) {
