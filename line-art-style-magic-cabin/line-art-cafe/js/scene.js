@@ -106,7 +106,13 @@ const DRINKS = [
     { id: 'tea', name: '红茶', icon: '🍵', color: 0xa0522d, price: 10 },
     { id: 'juice', name: '果汁', icon: '🧃', color: 0xff9d3d, price: 10 },
     { id: 'cookie', name: '曲奇', icon: '🍪', color: 0xc98a4b, price: 8 },
-    { id: 'cake', name: '蛋糕', icon: '🍰', color: 0xf5b8c4, price: 16 }
+    { id: 'cake', name: '蛋糕', icon: '🍰', color: 0xf5b8c4, price: 16 },
+    { id: 'smoothie', name: '奶昔', icon: '🥤', color: 0xffc1cc, price: 13 },
+    { id: 'croissant', name: '牛角包', icon: '🥐', color: 0xd9a441, price: 9 },
+    { id: 'cupcake', name: '纸杯蛋糕', icon: '🧁', color: 0xf7a8c4, price: 12 },
+    { id: 'donut', name: '甜甜圈', icon: '🍩', color: 0xe8a54b, price: 9 },
+    { id: 'icecream', name: '冰淇淋', icon: '🍦', color: 0xfff2d6, price: 11 },
+    { id: 'lemonade', name: '柠檬水', icon: '🍋', color: 0xf5e050, price: 9 }
 ];
 const DRINK_MAP = {}; for (const d of DRINKS) DRINK_MAP[d.id] = d;
 const CUSTOMER_COLORS = [0x8ec1de, 0xe0a8c4, 0xb9d68a, 0xe8c26a, 0xc7a8e8, 0xe8927a];
@@ -179,7 +185,9 @@ function buildPendant() {
 const stationMeshes = [];
 function buildStations() {
     const n = DRINKS.length;
-    const span = 5.6;
+    /* 商品从 6 种翻倍到 12 种，台面跟着变宽，但封顶在房间墙体范围内
+       （两侧墙在 ±5.1），不然取货点会戳出墙外。 */
+    const span = Math.min(9.4, 5.6 * (n / 6));
     for (let i = 0; i < n; i++) {
         const x = -span / 2 + span * (i + 0.5) / n;
         buildStation(DRINKS[i], x);

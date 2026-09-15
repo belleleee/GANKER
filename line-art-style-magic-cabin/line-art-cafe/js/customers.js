@@ -1047,8 +1047,8 @@ function currentOrderTime() {
 
 
     return (
-        16 -
-        7 *
+        12 -
+        6 *
         difficulty
     );
 }
