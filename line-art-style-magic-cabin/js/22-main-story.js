@@ -244,7 +244,10 @@ const MAIN_STORY_STAGES = [
                 resultText: '',
                 flag: 'trustedOwnJudgment',
                 mentor: { trust: 2, agreement: -6, independence: 14 },
-                marketEvent: { impact: 0.15, delay: 3, headline: '一家新经济公司逆势上涨，非共识判断经受住了考验' }
+                marketEvent: {
+                    impact: -0.04, delay: 2, headline: '非共识判断短期承压：市场还没看懂这家新公司',
+                    phase2: { impact: 0.22, delay: 6, headline: '几个月后：当初没人看懂的公司，业绩验证了判断' }
+                }
             },
             {
                 label: '听他的，不投（稳妥，但可能错过）',

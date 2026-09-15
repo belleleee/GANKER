@@ -161,6 +161,35 @@
 }
 .founderSaleBtn:hover{background:rgba(255,214,102,.22)!important;box-shadow:0 0 16px rgba(255,214,102,.3)!important}
 
+.founderChoiceTable{display:flex;flex-direction:column;gap:6px}
+.founderChoiceRow{
+  display:grid;
+  grid-template-columns:auto 1fr 1fr 1fr 1fr auto;
+  align-items:center;
+  gap:8px;
+  padding:7px 9px;
+  border:1px solid rgba(255,214,102,.22);
+  border-radius:6px;
+  background:rgba(0,0,0,.15);
+  font-size:10.5px;
+  color:#d8cdb8;
+}
+.founderChoiceRow b{color:#ffe9ad;font-size:11px;white-space:nowrap}
+.founderChoiceRow em{font-style:normal;color:#fff}
+.founderChoiceRow .founderSaleBtn{flex:none;padding:4px 8px!important;font-size:10.5px!important}
+
+.retroCard{
+  margin:0 0 12px;
+  padding:10px 12px;
+  border:1px solid rgba(96,244,255,.4);
+  border-radius:8px;
+  background:rgba(96,244,255,.07);
+}
+.retroTitle{margin:0 0 8px;color:#8fe9ff;font-size:12px;font-weight:700}
+.retroRow{display:flex;justify-content:space-between;gap:10px;font-size:11px;color:#d8cdb8;padding:3px 0}
+.retroRow b{font-weight:700;color:#fff;text-align:right}
+.retroDismissBtn{margin-top:8px;width:100%;font-size:11px!important;padding:5px!important}
+
 .stockFundamentals{
   margin:0 0 14px;
   padding:9px 10px;

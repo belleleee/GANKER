@@ -242,6 +242,22 @@ function sanitizePortfolioMap(raw, valueKey) {
   return result;
 }
 
+function sanitizeRetro(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  if (!Number.isFinite(Number(raw.day))) return null;
+  return {
+    day: intValue(raw.day, 1, 1, 999999),
+    startEquity: intValue(raw.startEquity, 0, -999999, 9999999),
+    endEquity: intValue(raw.endEquity, 0, -999999, 9999999),
+    pnl: intValue(raw.pnl, 0, -999999, 9999999),
+    pnlPct: finiteNumber(raw.pnlPct, 0, -5, 5),
+    repDelta: intValue(raw.repDelta, 0, -100, 100),
+    confirmed: intValue(raw.confirmed, 0, 0, 999),
+    debunked: intValue(raw.debunked, 0, 0, 999),
+    seen: !!raw.seen
+  };
+}
+
 function normalizeInvestment(raw) {
   const holdings = sanitizePortfolioMap(raw && raw.holdings, 'cost');
   const shorts = sanitizePortfolioMap(raw && raw.shorts, 'entryValue');
@@ -255,6 +271,15 @@ function normalizeInvestment(raw) {
     lastRumorDay: intValue(raw && raw.lastRumorDay, -1, -1, 999999),
     lastCoffeeDay: intValue(raw && raw.lastCoffeeDay, -1, -1, 999999),
     marginDebt: intValue(raw && raw.marginDebt, 0, 0, 9999999),
+    /* 7天一轮的判断质量复盘：每周记录一次"这周信了几条最终证实、
+       几条被证伪"，跟资产变化放在一起看，比"赚到100万=胜利"更能
+       说明玩家的判断是不是真的在变好。 */
+    weekAnchorDay: intValue(raw && raw.weekAnchorDay, 1, 1, 999999),
+    weekStartEquity: intValue(raw && raw.weekStartEquity, 2600, -999999, 9999999),
+    weekStartReputation: intValue(raw && raw.weekStartReputation, 60, 0, 100),
+    weekConfirmed: intValue(raw && raw.weekConfirmed, 0, 0, 999),
+    weekDebunked: intValue(raw && raw.weekDebunked, 0, 0, 999),
+    lastRetro: sanitizeRetro(raw && raw.lastRetro),
     market: normalizeMarket(raw && raw.market),
     company: normalizeCompanyState(raw && raw.company),
     holdings,
@@ -305,7 +330,7 @@ function queueMarketTips() {
     if (!tip || typeof tip.id !== 'string' || !Number.isFinite(tip.impact)) continue;
     if (!STOCKS.some(item => item.id === tip.targetStock)) continue;
     if (marketState.news.some(news => news.intelId === tip.id)) continue;
-    marketState.news.push({
+    const tipNews = {
       title: String(tip.label || '打听到的消息').slice(0, 80),
       targetStock: tip.targetStock,
       impact: Math.max(-.2, Math.min(.2, tip.impact)),
@@ -314,7 +339,12 @@ function queueMarketTips() {
       intelId: tip.id,
       delay: 1,
       day: marketState.day
-    });
+    };
+    if (newsNeedsVerification(tipNews)) {
+      tipNews.verified = false;
+      tipNews.verifyDay = marketState.day + tipNews.delay + 2 + Math.floor(Math.random() * 2);
+    }
+    marketState.news.push(tipNews);
   }
   marketState.news = marketState.news.slice(-8);
   if (state.save) state.save.marketTips = [];
@@ -328,12 +358,13 @@ function queueStoryMarketEvents() {
     if (!event || event.targetStock !== 'WAHA' || typeof event.id !== 'string' ||
         !Number.isFinite(event.impact)) continue;
     if (marketState.storyEvents.some(queued => queued.id === event.id)) continue;
+    const delay1 = intValue(event.delay, 1, 1, 30);
     marketState.storyEvents.push({
       id: event.id,
       targetStock: 'WAHA',
       headline: String(event.headline || '娃哈哈经营消息').slice(0, 80),
       impact: Math.max(-.32, Math.min(.32, event.impact)),
-      dueDay: marketState.day + intValue(event.delay, 1, 1, 30)
+      dueDay: marketState.day + delay1
     });
     marketState.news.push({
       title: String(event.headline || '娃哈哈经营消息').slice(0, 80),
@@ -341,8 +372,33 @@ function queueStoryMarketEvents() {
       isStoryPending: true,
       storyEventId: event.id,
       day: marketState.day,
-      delay: intValue(event.delay, 1, 1, 30)
+      delay: delay1
     });
+    /* 两段式效果：广告豪赌这类决策，短期利润先受挫，价值要等更久才
+       兑现——phase2 是同一个决策延后发生的第二次冲击，单独排队，
+       跟 phase1 用同一套 storyEvents/news 管线，只是 dueDay 更晚。 */
+    const phase2 = event.phase2;
+    if (phase2 && Number.isFinite(phase2.impact)) {
+      const delay2 = delay1 + intValue(phase2.delay, 4, 1, 60);
+      const id2 = event.id + '-p2';
+      if (!marketState.storyEvents.some(queued => queued.id === id2)) {
+        marketState.storyEvents.push({
+          id: id2,
+          targetStock: 'WAHA',
+          headline: String(phase2.headline || '娃哈哈长期效应显现').slice(0, 80),
+          impact: Math.max(-.32, Math.min(.32, phase2.impact)),
+          dueDay: marketState.day + delay2
+        });
+        marketState.news.push({
+          title: String(phase2.headline || '娃哈哈长期效应显现').slice(0, 80),
+          targetStock: 'WAHA',
+          isStoryPending: true,
+          storyEventId: id2,
+          day: marketState.day,
+          delay: delay2
+        });
+      }
+    }
   }
   marketState.storyEvents = marketState.storyEvents.slice(-16);
   marketState.news = marketState.news.slice(-8);
@@ -537,6 +593,13 @@ function portfolioEquity() {
   return state.coins + pnl.longValue - marginDebt();
 }
 
+function dismissRetro() {
+  if (state.investment.lastRetro) state.investment.lastRetro.seen = true;
+  saveState();
+  redrawScreens();
+  if (!screenPanel.hidden) renderScreenPanel(activeScreen);
+}
+
 function forceLiquidateMargin() {
   let recovered = 0;
   for (const item of STOCKS) {
@@ -642,20 +705,94 @@ function resolvePlayerRumors(day, shocks) {
   marketState.news = marketState.news.slice(-8);
 }
 
+/* ---------------- 传闻验证队列 ----------------
+   可信度很低（<.45）的消息，newsImpact() 里已经有一套"先生效、隔
+   一两天自动回撤大半"的机制，玩家看不出来但价格会自己纠正。
+   这里补的是中等可信度（.45~.85，官方公告以外的大多数消息）：这批
+   以前"一锤定音、永远不揭晓"，现在会在生效几天后按可信度概率真正
+   判定一次"属实/证伪"，属实小幅加码，证伪把已经吃进的涨跌部分
+   打回去——玩家能在资讯栏里看到"待验证 → 已证实/已证伪"的状态变化，
+   而不是所有消息都石沉大海。 */
+function newsNeedsVerification(news) {
+  return Number.isFinite(news.credibility) && news.credibility >= .45 && news.credibility < .85 &&
+    !news.isPlayerRumor && !news.isEvent && !news.isStoryEvent && !news.isStoryPending && !news.isExposeNotice;
+}
+
 function makeNewsEvent(offset) {
   const seed = Math.floor(Math.random() * NEWS_POOL.length);
   const base = NEWS_POOL[(seed + offset) % NEWS_POOL.length];
   const source = NEWS_SOURCES[Math.floor(Math.random() * NEWS_SOURCES.length)];
   const credibility = source.min + Math.random() * (source.max - source.min);
-  return {
+  const day = (marketState ? marketState.day : 1) + offset;
+  const event = {
     title: base.title,
     targetStock: base.targetStock,
     impact: base.impact,
     credibility,
     source: source.id,
     delay: base.delay,
-    day: (marketState ? marketState.day : 1) + offset
+    day
   };
+  if (newsNeedsVerification(event)) {
+    event.verified = false;
+    event.verifyDay = day + base.delay + 2 + Math.floor(Math.random() * 2);
+  }
+  return event;
+}
+
+function resolveNewsVerification(day, shocks) {
+  marketState.news.forEach(news => {
+    if (!newsNeedsVerification(news) || news.verified !== false || !Number.isFinite(news.verifyDay)) return;
+    if (day < news.verifyDay) return;
+    news.verified = true;
+    const trueNews = Math.random() < news.credibility;
+    news.verifyOutcome = trueNews;
+    if (trueNews) {
+      shocks[news.targetStock] = (shocks[news.targetStock] || 0) + news.impact * .18;
+      state.investment.weekConfirmed = intValue(state.investment.weekConfirmed, 0, 0, 999) + 1;
+    } else {
+      shocks[news.targetStock] = (shocks[news.targetStock] || 0) - news.impact * .55;
+      state.investment.weekDebunked = intValue(state.investment.weekDebunked, 0, 0, 999) + 1;
+      marketState.news.push({
+        title: '"' + news.title + '" 被证实是假消息',
+        isExposeNotice: true,
+        bad: news.impact > 0,
+        delay: 0,
+        day
+      });
+    }
+  });
+  marketState.news = marketState.news.slice(-8);
+}
+
+/* ---------------- 7天投资复盘 ----------------
+   "赚到100万=胜利"只看结果，看不出判断本身有没有变好。这里每满
+   7个交易日结一次：这周资产从哪到哪、这周信过的消息里有多少最终
+   证实/被揭穿、声誉涨跌——跟"这周赚了多少钱"放在一张卡片里对照着看。 */
+function checkWeeklyRetrospective() {
+  const inv = state.investment;
+  if (marketState.day - inv.weekAnchorDay < 7) return;
+  const endEquity = typeof portfolioEquity === 'function' ? portfolioEquity() : state.coins;
+  const startEquity = inv.weekStartEquity;
+  const pnl = Math.round(endEquity - startEquity);
+  const pnlPct = startEquity > 0 ? pnl / startEquity : 0;
+  inv.lastRetro = {
+    day: marketState.day,
+    startEquity: Math.round(startEquity),
+    endEquity: Math.round(endEquity),
+    pnl,
+    pnlPct,
+    repDelta: reputation() - inv.weekStartReputation,
+    confirmed: inv.weekConfirmed,
+    debunked: inv.weekDebunked,
+    seen: false
+  };
+  inv.weekAnchorDay = marketState.day;
+  inv.weekStartEquity = endEquity;
+  inv.weekStartReputation = reputation();
+  inv.weekConfirmed = 0;
+  inv.weekDebunked = 0;
+  if (typeof showToast === 'function') showToast('📋 本周投资复盘生成了，去资讯栏看看这周的判断质量', 3200);
 }
 
 /* ---------------- 板块联动 ----------------
@@ -815,6 +952,7 @@ function advanceMarketDay() {
   }
   marketState.news = marketState.news.slice(-8);
   resolvePlayerRumors(marketState.day, shocks);
+  resolveNewsVerification(marketState.day, shocks);
   state.investment.reputation = Math.round(state.investment.reputation + (60 - state.investment.reputation) * .02);
   if (event) {
     event.targets.forEach(id => {
@@ -871,6 +1009,7 @@ function advanceMarketDay() {
       forceLiquidateMargin();
     }
   }
+  checkWeeklyRetrospective();
   redrawScreens();
   if (!screenPanel.hidden) renderScreenPanel(activeScreen);
   if (typeof investmentPnlSummary === 'function' && typeof showMarketFeedback === 'function') {

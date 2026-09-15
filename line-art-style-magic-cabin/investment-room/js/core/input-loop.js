@@ -28,6 +28,10 @@ dashBody.addEventListener('click', event => {
       repayMargin(button.dataset.amount);
       return;
     }
+    if (button.dataset.action === 'dismissRetro') {
+      dismissRetro();
+      return;
+    }
     if (button.dataset.action === 'setValuation') {
       const input = document.getElementById('myValuationInput');
       setPlayerValuation(button.dataset.stock, input ? input.value : 0);

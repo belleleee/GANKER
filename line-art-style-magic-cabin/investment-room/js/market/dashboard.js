@@ -601,25 +601,54 @@ function wahaCompanyPanelHtml(stock) {
 const FOUNDER_EMERGENCY_TIERS = [0.05, 0.1, 0.2];
 const FOUNDER_EMERGENCY_DISCOUNT = 0.08;
 
+function founderControlRiskLabel(pct) {
+    if (pct >= 67) return { label: '绝对控制', tone: '#39ff9c' };
+    if (pct >= 51) return { label: '相对安全', tone: '#8fd3e6' };
+    if (pct >= 34) return { label: '有被联合否决的风险', tone: '#ffd666' };
+    return { label: '控制权已经不在你手上', tone: '#ff5d75' };
+}
+
 function founderEmergencySaleHtml(company, stock) {
     if (!company.listed) return '';
     if (typeof showInvestTipOnce === 'function') {
         showInvestTipOnce('founderSale',
-            '这是给你个人用的应急工具，不是常规操作',
-            '主游戏那边现金流告急的时候，可以来这儿折价卖点创始人股换现金——注意是你个人腰包变多，公司账上不会多一分钱，创始人持股也会真的降下去，别当成常规收入来源。');
+            '这是一个真正的创业者决策，不是"哪个选项数字大选哪个"',
+            '卖股权换现金，钱进你个人腰包，公司账上不会多一分钱——但创始人持股是真的会降下去。持股比例掉到一定线以下，别人联手就能在重大决策上压过你。先看完三个选项的完整后果再决定。');
     }
     const price = Math.max(1, Math.round(stock.price * (1 - FOUNDER_EMERGENCY_DISCOUNT)));
-    const btns = FOUNDER_EMERGENCY_TIERS.map(frac => {
-        const shares = Math.max(1, Math.round(company.totalShares * frac));
+    const founderPctNow = wahaFounderPct(company);
+    const rows = [{ frac: 0, label: '不套现' }].concat(FOUNDER_EMERGENCY_TIERS.map(frac => ({ frac, label: '套现' + Math.round(frac * 100) + '%股权' })));
+    const body = rows.map(row => {
+        if (row.frac === 0) {
+            const risk = founderControlRiskLabel(founderPctNow);
+            return '<div class="founderChoiceRow">' +
+                '<b>' + row.label + '</b>' +
+                '<span>到手现金 <em>+0</em></span>' +
+                '<span>创始人持股 <em>' + founderPctNow + '%</em></span>' +
+                '<span>控制权 <em style="color:' + risk.tone + '">' + risk.label + '</em></span>' +
+                '<span>市场信心 <em>不受影响</em></span>' +
+                '</div>';
+        }
+        const shares = Math.max(1, Math.round(company.totalShares * row.frac));
         const affordable = shares <= company.founderShares;
         const proceeds = shares * price;
-        return '<button class="ghost founderSaleBtn" data-action="founderSale" data-shares="' + shares + '"' +
-            (affordable ? '' : ' disabled') + '>套现' + Math.round(frac * 100) + '%股权 · +' + proceeds + '</button>';
+        const founderPctAfter = Math.round(((company.founderShares - shares) / Math.max(1, company.totalShares)) * 1000) / 10;
+        const risk = founderControlRiskLabel(founderPctAfter);
+        const pressureNote = row.frac >= .2 ? '明显承压' : (row.frac >= .1 ? '略微承压' : '几乎不受影响');
+        return '<div class="founderChoiceRow">' +
+            '<b>' + row.label + '</b>' +
+            '<span>到手现金 <em>+' + proceeds + '</em></span>' +
+            '<span>创始人持股 <em>' + founderPctAfter + '%</em></span>' +
+            '<span>控制权 <em style="color:' + risk.tone + '">' + risk.label + '</em></span>' +
+            '<span>市场信心 <em>' + pressureNote + '</em></span>' +
+            '<button class="ghost founderSaleBtn" data-action="founderSale" data-shares="' + shares + '"' +
+            (affordable ? '' : ' disabled') + '>就这么办</button>' +
+            '</div>';
     }).join('');
     return '<div class="founderEmergencyBox">' +
-        '<p class="founderEmergencyTitle">创始人紧急套现 · 折价 ' + Math.round(FOUNDER_EMERGENCY_DISCOUNT * 100) +
-        '% 出手，钱进你个人腰包，不进公司账上</p>' +
-        '<div class="dashTradeActions dashTradeActionsWrap">' + btns + '</div>' +
+        '<p class="founderEmergencyTitle">创始人套现决策 · 折价 ' + Math.round(FOUNDER_EMERGENCY_DISCOUNT * 100) +
+        '% 出手，四个选项完整后果对比：</p>' +
+        '<div class="founderChoiceTable">' + body + '</div>' +
         '</div>';
 }
 
@@ -729,6 +758,26 @@ function holdingsPanelHtml() {
   return '<h3>我的持仓</h3>' + header + longBody + shortBody;
 }
 
+function retroCardHtml() {
+  const retro = state.investment.lastRetro;
+  if (!retro || retro.seen) return '';
+  const pnlTone = retro.pnl >= 0 ? '#39ff9c' : '#ff5d75';
+  const repTone = retro.repDelta >= 0 ? '#39ff9c' : '#ff5d75';
+  const total = retro.confirmed + retro.debunked;
+  const hitRate = total ? Math.round((retro.confirmed / total) * 100) : null;
+  const hitNote = hitRate === null
+    ? '这周没有消息进入验证'
+    : '这周信过的消息里，' + hitRate + '% 最终证实是真的（' + retro.confirmed + ' 真 / ' + retro.debunked + ' 假）';
+  return '<div class="retroCard">' +
+    '<p class="retroTitle">📋 第 ' + (retro.day - 7) + '～' + retro.day + ' 天投资复盘</p>' +
+    '<div class="retroRow"><span>总资产</span><b style="color:' + pnlTone + '">' + retro.startEquity + ' → ' + retro.endEquity +
+    '（' + (retro.pnl >= 0 ? '+' : '') + retro.pnl + ' · ' + formatPct(retro.pnlPct) + '）</b></div>' +
+    '<div class="retroRow"><span>声誉变化</span><b style="color:' + repTone + '">' + (retro.repDelta >= 0 ? '+' : '') + retro.repDelta + '</b></div>' +
+    '<div class="retroRow"><span>判断质量</span><b>' + hitNote + '</b></div>' +
+    '<button class="ghost retroDismissBtn" data-action="dismissRetro">知道了</button>' +
+    '</div>';
+}
+
 function newsPanelHtml() {
   const rows = marketState.news.slice(-6).reverse().map(news => {
     if (news.isStoryPending) {
@@ -754,9 +803,17 @@ function newsPanelHtml() {
         '<span style="color:' + tone + '">你散布的消息 · ' + status + '</span></div>';
     }
     const src = NEWS_SOURCES.find(s => s.id === news.source) || NEWS_SOURCES[0];
+    let verifyTag = '';
+    if (news.verified === false) {
+      verifyTag = ' · <span style="color:#c58bff">待验证 · Day ' + news.verifyDay + ' 揭晓</span>';
+    } else if (news.verified === true) {
+      verifyTag = news.verifyOutcome
+        ? ' · <span style="color:#39ff9c">已证实</span>'
+        : ' · <span style="color:#ff5d75">已证伪，价格已回调</span>';
+    }
     return '<div class="dashNewsRow"><b>' + news.title + '</b>' +
       news.targetStock + ' · 延迟 ' + news.delay + ' 天 · ' +
-      '<span style="color:' + src.tone + '">' + src.label + '</span></div>';
+      '<span style="color:' + src.tone + '">' + src.label + '</span>' + verifyTag + '</div>';
   }).join('');
   return '<h3>财经资讯</h3>' + rows;
 }
@@ -877,7 +934,7 @@ function renderScreenPanel(key) {
     '<span class="dashPnlPulse ' + (pnl.totalPnl >= 0 ? 'up' : 'down') + '">总盈亏 ' + (pnl.totalPnl >= 0 ? '+' : '') + pnl.totalPnl + '</span>';
   dashTrade.innerHTML = tradePanelHtml(stock);
   dashHoldings.innerHTML = holdingsPanelHtml();
-  dashNews.innerHTML = newsPanelHtml();
+  dashNews.innerHTML = retroCardHtml() + newsPanelHtml();
   const canvas = document.getElementById('chartCanvas');
   if (isCompanyPage) {
     if (canvas) canvas.style.display = 'none';
