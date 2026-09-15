@@ -47,7 +47,8 @@ const MAIN_STORY_STAGES = [
         questLabel: '去杂货铺买种子，翻地播种，收获并卖出第一批作物',
         target: { x: 10, z: -10 },
         lockedHint: '先去杂货铺买种子，种出第一批作物并卖掉。',
-        auto: () => storyStat('totalHarvests') >= 1 && currentCoins() >= 120
+        auto: () => storyStat('totalHarvests') >= 1 
+        // && currentCoins() >= 120
     },
     {
         /* 问题：这几块钱，为什么让他这么在意？
@@ -72,7 +73,8 @@ const MAIN_STORY_STAGES = [
         target: { x: 9.0, z: 0.0 },
         coinRequirement: 110,
         lockedHint: '先完成一笔送货，并攒够 110 金币。',
-        auto: () => storyStat('deliveryCount') >= 1 && currentCoins() >= 110
+        auto: () => storyStat('deliveryCount') >= 1 
+        // && currentCoins() >= 110
     },
     {
         /* 问题：这个老头以前到底是干什么的？
@@ -159,22 +161,26 @@ const MAIN_STORY_STAGES = [
            碎片：身份正式揭晓——他就是宗庆后
            钩子：认识了名字之后，才刚开始真正认识这个人 */
         unlocks: 'investment',
+        autoEntry: true,
         title: '原来你叫宗庆后',
         lines: [
-            { speaker: '旁白', text: '你走进股市小屋，满屏 K 线跳动。师傅却没有先看涨跌，只点开一家公司的资料。' },
-            { speaker: '师傅', text: '它卖什么？现金什么时候回来？欠了多少？' },
-            { speaker: '你', text: '你不是说你不看这个吗？' },
-            { speaker: '旁白', text: '角落一份旧报纸摊开，标题写着：娃哈哈创始人——宗庆后。照片上的人，和旁边喝茶的老人一模一样。' },
-            { speaker: '你', text: '……师傅？你叫宗庆后？' },
+            { speaker: '旁白', text: '你在股市小屋里点开了"娃哈哈"这家公司的资料——创始人持股、上市方案，写得清清楚楚。' },
+            { speaker: '你', text: '（这几行条目，怎么看着这么眼熟……）' },
+            { speaker: '旁白', text: '你想起茶屋角落那份旧报纸，标题写着：娃哈哈创始人——宗庆后。照片上的人，和旁边喝茶的老人一模一样。' },
+            { speaker: '你', text: '……师傅？你就是宗庆后？' },
             { speaker: '宗庆后', text: '怎么，名字还能值钱？' },
             { speaker: '你', text: '你怎么早不说？' },
             { speaker: '宗庆后', text: '说了又怎样？地还是要种，货还是要送。名字改变不了账本上的数字。' },
             { speaker: '旁白', text: '你看着他，忽然觉得这些天一起种地、一起送货的日子，比任何一个名字都真实。' }
         ],
         unlockToast: '📖 主线推进：你知道他是谁了',
-        questLabel: '进入股市小屋：从公司生意看懂价格背后的账',
+        questLabel: '去股市小屋，点开"公司上市"（WAHA）看看它的底细',
         target: { x: -12.0, z: 8.5 },
-        lockedHint: '先走到股市小屋，翻开那份旧资料。'
+        lockedHint: '先去股市小屋，点开"公司上市"那一项看看。',
+        auto: () => {
+            const inv = typeof readSavedInvestmentState === 'function' ? readSavedInvestmentState() : null;
+            return !!(inv && inv.wahaCompanyViewed);
+        }
     },
     {
         /* 问题：账面上赚了，为什么手里还是没钱？
@@ -665,6 +671,14 @@ function requestMainStoryAccess(key, proceed) {
         return;
     }
     const stage = MAIN_STORY_STAGES[idx];
+    /* autoEntry：这一章不靠"走到门口就先把剧情念一遍"来触发——
+       先放玩家自由进去，章节本身的 auto 条件会在别的地方（比如
+       股市小屋里点开了什么）达成后，由 pollAutoStageAdvance 自动
+       弹出对话，不需要卡在门口。 */
+    if (stage && stage.autoEntry) {
+        if (typeof proceed === 'function') proceed();
+        return;
+    }
     if (stage && stage.silent) {
         if (typeof showHintOverride === 'function') {
             showHintOverride(stage.lockedHint || stage.questLabel || '条件还没达成，先继续经营');

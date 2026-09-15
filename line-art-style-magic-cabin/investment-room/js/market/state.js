@@ -274,6 +274,10 @@ function normalizeInvestment(raw) {
     lastRumorDay: intValue(raw && raw.lastRumorDay, -1, -1, 999999),
     lastCoffeeDay: intValue(raw && raw.lastCoffeeDay, -1, -1, 999999),
     marginDebt: intValue(raw && raw.marginDebt, 0, 0, 9999999),
+    /* 主线"原来你叫宗庆后"要靠玩家自己点开WAHA那份公司资料才触发，
+       不是走进股市小屋这个动作本身——这个标记就是让主游戏那边知道
+       "资料被翻开过了"。 */
+    wahaCompanyViewed: !!(raw && raw.wahaCompanyViewed),
     /* 7天一轮的判断质量复盘：每周记录一次"这周信了几条最终证实、
        几条被证伪"，跟资产变化放在一起看，比"赚到100万=胜利"更能
        说明玩家的判断是不是真的在变好。 */

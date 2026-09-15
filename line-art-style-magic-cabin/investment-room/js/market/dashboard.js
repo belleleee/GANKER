@@ -1147,6 +1147,10 @@ function renderScreenPanel(key) {
   if (typeof maybeAutoShowMarketGuide === 'function') maybeAutoShowMarketGuide();
   state.coins = Math.trunc(safeMoney(state.coins, 100));
   const isCompanyPage = activeScreen === 'company';
+  if (isCompanyPage && !state.investment.wahaCompanyViewed) {
+    state.investment.wahaCompanyViewed = true;
+    saveState();
+  }
   const stock = safeStockForTrade(isCompanyPage ? 'WAHA' : marketState.selectedStock);
   const pnl = investmentPnlSummary();
   dashClock.textContent = 'DAY ' + marketState.day;
