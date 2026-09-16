@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>宗庆后 · 第④部分 · 兼并国企 · 1991</title>
+<link rel="stylesheet" href="./style.css">
+<link rel="stylesheet" href="./level_one_pixel.css">
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@400;700&display=swap">
+</head>
+<body class="zqh-prologue" data-scene="1">
+
+  <!-- ===== 背景层 ===== -->
+  <div class="pro-bg" id="bgStack">
+    <img class="pro-bg-img" id="bg" src="./assets/bg/scene4-1.png" alt="娃哈哈营养食品厂" />
+    <div class="pro-vignette"></div>
+    <div class="pro-bottom-fade"></div>
+    <div class="pro-grain"></div>
+  </div>
+
+  <!-- ===== 白雾转场层 ===== -->
+  <div class="pro-fog" id="fog"></div>
+
+  <!-- ===== 场景角标 ===== -->
+  <div class="pro-scene-tag anim" id="sceneTag">杭州 · 娃哈哈营养食品厂 · 一九八九至一九九一年</div>
+
+  <!-- ===== 音乐开关 ===== -->
+  <button class="pro-music" id="musicBtn" type="button" aria-label="背景音乐开关" title="背景音乐">
+    <svg class="ico-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 18V5l11-2v13"/><circle cx="9" cy="18" r="3"/><circle cx="20" cy="16" r="3"/>
+    </svg>
+    <svg class="ico-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 18V5l11-2v13"/><circle cx="9" cy="18" r="3"/><circle cx="20" cy="16" r="3"/><line x1="3" y1="4" x2="21" y2="20"/>
+    </svg>
+  </button>
+
+  <!-- ===== 数值面板 ===== -->
+  <div class="pro-hud" id="hud">
+    <div class="pro-hud-title">家　底</div>
+    <div id="hudStats"></div>
+  </div>
+
+  <!-- ===== 对话框 ===== -->
+  <div class="pro-dialog">
+    <div class="pro-dialog-bar"></div>
+    <div class="pro-dialog-main">
+      <div class="pro-speaker" id="speaker">旁　白</div>
+      <p class="pro-line" id="line"></p>
+    </div>
+    <div class="pro-hint" id="hint">▼ 点击继续</div>
+  </div>
+
+  <!-- ===== 分支选择 ===== -->
+  <div class="pro-choices" id="choicesBox" hidden>
+    <div class="pro-choices-title" id="choicesTitle"></div>
+    <div class="pro-choices-list" id="choicesList"></div>
+  </div>
+
+  <!-- ===== 兼并决策面板 · 三选一 ===== -->
+  <div class="pro-gamble" id="decisionBox" hidden>
+    <div class="pro-gamble-panel">
+      <span class="pro-gamble-kicker">兼并决策 · 三条路</span>
+      <h2>吞下一座老厂</h2>
+      <p class="pro-gamble-desc" id="decisionDesc">面对 2200 人的国营老厂，是省事联营、折中租赁，还是砸下 8000 万有偿兼并、把厂子和人心一并接过来？</p>
+      <div class="pro-gamble-options" id="decisionOptions"></div>
+      <div class="pro-gamble-result" id="decisionResult" hidden></div>
+      <button class="pro-gamble-next" id="decisionNext" type="button" hidden>继　续</button>
+    </div>
+  </div>
+
+  <!-- ===== 结算面板 ===== -->
+  <div class="pro-settle" id="settleBox" hidden>
+    <div class="pro-settle-panel">
+      <span class="pro-settle-kicker" id="settleKicker"></span>
+      <h2 class="pro-settle-title" id="settleTitle"></h2>
+      <p class="pro-settle-desc" id="settleDesc"></p>
+      <ul class="pro-settle-list" id="settleList"></ul>
+      <button class="pro-settle-next" id="settleNext" type="button">继　续</button>
+    </div>
+  </div>
+
+  <div class="pro-toast" id="toast"></div>
+
+  <!-- ===== 进入下一篇（结算后显示） ===== -->
+  <a class="pro-next-link" id="nextLink" hidden href="#">下一篇 · 第⑤部分 · 非常可乐 →</a>
+
+  <!-- 背景音乐 -->
+  <audio id="bgm" src="./assets/bgm/test1.flac" loop preload="none"></audio>
+
+<script>
+/* =====================================================================
+ * 配置区
+ * ===================================================================== */
+const USE_DEBUG_BG = false;
+const DEBUG_BG = './assets/debug-bg.png';
+const NEXT_PAGE = 'part5.html';
+const SAVE_KEY = 'zqh_level1_save';
+
+/* =====================================================================
+ * 行类型：{who,text} 对白/旁白；{if:'标志',who,text} 条件行；
+ * {decision:true} 兼并决策（三选一）；{settle:{...}} 结算面板；{toast:'文本'} 只弹提示不占行。
+ * ===================================================================== */
+const SCENES = [
+  {
+    chapter: '第一幕 · 娃哈哈营养食品厂',
+    tag: '杭州 · 娃哈哈营养食品厂 · 一九八九至一九九一年',
+    img: './assets/bg/scene4-1.png',
+    alt: '娃哈哈营养食品厂',
+    lines: [
+      { who: 'laozong', text: '（站在你旁边）这回你要吞下的不是厂房，是两千多号人的饭碗。' },
+      { who: 'narration', text: '1989 年，我趁热打铁，用"娃哈哈"这三个字给厂子落了户——杭州娃哈哈营养食品厂。说是厂，其实就几间房、140 个人。可就是这座小厂，接住了广告砸出来的满城订单。' },
+      { who: 'zhou', text: '（拨着算盘，头也不抬）上个月又加了两条灌装线，人手三班倒。可厂长，我丑话说在前头——再这么连轴转，机器要先散架。' },
+      { who: 'fan', text: '（举着单子进来）别散架了机器，先散架的是我。全省要货的电话，一个挨一个，我都排到下个月了！' },
+      { who: 'you', text: '（站在车间门口，看着连轴转的机器，半晌）……机器不停，是因为它歇不起。可单靠这一间厂，就算机器不歇，也供不上全国的孩子喝。' },
+      { who: 'narration', text: '我心里那本账，比谁都清楚：要在全国铺开，得有几十倍大的厂房、几十倍多的产线。可盖一座厂，从买地到投产，少说三五年——我等得起，订单等不起。' },
+      { who: 'narration', text: '这话，不是没人听见。市工业局有位专管"老厂解困"的刘处长，已经盯着我这间厂大半年——从"娃哈哈"卖断货，到我敢把身家押上电视广告，他一样一样看在眼里。这天下午，他自己找上了门。' },
+      { who: 'liuchuzhang', text: '（走进你的办公室，把公文包往桌上一放）厂长，我手里有个"烫手的机会"，不知你敢不敢接。' }
+    ]
+  },
+  {
+    chapter: '第二幕 · 杭州罐头厂',
+    tag: '杭州罐头厂 · 一九九一年',
+    img: './assets/bg/scene4-2.png',
+    alt: '杭州罐头厂',
+    lines: [
+      { who: 'liuchuzhang', text: '（带你穿过厂区，一边走一边说）杭州罐头厂，当年全国十大罐头厂，最风光的时候，出口的罐头能从这排到江边。2200 名职工，6 万平米厂房……可惜，那是十年前的事了。' },
+      { who: 'narration', text: '我看见车间里，机器停着，落了薄薄一层灰；几个老师傅蹲在门口，百无聊赖地抽烟。仓库里，卖不掉的罐头堆到房顶，积压的果品烂在筐里。一座厂子，睡过去了。' },
+      { who: 'luchangzhang', text: '（从办公室里迎出来，背着手，上下打量你，话里有话）刘处长，你带来的这位，就是那个做"娃哈哈"的后生？年轻。我可提醒你，我们这厂子，是国营的，两千多号人，不是谁想捡就能捡的。' },
+      { who: 'you', text: '（没接话，只问了一句）鲁厂长，厂里的老师傅们，手艺还在么？' },
+      { who: 'luchangzhang', text: '（一愣）……手艺？机器都停了，哪儿还有什么手艺。' },
+      { who: 'you', text: '（看着那排停着的机器，慢慢说）机器会停，手艺不会。会开罐头线、会做果品的老手，才是这厂最值钱的东西。' },
+      { who: 'wangshifu', text: '（不知什么时候站到门口，掸掸烟灰，嗓门不小）说得轻巧。我们 2200 口人，不是让谁来挑肥拣瘦的。你那位"娃哈哈"要是想来裁人、来捡便宜——趁早回吧。' },
+      { who: 'narration', text: '车间里安静下来。老师傅们都看着我。我站在原地，没说漂亮话，只对着王师傅点了点头。' },
+      { who: 'you', text: '我要的，就是连人带厂、一个都不少地接。机器会锈，人会手艺——手艺，不锈。' },
+      { who: 'narration', text: '王师傅盯着我看了好一会儿，没再说话，转身蹲回门口，又点了一支烟。鲁厂长站在办公室门口，脸上的打量，第一次少了三分。' }
+    ]
+  },
+  {
+    chapter: '第三幕 · 经销部灯下',
+    tag: '经销部 · 灯下 · 当夜',
+    img: './assets/bg/scene4-3.png',
+    alt: '经销部灯下算账',
+    lines: [
+      { who: 'zhou', text: '（把算盘一推，长出一口气）账我盘了三遍。罐头厂这底子，不比当年咱们那个经销部——那是个小窟窿，这是个无底洞。欠银行的钱、欠原料厂的钱、退休职工的工资，加起来……你听不听？' },
+      { who: 'you', text: '听。你照实念。' },
+      { who: 'zhou', text: '（又看了你一眼，慢慢念出一串数字）厂长，就冲这笔账，我劝你——火坑，别跳。' },
+      { who: 'fan', text: '（也忍不住）就是！咱厂刚站稳，拿命换来的这点家底，你往一个大火坑里填？图什么呀！' },
+      { who: 'you', text: '（沉默了很久，忽然问）范老师，你说，图什么？' },
+      { who: 'narration', text: '我们谁也没接话。我知道，图的是一个"等"字——等一座全国级的大厂从睡里醒过来，等那 2200 双手替我把产线开满。到那时候，"娃哈哈"才装得下全中国的孩子。这条路有三条走法，我想了一夜。' }
+    ]
+  },
+  {
+    chapter: '第四幕 · 抉择 · 三条路',
+    tag: '经销部 · 次日',
+    img: './assets/bg/scene4-3.png',
+    alt: '经销部抉择',
+    lines: [
+      { decision: true },
+      { if: 'merger_alliance', who: 'narration', text: '我选了最省事的一条——出品牌、出资金，跟罐头厂联营，利润两家分。刘处长松了口气，鲁厂长也点头。可日子一长我发现，厂是人家的，产线是人家的，关键时候，我一句话都调不动它。' },
+      { if: 'merger_alliance', settle: {
+        kicker: '第④部分 · 兼并结算',
+        title: '联营 · 省事之路',
+        desc: '出品牌出资金，利润两家分。厂是人家的，产线是人家的——产能没能真正捏进自己手里。',
+        items: ['现金 <b>×1.2</b>', '声誉 <b>+0</b>'],
+        effects: { cash_mult: 1.2, reputation: 0 }
+      } },
+      { if: 'merger_lease', who: 'narration', text: '我折中一步——把罐头厂的生产线租下来，自己派人管，厂房还是人家的。我自己说了算，产线也转起来了，可职工还是国营的编制，调度起来隔着一层纱，总差着一口气。' },
+      { if: 'merger_lease', settle: {
+        kicker: '第④部分 · 兼并结算',
+        title: '租赁 · 折中之路',
+        desc: '租下产线自己派人管，厂房还是人家的。产线转起来了，可职工还是国营编制，总差着一口气。',
+        items: ['现金 <b>×1.4</b>', '声誉 <b>+5</b>'],
+        effects: { cash_mult: 1.4, reputation: 5 }
+      } },
+      { if: 'merger_buyout', who: 'narration', text: '我在合同上签下名字那晚，把三个字反复看了很久——"有偿兼并"。这不是租，不是合，是我要把这座厂、这些机器、这 2200 口人，连同它的债，整个地背到自己肩上。' },
+      { if: 'merger_buyout', who: 'liuchuzhang', text: '（收起合同，难得正经）宗厂长，我再问你一句：想清楚了？这钱砸下去，可就没有回头路了。' },
+      { if: 'merger_buyout', who: 'you', text: '（把笔放下）想清楚了。我不是来捡便宜的，是来把一座厂子、两千多号人，一起扛起来的。' },
+      { if: 'merger_buyout', who: 'narration', text: '8000 万，我账上能动用的家底几乎掏空，剩下的是三年也还不完的债。可我的眼睛，亮得吓人。' },
+      { if: 'merger_buyout', settle: {
+        kicker: '第④部分 · 兼并结算',
+        title: '有偿兼并 · 8000 万',
+        desc: '连人带厂、一个不少地接过来。家底几乎掏空，剩下三年还不完的债——可产能，彻底捏进了自己手里。',
+        items: ['现金 <b>×0.72</b>', '声誉 <b>+15</b>', '「产能底牌」解锁'],
+        effects: { cash_mult: 0.72, reputation: 15, factory_bonus: true }
+      } }
+    ]
+  },
+  {
+    chapter: '第五幕 · 接厂第一天',
+    tag: '罐头厂大门 · 接厂日',
+    img: './assets/bg/scene4-4.png',
+    alt: '接厂第一天工人堵门',
+    if: 'merger_buyout',
+    lines: [
+      { who: 'narration', text: '消息传得比风快——"娃哈哈那个后生，把咱厂买了。"买厂，在这座老厂的老工人听来，只有一层意思：新老板要进门，先动刀子。' },
+      { who: 'laogongren_a', text: '（挤到前面，嗓门发抖）刘处长，鲁厂长，你们拍拍良心！我们在国营厂干了一辈子，铁饭碗，就这么让一个做饮料的给端了？！' },
+      { who: 'laogongren_b', text: '就是！谁知道他进来第一刀，砍谁？！' },
+      { who: 'wangshifu', text: '（挤到人群前头，压了压手，人群慢慢静下来。他盯着你，问了一句）你昨天说，一个都不少地接。这话，今天还算数么？' },
+      { who: 'you', text: '（没躲，一步一步走到厂门口，站到人堆前，声音不大，但字字清楚）算数。我当着大家的面立三条规矩——第一，2200 人，一个不裁；第二，工资照国营厂的规矩发，今天先把这个月补齐，往后只有早，没有晚；第三，厂子要是亏了，先从我自己的工资里扣，扣到没有，再扣家里的。' },
+      { who: 'narration', text: '人群静了。没人想到这个"后生"会这么说。有人小声嘀咕，有人还是不信。王师傅盯着我看了很久，忽然把烟头往地上一掐，转身，第一个朝车间走去。' },
+      { who: 'wangshifu', text: '（边走边甩下一句）……都别堵着了。他说了一个都不裁——咱先看他把产线开起来，再看他把话兑现不兑现。' }
+    ]
+  },
+  {
+    chapter: '第六幕 · 三个月后',
+    tag: '罐头厂车间 · 三个月后',
+    img: './assets/bg/scene4-5.png',
+    alt: '三个月后产线转起来',
+    if: 'merger_buyout',
+    lines: [
+      { who: 'narration', text: '头一个月最难。我先把仓库里积压的罐头平价卖给学校食堂和大单位——货一出手，钱就活了。第二个月，我把罐头厂闲置的产线调过来灌"娃哈哈"，老师傅的罐头手艺，干起灌装来又快又稳。' },
+      { who: 'luchangzhang', text: '（站在车间门口，看了很久，忽然对身边人说）……我在这厂三十年，头一回觉得，机器响得这么顺耳。' },
+      { who: 'zhou', text: '（翻着新账本，笑了）三个月，账平了。厂长——不是我说，你这赌，赌对了。' },
+      { who: 'fan', text: '（抹了把汗）可不是！现在这两千多号人，可都是咱"娃哈哈"的人了！' },
+      { who: 'wangshifu', text: '（把一瓶新装的产品递到你面前，闷声闷气地说）……给。这是我看着下线、亲手装的。你说的那三条，我都记着——往后，我替全厂盯着你兑现。' },
+      { who: 'narration', text: '我没有说话，接过那瓶"娃哈哈"，把瓶盖拧开，仰头喝了一口。酸甜的，是孩子爱喝的味道。我忽然想，这味道，也许还能再装得多一点、再走得远一点。' },
+      { who: 'narration', text: '那一年，2200 人的手艺拧进一条产线，老厂子真的醒了过来。我手里的底牌，也从一间小厂，变成了一座能开满全国的厂。' }
+    ]
+  }
+];
+
+/* =====================================================================
+ * 引擎
+ * ===================================================================== */
+const WHO_NAME = {
+  narration: '旁　白', you: '我', laozong: '老　宗',
+  zhou: '周老师', fan: '范老师',
+  liuchuzhang: '刘处长', luchangzhang: '鲁厂长', wangshifu: '王师傅',
+  laogongren_a: '老工人甲', laogongren_b: '老工人乙'
+};
+const STAT_NAME = {
+  resilience: '坚韧', ahai_bond: '与阿海的情谊', negotiation_skill: '谈判', father_bond: '与父亲的羁绊'
+};
+const STAT_ORDER = ['resilience', 'ahai_bond', 'negotiation_skill', 'father_bond'];
+
+const state = {
+  stats: { resilience: 0, ahai_bond: 0, negotiation_skill: 0, father_bond: 0 },
+  cash: 0,
+  reputation: 0,
+  flags: {}
+};
+
+const lineEl = document.getElementById('line');
+const hintEl = document.getElementById('hint');
+const speakerEl = document.getElementById('speaker');
+const bgEl = document.getElementById('bg');
+const sceneTagEl = document.getElementById('sceneTag');
+const stackEl = document.getElementById('bgStack');
+const bodyEl = document.body;
+const choicesBox = document.getElementById('choicesBox');
+const choicesTitle = document.getElementById('choicesTitle');
+const choicesList = document.getElementById('choicesList');
+const hudStats = document.getElementById('hudStats');
+const toastEl = document.getElementById('toast');
+const bgm = document.getElementById('bgm');
+const musicBtn = document.getElementById('musicBtn');
+const decisionBox = document.getElementById('decisionBox');
+const decisionOptions = document.getElementById('decisionOptions');
+const decisionResult = document.getElementById('decisionResult');
+const decisionNext = document.getElementById('decisionNext');
+const settleBox = document.getElementById('settleBox');
+const fogEl = document.getElementById('fog');
+
+let scene = 0;
+let idx = -1;
+let typing = false;
+let finished = false;
+let switching = false;
+let timer = null;
+let stream = null;
+let pendingChoice = null;
+let choiceIdx = -1;
+let pendingDecision = null;
+let pendingSettle = null;
+let musicOn = false;
+let toastTimer = null;
+let fogOpen = true;
+
+/* ---- 白雾转场 ---- */
+function resetFog(){
+  fogOpen = true;
+  fogEl.classList.remove('dispersed');
+}
+function disperseFog(){
+  if(!fogOpen) return;
+  fogOpen = false;
+  fogEl.classList.add('dispersed');
+}
+
+function bgFor(S){ return USE_DEBUG_BG ? DEBUG_BG : S.img; }
+function getLines(){ return stream; }
+
+function setStream(){
+  stream = SCENES[scene].lines.filter(function(l){
+    if(l.if && !state.flags[l.if]) return false;
+    return true;
+  });
+}
+
+/* ---- 打字机 ---- */
+function typeLine(l){
+  const full = l.text;
+  let pos = 0;
+  typing = true;
+  setSpeaker(l.who);
+  lineEl.classList.toggle('action', full.charAt(0) === '（');
+  hintEl.style.visibility = 'hidden';
+  lineEl.textContent = '';
+  clearInterval(timer);
+  timer = setInterval(function(){
+    pos++;
+    lineEl.textContent = full.slice(0, pos);
+    if(pos < full.length){
+      const caret = document.createElement('span');
+      caret.className = 'caret';
+      lineEl.appendChild(caret);
+    }
+    if(pos >= full.length){
+      clearInterval(timer);
+      typing = false;
+      if(idx === getLines().length - 1){ finished = true; setEndHint(); }
+      hintEl.style.visibility = 'visible';
+    }
+  }, 55);
+}
+
+function finishLine(){
+  const ls = getLines();
+  if(idx < 0 || idx >= ls.length) return;
+  clearInterval(timer);
+  lineEl.textContent = ls[idx].text;
+  typing = false;
+  if(idx === ls.length - 1){ finished = true; setEndHint(); }
+  hintEl.style.visibility = 'visible';
+}
+
+function setSpeaker(who){
+  speakerEl.textContent = WHO_NAME[who] || WHO_NAME.narration;
+  speakerEl.className = 'pro-speaker' + (who === 'narration' ? '' : ' ' + who);
+}
+
+function setEndHint(){
+  if(scene === SCENES.length - 1 || nextSceneIdx() >= SCENES.length){
+    hintEl.textContent = '第④部分 · 完 —— 下一篇：非常可乐 · 第⑤部分';
+    hintEl.classList.add('done');
+    saveStats();
+    showNextLink();
+  } else {
+    hintEl.textContent = '▼ 进入下一幕';
+    hintEl.classList.remove('done');
+    hideNextLink();
+  }
+}
+
+/* ---- 数值面板 ---- */
+function renderHud(){
+  hudStats.innerHTML =
+    '<div class="pro-hud-row"><span>现金</span><b>¥' + state.cash + '</b></div>' +
+    '<div class="pro-hud-row"><span>声誉</span><b>' + state.reputation + '</b></div>';
+}
+
+/* ---- 数值存档 ---- */
+function saveStats(){
+  try{
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      stats: {
+        resilience: state.stats.resilience,
+        ahai_bond: state.stats.ahai_bond,
+        negotiation_skill: state.stats.negotiation_skill,
+        father_bond: state.stats.father_bond,
+        cash: state.cash,
+        reputation: state.reputation
+      },
+      flags: state.flags,
+      savedAt: new Date().toISOString()
+    }));
+  }catch(e){}
+}
+
+function showNextLink(){
+  const a = document.getElementById('nextLink');
+  const qs = STAT_ORDER.map(function(k){ return k + '=' + state.stats[k]; })
+    .concat(['cash=' + state.cash, 'reputation=' + state.reputation])
+    .join('&');
+  a.href = NEXT_PAGE + '?' + qs;
+  a.hidden = false;
+}
+
+function hideNextLink(){ document.getElementById('nextLink').hidden = true; }
+
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, 2600);
+}
+
+/* ---- 音效 ---- */
+function playSfx(path){
+  if(!path) return;
+  try{
+    const a = new Audio(path);
+    a.volume = 0.6;
+    const p = a.play();
+    if(p && p.catch){
+      p.catch(function(){ if(path !== '#') toast('音效文件缺失：' + path); });
+    }
+  }catch(e){
+    if(path !== '#') toast('音效文件缺失：' + path);
+  }
+}
+
+/* ---- 分支选择 ---- */
+function showChoices(c){
+  pendingChoice = c;
+  choiceIdx = idx;
+  choicesTitle.textContent = c.prompt;
+  choicesList.innerHTML = '';
+  c.options.forEach(function(opt){
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'pro-choice';
+    btn.textContent = opt.label;
+    btn.addEventListener('click', function(ev){
+      ev.stopPropagation();
+      playSfx(opt.sound);
+      pickChoice(opt.key);
+    });
+    choicesList.appendChild(btn);
+  });
+  choicesBox.hidden = false;
+  renderHud();
+}
+
+function pickChoice(key){
+  const c = pendingChoice;
+  if(!c) return;
+  const opt = c.options.find(function(o){ return o.key === key; });
+  pendingChoice = null;
+  choicesBox.hidden = true;
+
+  if(opt.effects){
+    Object.keys(opt.effects).forEach(function(k){
+      if(k in state.stats) state.stats[k] += opt.effects[k];
+    });
+    saveStats();
+  }
+  Object.assign(state.flags, opt.flags || {});
+
+  const follow = [];
+  if(opt.text) follow.push({ who: 'you', text: opt.text });
+  if(c.after && c.after[key]){
+    follow.push.apply(follow, c.after[key]);
+  } else {
+    follow.push.apply(follow, getLines().slice(choiceIdx + 1));
+  }
+
+  stream = follow;
+  idx = -1; typing = false; finished = false;
+  hintEl.classList.remove('done');
+  hintEl.style.visibility = 'visible';
+  advance();
+}
+
+/* =====================================================================
+ * 兼并决策 · 三选一
+ * 联营：现金 ×1.2、声誉 +0，无产能底牌
+ * 租赁：现金 ×1.4、声誉 +5，无产能底牌
+ * 有偿兼并（8000万）：现金 ×0.72、声誉 +15，解锁产能底牌（factory_bonus）
+ * ===================================================================== */
+const DECISION_OPTIONS = [
+  {
+    key: 'A',
+    label: '联营 · 出品牌出资金',
+    desc: '最省事的一条。出品牌、出资金，跟罐头厂联营，利润两家分。',
+    result: '你选了最省事的一条——出品牌、出资金，跟罐头厂联营，利润两家分。刘处长松了口气，鲁厂长也点头。可日子一长你发现，厂是人家的，产线是人家的，关键时候，你一句话都调不动它。',
+    resultClass: 'safe',
+    flag: 'merger_alliance'
+  },
+  {
+    key: 'B',
+    label: '租赁 · 租下产线自己管',
+    desc: '折中一步。把罐头厂的生产线租下来，自己派人管。',
+    result: '你折中一步——把罐头厂的生产线租下来，自己派人管，厂房还是人家的。你自己说了算，产线也转起来了，可职工还是国营的编制，调度起来隔着一层纱，总差着一口气。',
+    resultClass: 'safe',
+    flag: 'merger_lease'
+  },
+  {
+    key: 'C',
+    label: '有偿兼并 · 8000万连人带厂',
+    desc: '最狠的一条。砸下8000万，把这座厂、这些机器、这2200口人，连同它的债，整个背过来——家底几乎掏空。',
+    result: '你在合同上签下名字那晚，把三个字反复看了很久——"有偿兼并"。这不是租，不是合，是你要把这座厂、这些机器、这2200口人，连同它的债，整个地背到自己肩上。',
+    resultClass: 'buyout',
+    flag: 'merger_buyout'
+  }
+];
+
+function startDecision(){
+  pendingDecision = true;
+  hintEl.style.visibility = 'hidden';
+  decisionResult.hidden = true;
+  decisionResult.className = 'pro-gamble-result';
+  decisionNext.hidden = true;
+  decisionOptions.innerHTML = '';
+  DECISION_OPTIONS.forEach(function(opt){
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'pro-gamble-opt';
+    btn.innerHTML = '<span class="opt-label">' + opt.label + '</span><span class="opt-text">' + opt.desc + '</span>';
+    btn.addEventListener('click', function(ev){
+      ev.stopPropagation();
+      playSfx('#');
+      pickDecision(opt.key);
+    });
+    decisionOptions.appendChild(btn);
+  });
+  decisionBox.hidden = false;
+}
+
+function pickDecision(key){
+  Array.prototype.forEach.call(decisionOptions.children, function(b){ b.disabled = true; });
+  const opt = DECISION_OPTIONS.find(function(o){ return o.key === key; });
+  /* 先清除全部三个分支 flag，避免 localStorage 继承的旧 flag 导致多分支同时生效 */
+  delete state.flags.merger_alliance;
+  delete state.flags.merger_lease;
+  delete state.flags.merger_buyout;
+  state.flags[opt.flag] = true;
+  decisionResult.className = 'pro-gamble-result ' + opt.resultClass;
+  decisionResult.textContent = opt.result;
+  decisionResult.hidden = false;
+  decisionNext.hidden = false;
+}
+
+decisionNext.addEventListener('click', function(ev){
+  ev.stopPropagation();
+  endDecision();
+});
+
+function endDecision(){
+  if(!state.flags.merger_alliance && !state.flags.merger_lease && !state.flags.merger_buyout){
+    toast('请先选择一条路');
+    return;
+  }
+  pendingDecision = null;
+  decisionBox.hidden = true;
+  bodyEl.classList.add('has-stats');
+  renderHud();
+  saveStats();
+  setStream();
+  idx = -1;
+  for(let i = 0; i < stream.length; i++){
+    if(stream[i].decision){ idx = i; break; }
+  }
+  typing = false;
+  finished = (idx >= stream.length - 1);
+  if(finished) setEndHint();
+  hintEl.classList.remove('done');
+  hintEl.style.visibility = 'visible';
+  advance();
+}
+
+/* ---- 结算面板（支持现金乘法 + 产能底牌解锁） ---- */
+function showSettle(s){
+  pendingSettle = s;
+  document.getElementById('settleKicker').textContent = s.kicker || '';
+  document.getElementById('settleTitle').textContent = s.title || '';
+  document.getElementById('settleDesc').textContent = s.desc || '';
+  const list = document.getElementById('settleList');
+  list.innerHTML = '';
+  (s.items || []).forEach(function(it){
+    const li = document.createElement('li');
+    li.innerHTML = it;
+    list.appendChild(li);
+  });
+  settleBox.hidden = false;
+  hintEl.style.visibility = 'hidden';
+}
+
+function endSettle(){
+  const s = pendingSettle;
+  if(!s) return;
+  pendingSettle = null;
+  settleBox.hidden = true;
+  const fx = s.effects || {};
+  const parts = [];
+  if(fx.cash_mult){
+    const old = state.cash;
+    state.cash = Math.round(old * fx.cash_mult);
+    parts.push('现金 ¥' + old + ' → ¥' + state.cash + '（×' + fx.cash_mult + '）');
+  }
+  if(fx.reputation){
+    state.reputation += fx.reputation;
+    parts.push((fx.reputation > 0 ? '+' : '') + fx.reputation + ' 声誉');
+  }
+  if(fx.factory_bonus){
+    state.flags.factory_bonus = true;
+    parts.push('解锁「产能底牌」');
+  }
+  if(parts.length){
+    renderHud();
+    saveStats();
+    toast(parts.join(' · '));
+  }
+  if(idx === getLines().length - 1){
+    finished = true;
+    setEndHint();
+  }
+  hintEl.style.visibility = 'visible';
+  advance();
+}
+
+document.getElementById('settleNext').addEventListener('click', function(ev){
+  ev.stopPropagation();
+  endSettle();
+});
+
+/* ---- 推进 ---- */
+function advance(){
+  if(fogOpen) return;
+  if(switching) return;
+  if(pendingChoice) return;
+  if(pendingDecision) return;
+  if(pendingSettle) return;
+  if(finished){
+    if(nextSceneIdx() < SCENES.length) switchScene();
+    return;
+  }
+  if(typing){ finishLine(); return; }
+  if(idx < getLines().length - 1){
+    idx++;
+    const l = getLines()[idx];
+    if(l.choice){ showChoices(l.choice); return; }
+    if(l.decision){ startDecision(); return; }
+    if(l.settle){ showSettle(l.settle); return; }
+    if(l.toast){
+      toast(l.toast);
+      if(idx === getLines().length - 1){
+        finished = true;
+        setEndHint();
+        hintEl.style.visibility = 'visible';
+      } else {
+        advance();
+      }
+      return;
+    }
+    typeLine(l);
+  }
+}
+
+/* 下一幕索引：跳过尚未满足条件的分支幕 */
+function nextSceneIdx(){
+  let ns = scene + 1;
+  while(ns < SCENES.length && SCENES[ns].if && !state.flags[SCENES[ns].if]) ns++;
+  return ns;
+}
+
+function preloadNext(){
+  const ns = nextSceneIdx();
+  if(ns < SCENES.length){
+    const im = new Image();
+    im.src = bgFor(SCENES[ns]);
+  }
+}
+
+/* ---- 切换至下一幕 ---- */
+function switchScene(){
+  if(switching) return;
+  const ns = nextSceneIdx();
+  if(ns >= SCENES.length) return;
+  switching = true;
+  scene = ns;
+  const S = SCENES[scene];
+  stackEl.style.opacity = '0';
+  setTimeout(function(){
+    bgEl.src = bgFor(S);
+    bgEl.alt = S.alt;
+    sceneTagEl.textContent = S.tag;
+    document.title = S.chapter;
+    bodyEl.dataset.scene = String(scene + 1);
+    setStream();
+    idx = -1; typing = false; finished = false;
+    hintEl.classList.remove('done');
+    hintEl.textContent = '▼ 点击继续';
+    hintEl.style.visibility = 'visible';
+    stackEl.style.opacity = '1';
+    sceneTagEl.classList.remove('anim');
+    void sceneTagEl.offsetWidth;
+    sceneTagEl.classList.add('anim');
+    preloadNext();
+    setTimeout(function(){ switching = false; advance(); }, 1100);
+  }, 600);
+}
+
+/* ---- 音乐开关 ---- */
+function toggleMusic(){
+  if(musicOn){
+    bgm.pause();
+    musicOn = false;
+    musicBtn.classList.remove('is-on');
+    return;
+  }
+  const p = bgm.play();
+  if(p && p.catch){
+    p.catch(function(){
+      musicOn = false;
+      musicBtn.classList.remove('is-on');
+    });
+  }
+  musicOn = true;
+  musicBtn.classList.add('is-on');
+}
+bgm.addEventListener('error', function(){
+  musicOn = false;
+  musicBtn.classList.remove('is-on');
+});
+musicBtn.addEventListener('click', function(ev){
+  ev.stopPropagation();
+  toggleMusic();
+});
+
+/* =====================================================================
+ * 数值继承（从前序部分继承：心性数值 + 现金 + 声誉 + 分支标志）
+ * 优先读取 URL 参数，其次读 localStorage 存档；都没有时从默认值开始。
+ * ===================================================================== */
+const INHERIT_KEYS = ['resilience', 'ahai_bond', 'negotiation_skill', 'father_bond'];
+
+function loadInherited(){
+  const out = {};
+  const flags = {};
+  let got = false;
+  let cash = 0;
+  let reputation = 0;
+  const qs = new URLSearchParams(location.search);
+  INHERIT_KEYS.forEach(function(k){
+    const v = qs.get(k);
+    if(v !== null && v !== '' && !isNaN(Number(v))){ out[k] = Number(v); got = true; }
+  });
+  const c = qs.get('cash');
+  if(c !== null && c !== '' && !isNaN(Number(c))){ cash = Number(c); got = true; }
+  const r = qs.get('reputation');
+  if(r !== null && r !== '' && !isNaN(Number(r))){ reputation = Number(r); got = true; }
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(raw){
+      const data = JSON.parse(raw);
+      if(data && data.stats){
+        INHERIT_KEYS.forEach(function(k){
+          if(typeof data.stats[k] === 'number' && !(k in out)){ out[k] = data.stats[k]; got = true; }
+        });
+        if(typeof data.stats.cash === 'number' && !qs.get('cash')){ cash = data.stats.cash; got = true; }
+        if(typeof data.stats.reputation === 'number' && !qs.get('reputation')){ reputation = data.stats.reputation; got = true; }
+      }
+      if(data && data.flags){ Object.assign(flags, data.flags); }
+    }
+  }catch(e){}
+  /* 若没有继承到现金，给一个默认起始值（广告豪赌后小厂经营所得） */
+  if(!got || cash === 0){ cash = 550; reputation = 22; }
+  return { out: out, flags: flags, got: got, cash: cash, reputation: reputation };
+}
+
+/* ---- 启动 ---- */
+const inherited = loadInherited();
+if(inherited.got){
+  Object.keys(inherited.out).forEach(function(k){ state.stats[k] = inherited.out[k]; });
+}
+state.cash = inherited.cash;
+state.reputation = inherited.reputation;
+Object.assign(state.flags, inherited.flags);
+/* 清除 part4 决策残留 flag，避免上次游玩或 localStorage 旧数据干扰本次分支 */
+delete state.flags.merger_alliance;
+delete state.flags.merger_lease;
+delete state.flags.merger_buyout;
+bodyEl.classList.add('has-stats');
+setStream();
+bgEl.src = bgFor(SCENES[0]);
+renderHud();
+setTimeout(advance, 1600);
+
+document.addEventListener('click', function(){
+  if(fogOpen){ disperseFog(); return; }
+  advance();
+});
+document.addEventListener('keydown', function(e){
+  var k = e.key.toLowerCase();
+  if(k === ' ' || k === 'enter' || k === 'arrowdown' || k === 'arrowright' || k === 'z'){
+    e.preventDefault();
+    if(fogOpen){ disperseFog(); return; }
+    advance();
+  }
+  if(k === 'x'){
+    e.preventDefault();
+    if(typing) finishLine();
+  }
+});
+</script>
+</body>
+</html>
