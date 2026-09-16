@@ -5,7 +5,10 @@
 
 .deliveryBoard {
     position: fixed;
-    top: 16px;
+    /* 右上角还有个圆形菜单按钮（#menuDot，top:14px/right:14px/30px），
+       订单板原来紧贴着它，两个都是 fixed 定位会叠在一起。往下挪开
+       够用的间距，不用再抢占同一块地方。 */
+    top: 54px;
     right: 18px;
     z-index: 14;
     width: min(280px, calc(100vw - 36px));
