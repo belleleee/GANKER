@@ -186,3 +186,62 @@
     color: #a89a80;
     font-style: italic;
 }
+
+.mentorMemoryEntry {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 20px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    text-decoration: none;
+    border: 1px solid rgba(58, 47, 34, .18);
+    background: rgba(58, 47, 34, .04);
+    color: inherit;
+}
+
+.mentorMemoryEntry.on {
+    cursor: pointer;
+    border: 1px solid rgba(200, 150, 44, .6);
+    background: linear-gradient(120deg, rgba(200, 150, 44, .18), rgba(255, 250, 236, .75) 70%);
+    box-shadow: 0 4px 14px rgba(58, 47, 34, .12);
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.mentorMemoryEntry.on:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(58, 47, 34, .18);
+}
+
+.mentorMemoryIcon {
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    font-size: 19px;
+    background: rgba(58, 47, 34, .08);
+}
+
+.mentorMemoryEntry.on .mentorMemoryIcon {
+    background: radial-gradient(circle at 32% 28%, #ffe6a3, #c8962c 78%);
+    box-shadow: 0 0 0 3px rgba(200, 150, 44, .18);
+}
+
+.mentorMemoryEntry b {
+    display: block;
+    font: 700 14px/1.4 "Songti SC", "STSong", Georgia, serif;
+    color: #362b1e;
+}
+
+.mentorMemoryEntry:not(.on) b {
+    color: #8a7a5c;
+}
+
+.mentorMemoryEntry small {
+    display: block;
+    margin-top: 2px;
+    font-size: 11.5px;
+    color: #6b5a41;
+}

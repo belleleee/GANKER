@@ -38,6 +38,14 @@ const MENTOR_FRAGMENTS = [
     { stage: 8, text: '他说，回城那年他三十三岁，没人觉得这个岁数回来的人能有什么出息——连他自己都这么以为。' }
 ];
 
+/* 认出他是谁（真名揭晓那一章）之后，"关于师傅"面板才会冒出一个
+   入口，能走进一整段他年轻时的完整回忆——独立的一套页面
+   （memories/first.html 开头，自己链着 part1→part2→part3，
+   自带存档和分支，不需要这边额外接管）。碎片是"听说的只言片语"，
+   这个入口才是"真正走进去看"。 */
+const MENTOR_MEMORY_UNLOCK_STAGE = 5;
+const MENTOR_MEMORY_ENTRY = 'memories/first.html';
+
 /* 藏在小屋各处互动里的碎片——不按主线顺序解锁，碰到对应的
    成就就亮了。复用已经在记的 achievementState.unlocked，不用
    另起一套触发和存档逻辑。 */
@@ -80,11 +88,22 @@ function renderMentorFragments() {
             '<p>' + (unlocked ? f.text : '还没碰到这段记忆——在小屋里多摸摸看') + '</p>' +
             '</div>';
     }).join('');
+    const memoryUnlocked = stage > MENTOR_MEMORY_UNLOCK_STAGE;
+    const memoryEntry = memoryUnlocked
+        ? '<a class="mentorMemoryEntry on" href="' + MENTOR_MEMORY_ENTRY + '" target="_blank" rel="noopener">' +
+            '<span class="mentorMemoryIcon">📖</span>' +
+            '<span><b>走进他的回忆</b><small>完整地看一遍他年轻时的那些年</small></span>' +
+            '</a>'
+        : '<div class="mentorMemoryEntry">' +
+            '<span class="mentorMemoryIcon">🔒</span>' +
+            '<span><b>走进他的回忆</b><small>认出他是谁之后，这道门才会打开</small></span>' +
+            '</div>';
     mentorFragments.innerHTML =
         '<p class="mentorFragmentsCount">主线记忆 · ' + storyCount + '/' + MENTOR_FRAGMENTS.length + '</p>' +
         '<div class="mentorFragmentTimeline">' + storyCards + '</div>' +
         '<div class="mentorFragmentDivider"><span>🧩 藏在小屋里的记忆 · ' + hiddenUnlockedCount + '/' + MENTOR_HIDDEN_FRAGMENTS.length + '</span></div>' +
-        '<div class="mentorHiddenGrid">' + hiddenCards + '</div>';
+        '<div class="mentorHiddenGrid">' + hiddenCards + '</div>' +
+        memoryEntry;
 }
 
 function renderMentorPanel() {

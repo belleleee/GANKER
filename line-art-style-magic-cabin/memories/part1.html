@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>宗庆后 · 第①部分 · 代销小摊 · 1987</title>
+<link rel="stylesheet" href="./style.css">
+<link rel="stylesheet" href="./level_one_pixel.css">
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@400;700&display=swap">
+</head>
+<body class="zqh-prologue" data-scene="1">
+
+  <!-- ===== 背景层 ===== -->
+  <div class="pro-bg" id="bgStack">
+    <img class="pro-bg-img" id="bg" src="./assets/bg/scene1-1.png" alt="晨露老街" />
+    <div class="pro-vignette"></div>
+    <div class="pro-bottom-fade"></div>
+    <div class="pro-grain"></div>
+  </div>
+
+  <!-- ===== 白雾转场层 ===== -->
+  <div class="pro-fog" id="fog"></div>
+
+  <!-- ===== 场景角标 ===== -->
+  <div class="pro-scene-tag anim" id="sceneTag">杭州 · 上城区 · 一九八七年春</div>
+
+  <!-- ===== 音乐开关 ===== -->
+  <button class="pro-music" id="musicBtn" type="button" aria-label="背景音乐开关" title="背景音乐">
+    <svg class="ico-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 18V5l11-2v13"/><circle cx="9" cy="18" r="3"/><circle cx="20" cy="16" r="3"/>
+    </svg>
+    <svg class="ico-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 18V5l11-2v13"/><circle cx="9" cy="18" r="3"/><circle cx="20" cy="16" r="3"/><line x1="3" y1="4" x2="21" y2="20"/>
+    </svg>
+  </button>
+
+  <!-- ===== 数值面板 ===== -->
+  <div class="pro-hud" id="hud">
+    <div class="pro-hud-title">摊　账</div>
+    <div id="hudStats"></div>
+  </div>
+
+  <!-- ===== 对话框 ===== -->
+  <div class="pro-dialog">
+    <div class="pro-dialog-bar"></div>
+    <div class="pro-dialog-main">
+      <div class="pro-speaker" id="speaker">旁　白</div>
+      <p class="pro-line" id="line"></p>
+    </div>
+    <div class="pro-hint" id="hint">▼ 点击继续</div>
+  </div>
+
+  <!-- ===== 分支选择 ===== -->
+  <div class="pro-choices" id="choicesBox" hidden>
+    <div class="pro-choices-title" id="choicesTitle"></div>
+    <div class="pro-choices-list" id="choicesList"></div>
+  </div>
+
+  <!-- ===== 经营小游戏(#) ===== -->
+  <div class="pro-game" id="gameBox" hidden>
+    <a class="pro-game-link" id="gameLink" href="#">经营小游戏 · 备货 → 顾客下单 → 交付收钱</a>
+    <p class="pro-game-tip" id="gameTip">攒够目标现金 ¥110，即可继续剧情（占位链接，后续接入小游戏）</p>
+  </div>
+
+  <!-- ===== 小摊结算面板 ===== -->
+  <div class="pro-settle" id="settleBox" hidden>
+    <div class="pro-settle-panel">
+      <span class="pro-settle-kicker" id="settleKicker"></span>
+      <h2 class="pro-settle-title" id="settleTitle"></h2>
+      <p class="pro-settle-desc" id="settleDesc"></p>
+      <ul class="pro-settle-list" id="settleList"></ul>
+      <button class="pro-settle-next" id="settleNext" type="button">继　续</button>
+    </div>
+  </div>
+
+  <div class="pro-toast" id="toast"></div>
+
+  <!-- ===== 进入下一篇（结算后显示） ===== -->
+  <a class="pro-next-link" id="nextLink" hidden href="#">下一篇 · 第②部分 · 承包谈判 →</a>
+
+  <!-- 背景音乐 -->
+  <audio id="bgm" src="./assets/bgm/test1.flac" loop preload="none"></audio>
+
+<script>
+/* =====================================================================
+ * 配置区
+ * ===================================================================== */
+/* 调试开关：true 时所有场景统一使用 assets/debug-bg.png；
+   替换真实背景图后，请改为 false，各场景将使用下方 SCENES 里的图片路径。 */
+const USE_DEBUG_BG = false;
+const DEBUG_BG = './assets/debug-bg.png';
+/* 下一篇页面文件名：本部分结束时跳转到这里，数值通过 URL 参数 + localStorage 双重继承。
+   若下一篇改了文件名，只需改这一处。 */
+const NEXT_PAGE = 'part2.html';
+/* 存档键：数值写入 localStorage，供下一篇读取。 */
+const SAVE_KEY = 'zqh_level1_save';
+/* =====================================================================
+ * 行类型：{who,text} 对白/旁白；{if:'标志',who,text} 条件行（有该标志才显示）；
+ * {ifNot:'标志',who,text} 条件行（没有该标志才显示）；{toast:'文本'} 只弹提示不占行；
+ * {game:{...}} 经营小游戏占位链接；{settle:{...}} 小摊结算面板。
+ * ===================================================================== */
+const SCENES = [
+  {
+    chapter: '第一幕 · 晨露老街',
+    tag: '杭州 · 上城区 · 一九八七年春',
+    img: './assets/bg/scene1-1.png',
+    alt: '晨露老街',
+    lines: [
+      { who: 'laozong', text: '（站在你旁边）这一年的你，三十九岁。三轮车是借的，账本是新的。' },
+      { who: 'narration', text: '我低头看自己的手——比刚才小了一圈。' },
+      { who: 'narration', text: '1978 年回到杭州，我接母亲的班进了校办厂。这九年里，我成了家，有了一个女儿。日子不算宽裕，但我头一回觉得，肩上有了想让人过好的牵挂——我比从前更沉得住气了。' },
+      { who: 'narration', text: '纸箱厂的活安稳，可我坐不住。我主动申请转了供销员，一跑就是九年。杭州城里的大小街巷、四十几所中小学和幼儿园，哪家的门朝哪边开，谁家孩子多、爱买什么，我都记在心里。' },
+      { who: 'narration', text: '我不知道这算什么本事。我只知道，同样一双脚，别人走的是路，我走的是"门路"。' }
+    ]
+  },
+  {
+    chapter: '第一幕 · 承包告示',
+    tag: '布告栏前 · 一九八七年春',
+    img: './assets/bg/scene1-2.png',
+    alt: '承包告示',
+    lines: [
+      { who: 'laolu', text: '（压低了声音）看见没？那个经销部，连年亏，账上还欠着钱呢。文教局这回是铁了心要甩出去，谁都能报。' },
+      { who: 'you', text: '（盯着告示，慢声问）那……它现在还在给学校送货么？' },
+      { who: 'laolu', text: '（一愣）送啊，不送更完蛋。怎么，你还真看上它了？' },
+      { who: 'you', text: '我看上的不是那本烂账。是那四十多所学校，每天要喝的汽水、要啃的棒冰、要用秃的铅笔。' },
+      { who: 'laolu', text: '（摇头）老伙计，一把年纪了，别瞎折腾。安稳点，不好么？' },
+      { who: 'narration', text: '我没接话。我想起母亲说过——日子是过出来的，不是想出来的。也想起茶场赵伯说过——能把一件事做到底的人，差不了。' },
+      { who: 'narration', text: '可我也清楚，光有胆子不够。要接这个经销部，我得先让文教局的人信我"能做成"，还得拿得出一笔本钱。而我现在，什么都没有——除了这辆旧三轮车，和一双磨不坏的布鞋。' },
+      { who: 'you', text: '（把三轮车推到路边，蹲下来，从车斗里拿出几个旧木箱）既然没有本钱，那就先去挣本钱。没有招牌，那就先挣招牌。' }
+    ]
+  },
+  {
+    chapter: '第一幕 · 代销小摊',
+    tag: '路口 · 支起小摊',
+    img: './assets/bg/scene1-3.png',
+    alt: '代销小摊',
+    lines: [
+      { if: 'ahai_stay', who: 'ahai', text: '（不知从哪儿冒出来，抄起一箱汽水就往冰桶里码，嘴里还念叨）我就说，跟着你准有口饭吃。你只管招呼客人，进货补货的事儿，交给我。' },
+      { if: 'ahai_stay', who: 'you', text: '（愣了一瞬，笑了）你怎么来了？' },
+      { if: 'ahai_stay', who: 'ahai', text: '当年在茶场说好互相罩着——这话，一辈子作数。' },
+      { if: 'ahai_stay', toast: '机制 · 阿海协助补货：小游戏内"备货 / 预制货品"速度大幅提升（备货耗时减半）；对应结局结算时，如有阿海线，现金小额加成。' },
+      { ifNot: 'ahai_stay', who: 'narration', text: '这时候我多希望有人搭把手。可我知道，路是我自己选的，那就得一个人先把车蹬起来。' }
+    ]
+  },
+  {
+    chapter: '第二幕 · 三轮车摊 · 放学',
+    tag: '放学时分 · 摊前',
+    img: './assets/bg/scene1-4.png',
+    alt: '放学买汽水',
+    lines: [
+      { who: 'narration', text: '摊子小，可我从来不把它当小摊摆。汽水瓶擦得干干净净，铅笔削好头朝上插在盒里，本子按大小码齐——我在茶场学了一辈子"把一件事做到底"，如今全用在了这几尺见方的车斗上。' },
+      { game: { label: '经营小游戏 · 备货 → 顾客下单 → 交付收钱', tip: '攒够目标现金 ¥110，即可继续剧情（占位链接 #，后续接入小游戏）', href: '#' } },
+      { who: 'maomao', text: '（攥着一张汗湿的毛票，踮着脚）叔，一瓶汽水，两根棒冰——棒冰要绿豆的！' },
+      { who: 'you', text: '（接过钱，先仔细数了一遍零头）行，汽水这瓶凉，棒冰给你包层纸，别急着塞嘴里，冻牙。' },
+      { who: 'maomao', text: '（嘿嘿笑）叔你人真好。我明儿还来！' }
+    ]
+  },
+  {
+    chapter: '第二幕 · 三轮车摊 · 老太太',
+    tag: '摊位另一边 · 午后',
+    img: './assets/bg/scene1-5.png',
+    alt: '老太太买毛巾',
+    lines: [
+      { who: 'laotaitai', text: '（咂嘴）六块……贵了。街那头卖五块五。' },
+      { who: 'you', text: '（没抬价，把毛巾重新叠好）五块五有五块五的货。这条是正经棉的，用得久。您先用着——要是不经用，拿回来，我给您换。' },
+      { who: 'laotaitai', text: '（半信半疑，还是掏了钱）……冲你这话，我买一条试试。' },
+      { who: 'narration', text: '一笔一笔，都是小钱。可我记得比谁都清楚。我的账本上，记的不光是数字——谁家孩子喝汽水牙疼、哪所学校下个月要订本子、谁答应过"明儿还来"，我都在后面画一个只有自己看得懂的小记号。' },
+      { settle: {
+        kicker: '第①部分 · 小摊结算',
+        title: '小摊目标达成',
+        desc: '现金攒够第一桶金，声誉渐起，口碑在小范围传开。',
+        items: [
+          '现金 · 攒够第一桶金（游戏目标 <b>¥110</b>）',
+          '声誉 <b>+4</b> · 口碑在小范围传开'
+        ],
+        effects: { cash: 110, reputation: 4 }
+      } }
+    ]
+  },
+  {
+    chapter: '第三幕 · 夕阳记账',
+    tag: '黄昏 · 摊边',
+    img: './assets/bg/scene1-6.png',
+    alt: '夕阳记账',
+    lines: [
+      { who: 'mother', text: '（不知何时站在摊边，放下一只装满了水的搪瓷缸，没头没尾地丢下一句）……别渴着。' },
+      { who: 'narration', text: '她还是老样子——从不夸我，也从不拦我。只在我最不容易的时候，把一件最要紧的小事，悄悄替我办了。' }
+    ]
+  },
+  {
+    chapter: '第三幕 · 深夜复核账本',
+    tag: '夜深 · 灯下',
+    img: './assets/bg/scene1-7.png',
+    alt: '深夜复核账本',
+    lines: [
+      { who: 'narration', text: '这一天忙下来，小摊攒够了我的"第一桶金"。不多，但够我走进文教局那间办公室时，腰杆不虚。' },
+      { who: 'narration', text: '我收好账本，把三轮车擦干净，还了回去。路过布告栏时，我停下，伸手把那张承包告示上的每一个字，又默读了一遍。' },
+      { who: 'you', text: '……下一个，该轮到我上台了。' }
+    ]
+  }
+];
+
+/* =====================================================================
+ * 引擎
+ * ===================================================================== */
+const WHO_NAME = {
+  narration: '旁　白', you: '你', laolu: '老　陆', ahai: '阿　海',
+  mother: '母　亲', maomao: '毛　毛', laotaitai: '老太太', laozong: '老　宗'
+};
+
+const state = {
+  stats: { resilience: 0, ahai_bond: 0, negotiation_skill: 0, father_bond: 0 },
+  cash: 0,        /* 现金（本部分：第一桶金） */
+  reputation: 0,  /* 声誉 */
+  flags: {}
+};
+
+const lineEl = document.getElementById('line');
+const hintEl = document.getElementById('hint');
+const speakerEl = document.getElementById('speaker');
+const bgEl = document.getElementById('bg');
+const sceneTagEl = document.getElementById('sceneTag');
+const stackEl = document.getElementById('bgStack');
+const bodyEl = document.body;
+const chapterBox = null;
+const chapterText = null;
+const choicesBox = document.getElementById('choicesBox');
+const choicesTitle = document.getElementById('choicesTitle');
+const choicesList = document.getElementById('choicesList');
+const hudStats = document.getElementById('hudStats');
+const toastEl = document.getElementById('toast');
+const bgm = document.getElementById('bgm');
+const musicBtn = document.getElementById('musicBtn');
+const gameBox = document.getElementById('gameBox');
+const gameLink = document.getElementById('gameLink');
+const gameTip = document.getElementById('gameTip');
+const settleBox = document.getElementById('settleBox');
+const fogEl = document.getElementById('fog');
+
+let scene = 0;             /* 当前幕索引 */
+let idx = -1;              /* 当前行索引（-1 表示尚未开始） */
+let typing = false;
+let finished = false;      /* 当前幕是否已到末行 */
+let switching = false;     /* 幕切换空档期锁：期间忽略所有输入，防止连点跳幕 */
+let timer = null;
+let stream = null;         /* 当前播放序列 */
+let pendingChoice = null;  /* 正在展示的选择 */
+let choiceIdx = -1;        /* 选择对象在原始序列中的位置 */
+let pendingGame = null;    /* 正在展示的经营小游戏占位 */
+let pendingSettle = null;  /* 正在展示的结算面板 */
+let musicOn = false;
+let toastTimer = null;
+let fogOpen = true;        /* 白雾转场：true=白屏覆盖，按 Z 键散开 */
+
+/* ---- 白雾转场 ---- */
+function resetFog(){
+  fogOpen = true;
+  fogEl.classList.remove('dispersed');
+}
+function disperseFog(){
+  if(!fogOpen) return;
+  fogOpen = false;
+  fogEl.classList.add('dispersed');
+}
+
+function bgFor(S){ return USE_DEBUG_BG ? DEBUG_BG : S.img; }
+function getLines(){ return stream; }
+
+function setStream(){
+  stream = SCENES[scene].lines.filter(function(l){
+    if(l.if && !state.flags[l.if]) return false;
+    if(l.ifNot && state.flags[l.ifNot]) return false;
+    return true;
+  });
+}
+
+/* ---- 打字机 ---- */
+function typeLine(l){
+  const full = l.text;
+  let pos = 0;
+  typing = true;
+  setSpeaker(l.who);
+  lineEl.classList.toggle('action', full.charAt(0) === '（');
+  hintEl.style.visibility = 'hidden';
+  lineEl.textContent = '';
+  clearInterval(timer);
+  timer = setInterval(function(){
+    pos++;
+    lineEl.textContent = full.slice(0, pos);
+    if(pos < full.length){
+      const caret = document.createElement('span');
+      caret.className = 'caret';
+      lineEl.appendChild(caret);
+    }
+    if(pos >= full.length){
+      clearInterval(timer);
+      typing = false;
+      if(idx === getLines().length - 1){ finished = true; setEndHint(); }
+      hintEl.style.visibility = 'visible';
+    }
+  }, 55);
+}
+
+function finishLine(){
+  const ls = getLines();
+  if(idx < 0 || idx >= ls.length) return;
+  clearInterval(timer);
+  lineEl.textContent = ls[idx].text;
+  typing = false;
+  if(idx === ls.length - 1){ finished = true; setEndHint(); }
+  hintEl.style.visibility = 'visible';
+}
+
+function setSpeaker(who){
+  speakerEl.textContent = WHO_NAME[who] || WHO_NAME.narration;
+  speakerEl.className = 'pro-speaker' + (who === 'narration' ? '' : ' ' + who);
+}
+
+function setEndHint(){
+  if(scene === SCENES.length - 1){
+    hintEl.textContent = '第①部分 · 完 —— 下一篇：承包谈判 · 第②部分';
+    hintEl.classList.add('done');
+    saveStats();
+    showNextLink();
+  } else {
+    hintEl.textContent = '▼ 进入下一幕';
+    hintEl.classList.remove('done');
+    hideNextLink();
+  }
+}
+
+/* ---- 数值面板 ---- */
+function renderHud(){
+  hudStats.innerHTML =
+    '<div class="pro-hud-row"><span>现金</span><b>¥' + state.cash + '</b></div>' +
+    '<div class="pro-hud-row"><span>声誉</span><b>' + state.reputation + '</b></div>';
+}
+
+/* ---- 数值存档（供下一篇继承：localStorage + 跳转 URL 参数双通道） ---- */
+function saveStats(){
+  try{
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      stats: {
+        resilience: state.stats.resilience,
+        ahai_bond: state.stats.ahai_bond,
+        negotiation_skill: state.stats.negotiation_skill,
+        father_bond: state.stats.father_bond,
+        cash: state.cash,
+        reputation: state.reputation
+      },
+      flags: state.flags,
+      savedAt: new Date().toISOString()
+    }));
+  }catch(e){ /* 存储不可用时静默失败，不影响游玩 */ }
+}
+
+function showNextLink(){
+  const a = document.getElementById('nextLink');
+  const qs = ['resilience', 'ahai_bond', 'negotiation_skill', 'father_bond']
+    .map(function(k){ return k + '=' + state.stats[k]; })
+    .concat(['cash=' + state.cash, 'reputation=' + state.reputation])
+    .join('&');
+  a.href = NEXT_PAGE + '?' + qs;
+  a.hidden = false;
+}
+
+function hideNextLink(){ document.getElementById('nextLink').hidden = true; }
+
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, 2600);
+}
+
+/* ---- 分支选择音效  ---- */
+function playSfx(path){
+  if(!path) return;
+  try{
+    const a = new Audio(path);
+    a.volume = 0.6;
+    const p = a.play();
+    if(p && p.catch){
+      p.catch(function(){ if(path !== '#') toast('音效文件缺失：' + path); });
+    }
+  }catch(e){
+    if(path !== '#') toast('音效文件缺失：' + path);
+  }
+}
+
+/* ---- 分支选择 ---- */
+function showChoices(c){
+  pendingChoice = c;
+  choiceIdx = idx;
+  choicesTitle.textContent = c.prompt;
+  choicesList.innerHTML = '';
+  c.options.forEach(function(opt){
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'pro-choice';
+    btn.textContent = opt.label;
+    btn.addEventListener('click', function(ev){
+      ev.stopPropagation();
+      playSfx(opt.sound);
+      pickChoice(opt.key);
+    });
+    choicesList.appendChild(btn);
+  });
+  choicesBox.hidden = false;
+  renderHud();
+}
+
+function pickChoice(key){
+  const c = pendingChoice;
+  if(!c) return;
+  const opt = c.options.find(function(o){ return o.key === key; });
+  pendingChoice = null;
+  choicesBox.hidden = true;
+
+  if(opt.effects){
+    Object.keys(opt.effects).forEach(function(k){
+      if(k in state.stats) state.stats[k] += opt.effects[k];
+    });
+    saveStats();
+  }
+  Object.assign(state.flags, opt.flags || {});
+
+  const follow = [];
+  if(opt.text) follow.push({ who: 'you', text: opt.text });
+  if(c.after && c.after[key]){
+    follow.push.apply(follow, c.after[key]);
+  } else {
+    follow.push.apply(follow, getLines().slice(choiceIdx + 1));
+  }
+
+  stream = follow;
+  idx = -1; typing = false; finished = false;
+  hintEl.classList.remove('done');
+  hintEl.style.visibility = 'visible';
+  advance();
+}
+
+/* ---- 经营小游戏(# 占位符) ---- */
+function showGame(g){
+  pendingGame = g;
+  gameLink.textContent = g.label || '经营小游戏';
+  gameLink.href = g.href || '#';
+  gameTip.textContent = g.tip || '';
+  lineEl.textContent = '';
+  gameBox.hidden = false;
+  hintEl.style.visibility = 'hidden';
+}
+
+function closeGame(){
+  if(!pendingGame) return;
+  pendingGame = null;
+  gameBox.hidden = true;
+  hintEl.style.visibility = 'visible';
+  advance();
+}
+
+gameLink.addEventListener('click', function(ev){
+  ev.preventDefault();
+  ev.stopPropagation();
+  toast('经营小游戏占位链接（#）：备货 → 顾客下单 → 交付收钱，后续接入');
+});
+
+/* ---- 小摊结算面板 ---- */
+function showSettle(s){
+  pendingSettle = s;
+  document.getElementById('settleKicker').textContent = s.kicker || '';
+  document.getElementById('settleTitle').textContent = s.title || '';
+  document.getElementById('settleDesc').textContent = s.desc || '';
+  const list = document.getElementById('settleList');
+  list.innerHTML = '';
+  (s.items || []).forEach(function(it){
+    const li = document.createElement('li');
+    li.innerHTML = it;
+    list.appendChild(li);
+  });
+  settleBox.hidden = false;
+  hintEl.style.visibility = 'hidden';
+}
+
+function endSettle(){
+  const s = pendingSettle;
+  if(!s) return;
+  pendingSettle = null;
+  settleBox.hidden = true;
+  const fx = s.effects || {};
+  const parts = [];
+  if(fx.cash){ state.cash += fx.cash; parts.push('+' + fx.cash + ' 现金'); }
+  if(fx.reputation){ state.reputation += fx.reputation; parts.push('+' + fx.reputation + ' 声誉'); }
+  if(parts.length){
+    renderHud();
+    saveStats();
+    toast(parts.join(' · ') + ' · 口碑在小范围传开');
+  }
+  if(idx === getLines().length - 1){
+    finished = true;
+    setEndHint();
+  }
+  hintEl.style.visibility = 'visible';
+  advance();
+}
+
+document.getElementById('settleNext').addEventListener('click', function(ev){
+  ev.stopPropagation();
+  endSettle();
+});
+
+/* ---- 推进 ---- */
+function advance(){
+  if(fogOpen) return;
+  if(switching) return;
+  if(pendingChoice) return;
+  if(pendingSettle) return;
+  if(pendingGame){ closeGame(); return; }
+  if(finished){
+    if(scene < SCENES.length - 1) switchScene();
+    return;
+  }
+  if(typing){ finishLine(); return; }
+  if(idx < getLines().length - 1){
+    idx++;
+    const l = getLines()[idx];
+    if(l.choice){ showChoices(l.choice); return; }
+    if(l.game){ showGame(l.game); return; }
+    if(l.settle){ showSettle(l.settle); return; }
+    if(l.toast){
+      toast(l.toast);
+      if(idx === getLines().length - 1){
+        finished = true;
+        setEndHint();
+        hintEl.style.visibility = 'visible';
+      } else {
+        advance();
+      }
+      return;
+    }
+    typeLine(l);
+  }
+}
+
+function preloadNext(){
+  if(scene + 1 < SCENES.length){
+    const im = new Image();
+    im.src = bgFor(SCENES[scene + 1]);
+  }
+}
+
+/* ---- 切换至下一幕 ---- */
+function switchScene(){
+  if(switching) return;
+  if(scene >= SCENES.length - 1) return;
+  switching = true;
+  scene++;
+  const S = SCENES[scene];
+  stackEl.style.opacity = '0';
+  setTimeout(function(){
+    bgEl.src = bgFor(S);
+    bgEl.alt = S.alt;
+    sceneTagEl.textContent = S.tag;
+    document.title = S.chapter;
+    bodyEl.dataset.scene = String(scene + 1);
+    setStream();
+    idx = -1; typing = false; finished = false;
+    hintEl.classList.remove('done');
+    hintEl.textContent = '▼ 点击继续';
+    hintEl.style.visibility = 'visible';
+    stackEl.style.opacity = '1';
+    sceneTagEl.classList.remove('anim');
+    void sceneTagEl.offsetWidth;
+    sceneTagEl.classList.add('anim');
+    preloadNext();
+    setTimeout(function(){ switching = false; advance(); }, 1100);
+  }, 600);
+}
+
+/* ---- 音乐开关 ---- */
+function toggleMusic(){
+  if(musicOn){
+    bgm.pause();
+    musicOn = false;
+    musicBtn.classList.remove('is-on');
+    return;
+  }
+  const p = bgm.play();
+  if(p && p.catch){
+    p.catch(function(){
+      musicOn = false;
+      musicBtn.classList.remove('is-on');
+    });
+  }
+  musicOn = true;
+  musicBtn.classList.add('is-on');
+}
+bgm.addEventListener('error', function(){
+  musicOn = false;
+  musicBtn.classList.remove('is-on');
+});
+musicBtn.addEventListener('click', function(ev){
+  ev.stopPropagation();
+  toggleMusic();
+});
+
+/* =====================================================================
+ * 序章数值继承
+ * 优先读取跳转 URL 参数（first.html 结尾按钮携带），其次读 localStorage 存档；
+ * 都没有存档时从 0 开始。阿海分支标志（ahai_stay / ahai_leave）仅从存档读取。
+ * ===================================================================== */
+const INHERIT_KEYS = ['resilience', 'ahai_bond', 'negotiation_skill', 'father_bond'];
+
+function loadInherited(){
+  const out = {};
+  const flags = {};
+  let got = false;
+  const qs = new URLSearchParams(location.search);
+  INHERIT_KEYS.forEach(function(k){
+    const v = qs.get(k);
+    if(v !== null && v !== '' && !isNaN(Number(v))){ out[k] = Number(v); got = true; }
+  });
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(raw){
+      const data = JSON.parse(raw);
+      if(data && data.stats){
+        INHERIT_KEYS.forEach(function(k){
+          if(typeof data.stats[k] === 'number' && !(k in out)){ out[k] = data.stats[k]; got = true; }
+        });
+        if(typeof data.stats.cash === 'number'){ state.cash = data.stats.cash; }
+        if(typeof data.stats.reputation === 'number'){ state.reputation = data.stats.reputation; }
+      }
+      if(data && data.flags){ Object.assign(flags, data.flags); }
+    }
+  }catch(e){ /* 读取失败则从 0 开始 */ }
+  return { out: out, flags: flags, got: got };
+}
+
+/* ---- 启动 ---- */
+const inherited = loadInherited();
+if(inherited.got){
+  Object.keys(inherited.out).forEach(function(k){ state.stats[k] = inherited.out[k]; });
+}
+Object.assign(state.flags, inherited.flags);
+bodyEl.classList.add('has-stats');
+setStream();
+bgEl.src = bgFor(SCENES[0]);
+renderHud();
+if(inherited.got) toast('已继承序章数值');
+setTimeout(advance, 1600);
+
+document.addEventListener('click', function(){
+  if(fogOpen){ disperseFog(); return; }
+  advance();
+});
+document.addEventListener('keydown', function(e){
+  var k = e.key.toLowerCase();
+  /* 继续：空格 / 回车 / 下 / 右 / Z */
+  if(k === ' ' || k === 'enter' || k === 'arrowdown' || k === 'arrowright' || k === 'z'){
+    e.preventDefault();
+    if(fogOpen){ disperseFog(); return; }
+    advance();
+  }
+  /* 打字时按 X：立即显示完整一行 */
+  if(k === 'x'){
+    e.preventDefault();
+    if(typing) finishLine();
+  }
+});
+</script>
+</body>
+</html>
