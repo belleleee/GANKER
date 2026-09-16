@@ -263,6 +263,36 @@ function removeDeliveryOrder(order, expired) {
 const DELIVERY_PREPAY_FEE = 0.1;
 const DELIVERY_PREPAY_SHARE = 0.5;
 
+/* 预付 + 延期：批发大单量太大，种子和仓库现存的货暂时凑不齐，
+   光谈钱解决不了"东西还没种出来"这个问题。这里给一条真正对应的
+   出路——先收订金，把交货期往后推，但延得越久，最终到手的钱
+   打得越狠，逼玩家算清楚"我到底需要多久才能补齐这批货"，不是
+   越拖越划算。 */
+const DELIVERY_EXTEND_TIERS = [
+    { seconds: 120, penalty: 0.10 },
+    { seconds: 240, penalty: 0.25 },
+    { seconds: 360, penalty: 0.45 }
+];
+
+function deliveryOrderShortOnStock(order) {
+    if (!order || !order.bulk) return false;
+    return deliveryCropStorageCount(order.cropId) < order.qty;
+}
+
+function extendDeliveryOrder(id, tierIndex) {
+    const order = deliveryOrders.find(o => o.id === id);
+    if (!order || order.accepted) return;
+    const tier = DELIVERY_EXTEND_TIERS[tierIndex];
+    if (!tier) return;
+    const prepayUnlocked = typeof isMainStoryFeatureUnlocked === 'function' && isMainStoryFeatureUnlocked('prepay');
+    if (!prepayUnlocked) return;
+    order.reward = Math.max(1, Math.round(order.reward * (1 - tier.penalty)));
+    order.life += tier.seconds;
+    order.extendedSeconds = (order.extendedSeconds || 0) + tier.seconds;
+    acceptDeliveryOrder(id, true);
+    showHintOverride('交货期延长了 ' + Math.round(tier.seconds / 60) + ' 分钟——这单最终能拿的钱也跟着打了折');
+}
+
 function acceptDeliveryOrder(id, prepay) {
     const order = deliveryOrders.find(o => o.id === id);
     if (!order || order.accepted) return;
@@ -321,18 +351,25 @@ function renderDeliveryBoard() {
     const prepayUnlocked = typeof isMainStoryFeatureUnlocked === 'function' && isMainStoryFeatureUnlocked('prepay');
     deliveryBoardList.innerHTML = pending.map(o => {
         const crop = deliveryCropDef(o.cropId);
-        return '<div class="deliveryBoardRow' + (o.bulk ? ' bulk' : '') + '">' +
+        const shortOnStock = prepayUnlocked && deliveryOrderShortOnStock(o);
+        const actionsHtml = '<button type="button" class="deliveryAcceptBtn" data-order="' + o.id + '">接单</button>' +
+            (shortOnStock
+                /* 种子/仓库现存的货凑不齐这单，光"预付"解决不了——给延期
+                   选项才是真正对应的出路，延得越久最终报酬打得越狠。 */
+                ? DELIVERY_EXTEND_TIERS.map((tier, i) =>
+                    '<button type="button" class="deliveryExtendBtn" data-order="' + o.id + '" data-tier="' + i + '" title="先收订金，交货期延长 ' + Math.round(tier.seconds / 60) + ' 分钟——延得越久，最终到手的钱越少">预付+延' +
+                    Math.round(tier.seconds / 60) + '分（报酬×' + Math.round((1 - tier.penalty) * 100) + '%）</button>').join('')
+                : (prepayUnlocked
+                    ? '<button type="button" class="deliveryPrepayBtn" data-order="' + o.id + '" title="现在先拿一半货款，总价打9折——送货那天不用再等回款">预付订金</button>'
+                    : ''));
+        return '<div class="deliveryBoardRow' + (o.bulk ? ' bulk' : '') + (shortOnStock ? ' shortOnStock' : '') + '">' +
             (o.bulk ? '<span class="deliveryBoardBulkTag">批发大单</span>' : '') +
+            (shortOnStock ? '<span class="deliveryBoardShortTag">库存不够</span>' : '') +
             '<span class="deliveryBoardIcon">' + (crop ? crop.icon : '📦') + '</span>' +
             '<span class="deliveryBoardName">' + (crop ? crop.name : '作物') + ' ×' + o.qty + '</span>' +
             '<span class="deliveryBoardTimer' + (o.life < 40 ? ' urgent' : '') + '">' + deliveryFormatTime(o.life) + '</span>' +
             '<span class="deliveryBoardReward">+' + o.reward + ' 金币</span>' +
-            '<span class="deliveryBoardActions">' +
-            '<button type="button" class="deliveryAcceptBtn" data-order="' + o.id + '">接单</button>' +
-            (prepayUnlocked
-                ? '<button type="button" class="deliveryPrepayBtn" data-order="' + o.id + '" title="现在先拿一半货款，总价打9折——送货那天不用再等回款">预付订金</button>'
-                : '') +
-            '</span>' +
+            '<span class="deliveryBoardActions">' + actionsHtml + '</span>' +
             '</div>';
     }).join('');
 }
@@ -344,6 +381,11 @@ function deliveryFormatTime(seconds) {
 
 if (deliveryBoardList) {
     deliveryBoardList.addEventListener('click', event => {
+        const extendBtn = event.target.closest('.deliveryExtendBtn');
+        if (extendBtn) {
+            extendDeliveryOrder(Number(extendBtn.dataset.order), Number(extendBtn.dataset.tier));
+            return;
+        }
         const prepayBtn = event.target.closest('.deliveryPrepayBtn');
         if (prepayBtn) {
             acceptDeliveryOrder(Number(prepayBtn.dataset.order), true);

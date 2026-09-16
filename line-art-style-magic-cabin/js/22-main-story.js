@@ -184,30 +184,32 @@ const MAIN_STORY_STAGES = [
     },
     {
         /* 问题：账面上赚了，为什么手里还是没钱？
-           机制：订单板出现一笔现在周转不开的大单，第一次理解"利润≠现金"
+           机制：订单板出现一笔现在的种子和仓库存货都凑不齐的大单，
+           第一次理解"利润≠现在就能交出货"
            碎片：联销体记忆——邵老板当年怎么帮他周转过这道坎
            钩子：这次是师傅把当年的法子教给玩家，不是替玩家拿主意 */
         unlocks: 'prepay',
         title: '赚了钱，为什么还是没钱？',
         lines: [
-            { speaker: '旁白', text: '订单板上摆着一笔大单，利润相当可观——可翻遍钱包，连备货的本钱都凑不齐。' },
-            { speaker: '你', text: '这单明明能赚，怎么反倒卡住了？' },
-            { speaker: '旁白', text: '你这才明白：账上有赚头，不等于手里有钱——这中间差着一段周转的时间。' },
+            { speaker: '旁白', text: '订单板上摆着一笔大单，利润相当可观——可算算手里的种子和仓库存货，这个量眼下根本凑不齐。' },
+            { speaker: '你', text: '这单明明能赚，但是东西还没种出来，交不了货怎么办？' },
+            { speaker: '旁白', text: '你这才明白：账上有赚头，不等于东西现在就能交出去——这中间差着一段生产的时间。' },
             { speaker: '宗庆后', text: '（沉默了一下）这个坎，我以前也踩过。' },
-            { speaker: '旁白', text: '联销体刚起步那会儿，邵老板是第一批愿意掏钱进货的人。有一次订单太大，宗庆后自己也周转不开。' },
-            { speaker: '邵老板', text: '你先把订金打给我一半，我先按单子备货，剩下的等你东西出手了再补给你。' },
+            { speaker: '旁白', text: '联销体刚起步那会儿，邵老板是第一批愿意掏钱进货的人。有一次订单太大，宗庆后自己也备不齐货。' },
+            { speaker: '邵老板', text: '你先把订金打给我一半，交货期往后挪一挪，我等你把东西凑齐——只是这么一等，这单我也得少赚点。' },
             { speaker: '宗庆后', text: '我当时不乐意——好像欠了他一份人情。他说，这不是人情，这是生意人该有的法子。' },
             { speaker: '你', text: '那后来呢？' },
-            { speaker: '宗庆后', text: '后来才想明白：让客户先付一部分订金，我能先周转开；他也算买了个"东西一定送到"的放心——两边都让一点利，账才转得动。' },
-            { speaker: '旁白', text: '你看着眼前这张大单，忽然懂了——原来"预付订金"不是走捷径，是拿一点利润，换出周转的空间。' }
+            { speaker: '宗庆后', text: '后来才想明白：让客户先付一部分订金，换来的是时间，不是白拿的——拖得越久，让出去的利就越多，两边才都划算。' },
+            { speaker: '旁白', text: '你看着眼前这张大单，忽然懂了——原来"预付订金"不是走捷径，是拿一点利润，换出补齐这批货的时间。' }
         ],
         unlockToast: '📖 主线推进：你学会了"预付订金"这招',
-        questLabel: '遇到一笔现在周转不开的大单，听师傅讲完邵老板的故事',
+        questLabel: '遇到一笔现在的存货凑不齐的大单，听师傅讲完邵老板的故事',
         target: { x: 9.0, z: 0.0 },
-        lockedHint: '先接到一笔现在周转不开的大单，答案自然会出现。',
+        lockedHint: '先接到一笔现在的种子和仓库存货都凑不齐的大单，答案自然会出现。',
         auto: () => {
             if (typeof deliveryOrders === 'undefined' || !Array.isArray(deliveryOrders)) return false;
-            return deliveryOrders.some(order => order.bulk && !order.accepted && currentCoins() < order.reward);
+            if (typeof deliveryOrderShortOnStock !== 'function') return false;
+            return deliveryOrders.some(order => !order.accepted && deliveryOrderShortOnStock(order));
         },
         choices: [
             {
