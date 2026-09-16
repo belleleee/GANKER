@@ -454,6 +454,7 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.32;ba
 /* ================================================================
    序章剧情页 first.html · 电影叙事层
    配合 level-one-pixel.css 末尾「序章剧情页 · 像素交互层」使用；
+   本文件原有内容全部保留，仅在其后追加。
    ================================================================ */
 .zqh-prologue{
   --pro-gold:#c9a76a;
@@ -915,7 +916,7 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.32;ba
 /* ---- 老宗角色配色 ---- */
 .zqh-prologue .pro-speaker.laozong{ color:#a8c4a0; border-color:rgba(168,196,160,.5); background:rgba(168,196,160,.08); }
 /* ================================================================
-   第③部分 · 广告豪赌 · 新增样式（只追加，不删改原有部分）
+   第③部分 · 广告豪赌 · 新增样式 
    ================================================================ */
 /* ---- 第③部分新角色配色 ---- */
 .zqh-prologue .pro-speaker.zhujiaoshou{ color:#9ec5e8; border-color:rgba(158,197,232,.5); background:rgba(158,197,232,.08); }
@@ -1012,7 +1013,166 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.32;ba
   cursor:pointer; box-shadow:4px 4px 0 var(--px-shadow);
 }
 .pro-gamble-next:hover{ background:var(--px-orange); }
+.pro-gamble-next[hidden]{ display:none; }
 @media(max-width:760px){
   .pro-gamble-panel{ padding:18px 16px 22px; }
   .pro-gamble-opt{ padding:12px 14px; }
+}
+/* ===== 第④部分 · 兼并国企 · 追加样式 ===== */
+.pro-gamble-result.buyout{
+  border-color:var(--px-gold);
+  color:var(--px-cream);
+  background:rgba(199,98,62,.18);
+}
+.pro-gamble-result.buyout::before{
+  content:'★ 主线 · ';
+  color:var(--px-gold);
+  font-weight:700;
+}
+.pro-gamble-options{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.pro-gamble-opt{
+  text-align:left;
+}
+.pro-contract{
+  position:fixed; inset:0; z-index:30;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(5,12,16,.82);
+  backdrop-filter:blur(2px);
+}
+.pro-contract[hidden]{ display:none; }
+.pro-contract-panel{
+  width:min(860px,92vw);
+  max-height:88vh;
+  overflow-y:auto;
+  padding:28px 32px 24px;
+  border:5px solid var(--px-gold);
+  background:rgba(13,29,34,.97);
+  box-shadow:12px 12px 0 var(--px-shadow);
+  font-family:"Courier New","Songti SC",monospace;
+}
+.pro-contract-kicker{
+  display:inline-block;
+  padding:3px 12px;
+  border:2px solid var(--px-gold);
+  color:var(--px-gold);
+  font-size:.72rem;
+  letter-spacing:.18em;
+  margin-bottom:14px;
+}
+.pro-contract-panel h2{
+  color:var(--px-cream);
+  font-size:1.35rem;
+  letter-spacing:.08em;
+  margin:0 0 10px;
+}
+.pro-contract-desc{
+  color:rgba(255,240,191,.78);
+  font-size:.82rem;
+  line-height:1.9;
+  letter-spacing:.04em;
+  margin:0 0 18px;
+}
+.pro-contract-list{
+  display:flex; flex-direction:column; gap:10px;
+  margin-bottom:18px;
+}
+.pro-contract-item{
+  display:flex; align-items:flex-start; gap:14px;
+  padding:14px 16px;
+  border:3px solid var(--px-ink);
+  background:rgba(31,58,54,.85);
+  cursor:pointer;
+  transition:all .15s ease;
+}
+.pro-contract-item:hover{
+  border-color:var(--px-gold);
+  background:rgba(47,85,72,.9);
+}
+.pro-contract-item.selected{
+  border-color:var(--px-orange);
+  background:rgba(199,98,62,.22);
+  box-shadow:inset 0 0 0 1px rgba(199,98,62,.4);
+}
+.pro-contract-item .clause-num{
+  flex:0 0 32px;
+  height:32px;
+  display:grid; place-items:center;
+  border:2px solid var(--px-gold);
+  color:var(--px-gold);
+  font-weight:700;
+  font-size:.85rem;
+  background:rgba(230,184,90,.08);
+}
+.pro-contract-item.selected .clause-num{
+  border-color:var(--px-orange);
+  color:var(--px-orange);
+  background:rgba(199,98,62,.15);
+}
+.pro-contract-item .clause-text{
+  flex:1;
+  color:var(--px-cream);
+  font-size:.88rem;
+  line-height:1.85;
+  letter-spacing:.03em;
+  text-align:justify;
+}
+.pro-contract-item .clause-check{
+  flex:0 0 22px;
+  height:22px;
+  margin-top:2px;
+  border:2px solid var(--px-gold);
+  background:transparent;
+  display:grid; place-items:center;
+  font-size:.8rem;
+  color:transparent;
+}
+.pro-contract-item.selected .clause-check{
+  background:var(--px-orange);
+  border-color:var(--px-orange);
+  color:#fff;
+}
+.pro-contract-result{
+  padding:14px 18px;
+  border:3px solid var(--px-gold);
+  background:rgba(15,35,42,.9);
+  color:var(--px-cream);
+  font-size:.86rem;
+  line-height:1.9;
+  letter-spacing:.04em;
+  margin-bottom:16px;
+}
+.pro-contract-result.perfect{ border-color:#5cb87a; color:#c8f0d4; }
+.pro-contract-result.partial{ border-color:var(--px-gold); }
+.pro-contract-result.miss{ border-color:#c7623e; color:#f0c8b8; }
+.pro-contract-submit,
+.pro-contract-next{
+  display:block;
+  width:100%;
+  padding:12px 20px;
+  border:3px solid var(--px-ink);
+  background:var(--px-orange);
+  color:var(--px-cream);
+  font-family:"Courier New","Songti SC",monospace;
+  font-size:.92rem;
+  font-weight:700;
+  letter-spacing:.15em;
+  cursor:pointer;
+  box-shadow:5px 5px 0 var(--px-shadow);
+  transition:all .12s ease;
+}
+.pro-contract-submit:hover,
+.pro-contract-next:hover{
+  background:#d9754f;
+  transform:translate(-2px,-2px);
+  box-shadow:7px 7px 0 var(--px-shadow);
+}
+.pro-contract-submit:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+  transform:none;
+  box-shadow:5px 5px 0 var(--px-shadow);
 }
