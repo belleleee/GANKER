@@ -62,6 +62,9 @@
                 if (typeof updateWorldMapGuide === 'function') {
                     updateWorldMapGuide(dt);
                 }
+                if (typeof checkMemoryReward === 'function') {
+                    checkMemoryReward();
+                }
                 if (typeof updateGameplayLoop === 'function') {
                     updateGameplayLoop(dt);
                 }

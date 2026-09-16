@@ -106,6 +106,23 @@ const SAVE_KEY = 'zqh_level1_save';
 /* 暂存退出用的进度存档键，记"看到第几幕了"，用来支持中途退出、
    下次接着看，跟上面数值继承用的 SAVE_KEY 是两码事。 */
 const POS_KEY = 'zqh_part3_pos';
+/* 传给主游戏的"回忆奖励"——记的是累计总量，不是本篇多赚了多少，
+   主游戏那边自己算差额领取。 */
+const MEMORY_REWARD_KEY = 'magicCabin.memoryReward.v1';
+function pushMemoryReward(){
+  try{
+    const existing = JSON.parse(localStorage.getItem(MEMORY_REWARD_KEY) || 'null') || {};
+    localStorage.setItem(MEMORY_REWARD_KEY, JSON.stringify({
+      cash: (typeof state.cash === 'number') ? state.cash : (existing.cash || 0),
+      reputation: (typeof state.reputation === 'number') ? state.reputation : (existing.reputation || 0),
+      resilience: state.stats.resilience || 0,
+      ahai_bond: state.stats.ahai_bond || 0,
+      negotiation_skill: state.stats.negotiation_skill || 0,
+      father_bond: state.stats.father_bond || 0,
+      savedAt: new Date().toISOString()
+    }));
+  }catch(e){ /* 存储不可用时静默失败 */ }
+}
 /* 豪赌成功率：80%。选择时不向玩家显示实际概率。 */
 const GAMBLE_WIN_RATE = 0.80;
 /* 韧性阈值：豪赌失败时，若序章攒下的坚韧 >= 此值，现金最低保全 ×0.55；否则 ×0.35。 */
@@ -381,6 +398,7 @@ function setEndHint(){
     hintEl.classList.add('done');
     saveStats();
     clearPosition();
+    pushMemoryReward();
   } else {
     hintEl.textContent = '▼ 进入下一幕';
     hintEl.classList.remove('done');

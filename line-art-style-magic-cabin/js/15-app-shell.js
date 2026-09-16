@@ -647,6 +647,79 @@ function claimCafeRevenue() {
 
 window.getCafeTotalRevenue = function () { return cafeTotalRevenue; };
 
+/* ================================================================
+   "走进他的回忆"（memories/ 下那几篇独立传记）攒下的数值，接进
+   主游戏——cash 换金币、reputation 换股市声誉，都有现成的对应物；
+   resilience/ahai_bond/negotiation_skill/father_bond 这四个没有
+   现成对应物，按比例揉进师徒关系数值（trust/agreement/independence）。
+   memories/ 那边写的是"目前为止的累计总量"，不是"这次多赚了多少"
+   ——这边记一份"已经领过多少"，每次只补领差额，避免重复发放。 */
+const MEMORY_REWARD_KEY = 'magicCabin.memoryReward.v1';
+let memoryRewardClaimed = { cash: 0, reputation: 0, resilience: 0, ahai_bond: 0, negotiation_skill: 0, father_bond: 0 };
+
+function applyMemoryReputationDelta(delta) {
+    if (!delta) return;
+    const save = validateSave(readJson(cabinSaveKey(), null));
+    if (!save || typeof save !== 'object') return;
+    const economy = save.economy || {};
+    const investment = economy.investment || save.investment;
+    if (!investment || typeof investment !== 'object') return;
+    const cur = Math.max(0, Math.min(100, Math.trunc(Number(investment.reputation) || 60)));
+    investment.reputation = Math.max(0, Math.min(100, cur + delta));
+    writeJson(cabinSaveKey(), save);
+}
+
+function applyMemoryPersonalityDelta(key, rawDelta) {
+    if (!rawDelta || typeof applyMentorDelta !== 'function') return;
+    /* 传记里这四项的量级（个位数到几十）跟师徒关系数值不是一个尺度，
+       缩小一点再揉进去，不会让读几段回忆就把信任度冲得面目全非。 */
+    const scaled = Math.round(rawDelta / 4);
+    if (!scaled) return;
+    if (key === 'ahai_bond') applyMentorDelta({ trust: scaled });
+    else if (key === 'father_bond') applyMentorDelta({ agreement: scaled });
+    else applyMentorDelta({ independence: scaled }); /* resilience / negotiation_skill：都算自己扛事的底气 */
+}
+
+function checkMemoryReward() {
+    let payload;
+    try {
+        payload = JSON.parse(localStorage.getItem(MEMORY_REWARD_KEY) || 'null');
+    } catch (err) {
+        payload = null;
+    }
+    if (!payload || typeof payload !== 'object') return;
+    let changed = false;
+
+    const cashTotal = Math.max(0, Math.trunc(Number(payload.cash) || 0));
+    const cashDelta = cashTotal - memoryRewardClaimed.cash;
+    if (cashDelta > 0) {
+        addCabinCoins(cashDelta, '回忆里攒下的钱');
+        memoryRewardClaimed.cash = cashTotal;
+        changed = true;
+    }
+
+    const repTotal = Math.max(0, Math.trunc(Number(payload.reputation) || 0));
+    const repDelta = repTotal - memoryRewardClaimed.reputation;
+    if (repDelta !== 0) {
+        applyMemoryReputationDelta(repDelta);
+        memoryRewardClaimed.reputation = repTotal;
+        changed = true;
+    }
+
+    ['resilience', 'ahai_bond', 'negotiation_skill', 'father_bond'].forEach(key => {
+        const total = Math.trunc(Number(payload[key]) || 0);
+        const delta = total - memoryRewardClaimed[key];
+        if (delta !== 0) {
+            applyMemoryPersonalityDelta(key, delta);
+            memoryRewardClaimed[key] = total;
+            changed = true;
+        }
+    });
+
+    if (changed && typeof saveGameState === 'function') saveGameState(false);
+}
+window.checkMemoryReward = checkMemoryReward;
+
 function claimJournalRelic() {
     const reward = readJson(APP_JOURNAL_RELIC_KEY, null);
     const hasPendingReward = reward && typeof reward === 'object' && reward.starRelic;
@@ -884,6 +957,7 @@ function captureSaveState() {
         weatherFarm: typeof captureWeatherFarmState === 'function' ? captureWeatherFarmState() : null,
         gameplayLoop: typeof captureGameplayLoopState === 'function' ? captureGameplayLoopState() : null,
         cafeTotalRevenue: cafeTotalRevenue,
+        memoryRewardClaimed: Object.assign({}, memoryRewardClaimed),
         toolUnlock: typeof captureToolUnlockState === 'function' ? captureToolUnlockState() : null,
         gamblingRisk: typeof captureGamblingRiskState === 'function' ? captureGamblingRiskState() : null,
         coloring: typeof captureColoringState === 'function' ? captureColoringState() : null
@@ -1214,6 +1288,11 @@ function applySaveState(save) {
         applyColoringState(save.coloring);
     }
     cafeTotalRevenue = Math.max(0, Math.trunc(Number(save.cafeTotalRevenue) || 0));
+    if (save.memoryRewardClaimed && typeof save.memoryRewardClaimed === 'object') {
+        Object.keys(memoryRewardClaimed).forEach(key => {
+            memoryRewardClaimed[key] = Math.trunc(Number(save.memoryRewardClaimed[key]) || 0);
+        });
+    }
     renderStatsPanel();
     if (typeof renderCashFlowPanel === 'function') renderCashFlowPanel();
 }

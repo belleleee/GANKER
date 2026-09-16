@@ -351,6 +351,7 @@ function setEndHint(){
     hintEl.textContent = '第②部分 · 完 —— 下一篇：儿童营养液 · 广告豪赌（1988）';
     hintEl.classList.add('done');
     clearPosition();
+    pushMemoryReward();
   } else {
     hintEl.textContent = '▼ 进入下一幕';
     hintEl.classList.remove('done');
@@ -679,6 +680,24 @@ const INHERIT_KEYS = ['resilience', 'ahai_bond', 'negotiation_skill', 'father_bo
 /* 暂存退出用的进度存档键，记"看到第几幕了"，用来支持中途退出、
    下次接着看，跟上面数值继承用的 SAVE_KEY 是两码事。 */
 const POS_KEY = 'zqh_part2_pos';
+/* 传给主游戏的"回忆奖励"——记的是累计总量，不是本篇多赚了多少，
+   主游戏那边自己算差额领取。这一篇的 state 没有 cash/reputation，
+   保留上一篇（part1）传过来的那两项不动，只更新四个性格值。 */
+const MEMORY_REWARD_KEY = 'magicCabin.memoryReward.v1';
+function pushMemoryReward(){
+  try{
+    const existing = JSON.parse(localStorage.getItem(MEMORY_REWARD_KEY) || 'null') || {};
+    localStorage.setItem(MEMORY_REWARD_KEY, JSON.stringify({
+      cash: (typeof state.cash === 'number') ? state.cash : (existing.cash || 0),
+      reputation: (typeof state.reputation === 'number') ? state.reputation : (existing.reputation || 0),
+      resilience: state.stats.resilience || 0,
+      ahai_bond: state.stats.ahai_bond || 0,
+      negotiation_skill: state.stats.negotiation_skill || 0,
+      father_bond: state.stats.father_bond || 0,
+      savedAt: new Date().toISOString()
+    }));
+  }catch(e){ /* 存储不可用时静默失败 */ }
+}
 
 function loadInheritedStats(){
   const out = {};
