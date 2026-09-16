@@ -56,12 +56,6 @@
     <div class="pro-choices-list" id="choicesList"></div>
   </div>
 
-  <!-- ===== 经营小游戏(#) ===== -->
-  <div class="pro-game" id="gameBox" hidden>
-    <a class="pro-game-link" id="gameLink" href="#">经营小游戏 · 备货 → 顾客下单 → 交付收钱</a>
-    <p class="pro-game-tip" id="gameTip">攒够目标现金 ¥110，即可继续剧情（占位链接，后续接入小游戏）</p>
-  </div>
-
   <!-- ===== 小摊结算面板 ===== -->
   <div class="pro-settle" id="settleBox" hidden>
     <div class="pro-settle-panel">
@@ -97,7 +91,7 @@ const SAVE_KEY = 'zqh_level1_save';
 /* =====================================================================
  * 行类型：{who,text} 对白/旁白；{if:'标志',who,text} 条件行（有该标志才显示）；
  * {ifNot:'标志',who,text} 条件行（没有该标志才显示）；{toast:'文本'} 只弹提示不占行；
- * {game:{...}} 经营小游戏占位链接；{settle:{...}} 小摊结算面板。
+ * {settle:{...}} 小摊结算面板。
  * ===================================================================== */
 const SCENES = [
   {
@@ -138,7 +132,6 @@ const SCENES = [
       { if: 'ahai_stay', who: 'ahai', text: '（不知从哪儿冒出来，抄起一箱汽水就往冰桶里码，嘴里还念叨）我就说，跟着你准有口饭吃。你只管招呼客人，进货补货的事儿，交给我。' },
       { if: 'ahai_stay', who: 'you', text: '（愣了一瞬，笑了）你怎么来了？' },
       { if: 'ahai_stay', who: 'ahai', text: '当年在茶场说好互相罩着——这话，一辈子作数。' },
-      { if: 'ahai_stay', toast: '机制 · 阿海协助补货：小游戏内"备货 / 预制货品"速度大幅提升（备货耗时减半）；对应结局结算时，如有阿海线，现金小额加成。' },
       { ifNot: 'ahai_stay', who: 'narration', text: '这时候我多希望有人搭把手。可我知道，路是我自己选的，那就得一个人先把车蹬起来。' }
     ]
   },
@@ -149,7 +142,6 @@ const SCENES = [
     alt: '放学买汽水',
     lines: [
       { who: 'narration', text: '摊子小，可我从来不把它当小摊摆。汽水瓶擦得干干净净，铅笔削好头朝上插在盒里，本子按大小码齐——我在茶场学了一辈子"把一件事做到底"，如今全用在了这几尺见方的车斗上。' },
-      { game: { label: '经营小游戏 · 备货 → 顾客下单 → 交付收钱', tip: '攒够目标现金 ¥110，即可继续剧情（占位链接 #，后续接入小游戏）', href: '#' } },
       { who: 'maomao', text: '（攥着一张汗湿的毛票，踮着脚）叔，一瓶汽水，两根棒冰——棒冰要绿豆的！' },
       { who: 'you', text: '（接过钱，先仔细数了一遍零头）行，汽水这瓶凉，棒冰给你包层纸，别急着塞嘴里，冻牙。' },
       { who: 'maomao', text: '（嘿嘿笑）叔你人真好。我明儿还来！' }
@@ -231,9 +223,6 @@ const hudStats = document.getElementById('hudStats');
 const toastEl = document.getElementById('toast');
 const bgm = document.getElementById('bgm');
 const musicBtn = document.getElementById('musicBtn');
-const gameBox = document.getElementById('gameBox');
-const gameLink = document.getElementById('gameLink');
-const gameTip = document.getElementById('gameTip');
 const settleBox = document.getElementById('settleBox');
 const fogEl = document.getElementById('fog');
 
@@ -246,7 +235,6 @@ let timer = null;
 let stream = null;         /* 当前播放序列 */
 let pendingChoice = null;  /* 正在展示的选择 */
 let choiceIdx = -1;        /* 选择对象在原始序列中的位置 */
-let pendingGame = null;    /* 正在展示的经营小游戏占位 */
 let pendingSettle = null;  /* 正在展示的结算面板 */
 let musicOn = false;
 let toastTimer = null;
@@ -440,31 +428,6 @@ function pickChoice(key){
   advance();
 }
 
-/* ---- 经营小游戏(# 占位符) ---- */
-function showGame(g){
-  pendingGame = g;
-  gameLink.textContent = g.label || '经营小游戏';
-  gameLink.href = g.href || '#';
-  gameTip.textContent = g.tip || '';
-  lineEl.textContent = '';
-  gameBox.hidden = false;
-  hintEl.style.visibility = 'hidden';
-}
-
-function closeGame(){
-  if(!pendingGame) return;
-  pendingGame = null;
-  gameBox.hidden = true;
-  hintEl.style.visibility = 'visible';
-  advance();
-}
-
-gameLink.addEventListener('click', function(ev){
-  ev.preventDefault();
-  ev.stopPropagation();
-  toast('经营小游戏占位链接（#）：备货 → 顾客下单 → 交付收钱，后续接入');
-});
-
 /* ---- 小摊结算面板 ---- */
 function showSettle(s){
   pendingSettle = s;
@@ -515,7 +478,6 @@ function advance(){
   if(switching) return;
   if(pendingChoice) return;
   if(pendingSettle) return;
-  if(pendingGame){ closeGame(); return; }
   if(finished){
     if(scene < SCENES.length - 1) switchScene();
     return;
@@ -525,7 +487,6 @@ function advance(){
     idx++;
     const l = getLines()[idx];
     if(l.choice){ showChoices(l.choice); return; }
-    if(l.game){ showGame(l.game); return; }
     if(l.settle){ showSettle(l.settle); return; }
     if(l.toast){
       toast(l.toast);

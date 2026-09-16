@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>宗庆后 · 第⑦部分· 替别人做的嫁衣</title>
+<link rel="stylesheet" href="./style.css">
+<link rel="stylesheet" href="./level_one_pixel.css">
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@400;700&display=swap">
+</head>
+<body class="zqh-prologue" data-scene="1">
+
+  <!-- ===== 背景层 ===== -->
+  <div class="pro-bg" id="bgStack">
+    <img class="pro-bg-img" id="bg" src="./assets/bg/01-卸下旧招牌.png" alt="厂门口卸下旧招牌" />
+    <div class="pro-vignette"></div>
+    <div class="pro-bottom-fade"></div>
+    <div class="pro-grain"></div>
+  </div>
+
+  <!-- ===== 白雾转场层 ===== -->
+  <div class="pro-fog" id="fog"></div>
+
+  <!-- ===== 场景角标 ===== -->
+  <div class="pro-scene-tag anim" id="sceneTag">杭州 · 二〇〇七年冬</div>
+
+  <!-- ===== 音乐开关 ===== -->
+  <button class="pro-music" id="musicBtn" type="button" aria-label="背景音乐开关" title="背景音乐">
+    <svg class="ico-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 18V5l11-2v13"/><circle cx="9" cy="18" r="3"/><circle cx="20" cy="16" r="3"/>
+    </svg>
+    <svg class="ico-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 18V5l11-2v13"/><circle cx="9" cy="18" r="3"/><circle cx="20" cy="16" r="3"/><line x1="3" y1="4" x2="21" y2="20"/>
+    </svg>
+  </button>
+
+  <!-- ===== 数值面板 ===== -->
+  <div class="pro-hud" id="hud">
+    <div class="pro-hud-title">家　底</div>
+    <div id="hudStats"></div>
+  </div>
+
+  <!-- ===== 对话框 ===== -->
+  <div class="pro-dialog">
+    <div class="pro-dialog-bar"></div>
+    <div class="pro-dialog-main">
+      <div class="pro-speaker" id="speaker">旁　白</div>
+      <p class="pro-line" id="line"></p>
+    </div>
+    <div class="pro-hint" id="hint">▼ 点击继续</div>
+  </div>
+
+  <!-- ===== 坏结局结算面板 ===== -->
+  <div class="pro-badending" id="badEndingBox" hidden>
+    <div class="pro-badending-panel">
+      <span class="pro-badending-kicker">第⑦部分</span>
+      <h2 class="pro-badending-title">替别人做的嫁衣</h2>
+      <p class="pro-badending-desc">你没有输给任何人，你只是输给了一张纸，输给了你自己。</p>
+      <div class="pro-badending-cash" id="badEndingCash"></div>
+      <a class="pro-badending-next" href="#">退出剧情</a><!-- =====在这补上回小屋链接===== -->
+    </div>
+  </div>
+
+  <div class="pro-toast" id="toast"></div>
+
+  <!-- 背景音乐 -->
+  <audio id="bgm" src="./assets/bgm/sideb.mp3" loop preload="none"></audio>
+
+<script>
+/* =====================================================================
+ * 配置区
+ * ===================================================================== */
+const USE_DEBUG_BG = false;
+const DEBUG_BG = './assets/debug-bg.png';
+const SAVE_KEY = 'zqh_level1_save';
+
+/* =====================================================================
+ * 行类型：{who,text} 对白/旁白；{if:'标志',who,text} 条件行；
+ * {badending:true} 坏结局结算面板；{toast:'文本'} 只弹提示不占行。
+ * 旁白全部使用第一人称（我）。
+ * ===================================================================== */
+const SCENES = [
+  {
+    chapter: '第一幕 · 厂门口',
+    tag: '杭州 · 二〇〇七年冬',
+    img: './assets/bg/b-1.png',
+    alt: '厂门口卸下旧招牌',
+    lines: [
+      { who: 'narration', text: '合同是春天签的，牌子是冬天换的。那天风很大，旧招牌在绳子上晃了晃，落下来的时候，蒙了一路的灰。' },
+      { who: 'narration', text: '我站在马路对面，看着"娃哈哈"三个字被人抬走。那三个字，是一九八九年我亲手定下的，是我用一箱汽水、一瓶营养液，一乡一镇喂大的。' },
+      { who: 'wangshifu', text: '（不知什么时候站到了你身边，手里还攥着那顶旧工作帽，嗓子发哑）……厂长。厂还是咱的厂，人还是咱的人么？' },
+      { who: 'you', text: '（没回头，只看着那块新牌子）机器还在，人还在。可这三个字，往后不归咱说了算了。' }
+    ]
+  },
+  {
+    chapter: '第二幕 · 院子里',
+    tag: '厂区院子 · 数日后',
+    img: './assets/bg/b-2.png',
+    alt: '院中的冷席',
+    lines: [
+      { who: 'narration', text: '车间外的院子里摆开几张圆桌，经销商们三三两两坐着，没人动筷。田老板蹲在墙角，一根接一根地抽烟。' },
+      { who: 'tianlaoban', text: '（把烟头摁灭，抬头问你）宗厂长，我就问一句——往后，我进货，还找你不？' },
+      { who: 'narration', text: '这一句问得我半天没说出话。我跟他打了十几年交道，从冰汽水到营养液、从营养液到非常可乐；他信我，从来不管我身后挂着什么牌子。' },
+      { who: 'you', text: '（走过去，跟他并排蹲在墙角）找我。账照旧记，货照旧送。牌子换了，人没换。' },
+      { who: 'tianlaoban', text: '（沉默了很久，重新点上一支烟）……行。你说这句话，我就再信你一回。' }
+    ]
+  },
+  {
+    chapter: '第三幕 · 会议室',
+    tag: '会议室 · 当夜',
+    img: './assets/bg/b-3.png',
+    alt: '空席与合同',
+    lines: [
+      { who: 'narration', text: '这一夜，我把那份合同又翻了一遍。这一次，我终于看清了那两颗雷——它们一直安安静静地躺在那儿，像两句最普通不过的人话。' },
+      { who: 'you', text: '（念出声）"如需商标转让，须提交合资公司董事会审议。"……"外方可优先收购与合资公司同类业务相关资产。"' },
+      { who: 'shenlawyer', text: '（站在门口，没有进来）宗总，这两句，我那天是念过的。' },
+      { who: 'you', text: '（把合同合上，过了很久才说）我知道。是我没听进去。' },
+      { who: 'narration', text: '字，我前半生都在学着认。可这一次，门是别人替我开的——也是别人替我关上的。' }
+    ]
+  },
+  {
+    chapter: '第四幕 · 替别人做的嫁衣',
+    tag: '厂区 · 暮色',
+    img: './assets/bg/b-4.png',
+    alt: '暮色离厂',
+    lines: [
+      { who: 'narration', text: '我打赢过洋可乐，守住了乡镇的每一家小店；我用十年，把一张送货的网铺遍了全国。可我终究在十年后的这一张纸上，输了。' },
+      { who: 'narration', text: '我亲手做大的那个牌子，从此挂上了别人的名字。人们还是喝那瓶水，只是很少有人再记得，它最早是从杭州一间小经销部的三轮车上，一瓶一瓶送出来的。' },
+      { who: 'narration', text: '账上还剩一些钱，厂里还有一帮跟着我的老人。我把脚上那双布鞋提了提，慢慢往厂门外的夜色里走。' },
+      { who: 'you', text: '（走出一段，回头看了那块新牌子一眼，轻声）……路还长。摔一跤，总能看清点什么。' },
+      { badending: true }
+    ]
+  }
+];
+
+/* =====================================================================
+ * 引擎
+ * ===================================================================== */
+const WHO_NAME = {
+  narration: '旁　白', you: '我', laozong: '老　宗',
+  wangshifu: '王师傅', tianlaoban: '田老板', shenlawyer: '沈律师'
+};
+const STAT_NAME = {
+  resilience: '坚韧', ahai_bond: '与阿海的情谊', negotiation_skill: '谈判', father_bond: '与父亲的羁绊'
+};
+const STAT_ORDER = ['resilience', 'ahai_bond', 'negotiation_skill', 'father_bond'];
+
+const state = {
+  stats: { resilience: 0, ahai_bond: 0, negotiation_skill: 0, father_bond: 0 },
+  cash: 0,
+  reputation: 0,
+  flags: {}
+};
+
+const lineEl = document.getElementById('line');
+const hintEl = document.getElementById('hint');
+const speakerEl = document.getElementById('speaker');
+const bgEl = document.getElementById('bg');
+const sceneTagEl = document.getElementById('sceneTag');
+const stackEl = document.getElementById('bgStack');
+const bodyEl = document.body;
+const choicesBox = document.getElementById('choicesBox');
+const hudStats = document.getElementById('hudStats');
+const toastEl = document.getElementById('toast');
+const bgm = document.getElementById('bgm');
+const musicBtn = document.getElementById('musicBtn');
+const badEndingBox = document.getElementById('badEndingBox');
+const fogEl = document.getElementById('fog');
+
+let scene = 0;
+let idx = -1;
+let typing = false;
+let finished = false;
+let switching = false;
+let timer = null;
+let stream = null;
+let pendingBadEnding = false;
+let musicOn = false;
+let toastTimer = null;
+let fogOpen = true;
+
+/* ---- 白雾转场 ---- */
+function resetFog(){
+  fogOpen = true;
+  fogEl.classList.remove('dispersed');
+}
+function disperseFog(){
+  if(!fogOpen) return;
+  fogOpen = false;
+  fogEl.classList.add('dispersed');
+}
+
+function bgFor(S){ return USE_DEBUG_BG ? DEBUG_BG : S.img; }
+function getLines(){ return stream; }
+
+function setStream(){
+  stream = SCENES[scene].lines.filter(function(l){
+    if(l.if && !state.flags[l.if]) return false;
+    return true;
+  });
+}
+
+/* ---- 打字机 ---- */
+function typeLine(l){
+  const full = l.text;
+  let pos = 0;
+  typing = true;
+  setSpeaker(l.who);
+  lineEl.classList.toggle('action', full.charAt(0) === '（');
+  hintEl.style.visibility = 'hidden';
+  lineEl.textContent = '';
+  clearInterval(timer);
+  timer = setInterval(function(){
+    pos++;
+    lineEl.textContent = full.slice(0, pos);
+    if(pos < full.length){
+      const caret = document.createElement('span');
+      caret.className = 'caret';
+      lineEl.appendChild(caret);
+    }
+    if(pos >= full.length){
+      clearInterval(timer);
+      typing = false;
+      if(idx === getLines().length - 1){ finished = true; setEndHint(); }
+      hintEl.style.visibility = 'visible';
+    }
+  }, 55);
+}
+
+function finishLine(){
+  const ls = getLines();
+  if(idx < 0 || idx >= ls.length) return;
+  clearInterval(timer);
+  lineEl.textContent = ls[idx].text;
+  typing = false;
+  if(idx === getLines().length - 1){ finished = true; setEndHint(); }
+  hintEl.style.visibility = 'visible';
+}
+
+function setSpeaker(who){
+  speakerEl.textContent = WHO_NAME[who] || WHO_NAME.narration;
+  speakerEl.className = 'pro-speaker' + (who === 'narration' ? '' : ' ' + who);
+}
+
+function setEndHint(){
+  if(scene === SCENES.length - 1){
+    hintEl.textContent = '第⑦部分（改）· 完 —— 坏结局 · 替别人做的嫁衣';
+    hintEl.classList.add('done');
+    saveStats();
+  } else {
+    hintEl.textContent = '▼ 进入下一幕';
+    hintEl.classList.remove('done');
+  }
+}
+
+/* ---- 数值面板 ---- */
+function renderHud(){
+  hudStats.innerHTML =
+    '<div class="pro-hud-row"><span>现金</span><b>¥' + state.cash + '</b></div>' +
+    '<div class="pro-hud-row"><span>声誉</span><b>' + state.reputation + '</b></div>';
+}
+
+/* ---- 数值存档 ---- */
+function saveStats(){
+  try{
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      stats: {
+        resilience: state.stats.resilience,
+        ahai_bond: state.stats.ahai_bond,
+        negotiation_skill: state.stats.negotiation_skill,
+        father_bond: state.stats.father_bond,
+        cash: state.cash,
+        reputation: state.reputation
+      },
+      flags: state.flags,
+      savedAt: new Date().toISOString()
+    }));
+  }catch(e){}
+}
+
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, 2600);
+}
+
+/* ---- 坏结局结算面板 ---- */
+function showBadEnding(){
+  pendingBadEnding = true;
+  document.getElementById('badEndingCash').textContent = '结算现金 · ¥' + state.cash;
+  badEndingBox.hidden = false;
+  hintEl.style.visibility = 'hidden';
+  saveStats();
+}
+
+/* ---- 推进 ---- */
+function advance(){
+  if(fogOpen) return;
+  if(switching) return;
+  if(pendingBadEnding) return;
+  if(finished){
+    if(scene < SCENES.length - 1) switchScene();
+    return;
+  }
+  if(typing){ finishLine(); return; }
+  if(idx < getLines().length - 1){
+    idx++;
+    const l = getLines()[idx];
+    if(l.badending){ showBadEnding(); return; }
+    if(l.toast){
+      toast(l.toast);
+      if(idx === getLines().length - 1){
+        finished = true;
+        setEndHint();
+        hintEl.style.visibility = 'visible';
+      } else {
+        advance();
+      }
+      return;
+    }
+    typeLine(l);
+  }
+}
+
+function preloadNext(){
+  if(scene + 1 < SCENES.length){
+    const im = new Image();
+    im.src = bgFor(SCENES[scene + 1]);
+  }
+}
+
+/* ---- 切换至下一幕 ---- */
+function switchScene(){
+  if(switching) return;
+  if(scene >= SCENES.length - 1) return;
+  switching = true;
+  scene++;
+  const S = SCENES[scene];
+  stackEl.style.opacity = '0';
+  setTimeout(function(){
+    bgEl.src = bgFor(S);
+    bgEl.alt = S.alt;
+    sceneTagEl.textContent = S.tag;
+    document.title = S.chapter;
+    bodyEl.dataset.scene = String(scene + 1);
+    setStream();
+    idx = -1; typing = false; finished = false;
+    hintEl.classList.remove('done');
+    hintEl.textContent = '▼ 点击继续';
+    hintEl.style.visibility = 'visible';
+    stackEl.style.opacity = '1';
+    sceneTagEl.classList.remove('anim');
+    void sceneTagEl.offsetWidth;
+    sceneTagEl.classList.add('anim');
+    preloadNext();
+    setTimeout(function(){ switching = false; advance(); }, 1100);
+  }, 600);
+}
+
+/* ---- 音乐开关 ---- */
+function toggleMusic(){
+  if(musicOn){
+    bgm.pause();
+    musicOn = false;
+    musicBtn.classList.remove('is-on');
+    return;
+  }
+  const p = bgm.play();
+  if(p && p.catch){
+    p.catch(function(){
+      musicOn = false;
+      musicBtn.classList.remove('is-on');
+    });
+  }
+  musicOn = true;
+  musicBtn.classList.add('is-on');
+}
+bgm.addEventListener('error', function(){
+  musicOn = false;
+  musicBtn.classList.remove('is-on');
+});
+musicBtn.addEventListener('click', function(ev){
+  ev.stopPropagation();
+  toggleMusic();
+});
+
+/* =====================================================================
+ * 数值继承（从前序部分继承：心性数值 + 现金 + 声誉 + 分支标志）
+ * 优先读取 URL 参数，其次读 localStorage 存档；都没有时从默认值开始。
+ * ===================================================================== */
+const INHERIT_KEYS = ['resilience', 'ahai_bond', 'negotiation_skill', 'father_bond'];
+
+function loadInherited(){
+  const out = {};
+  const flags = {};
+  let got = false;
+  let cash = 0;
+  let reputation = 0;
+  const qs = new URLSearchParams(location.search);
+  INHERIT_KEYS.forEach(function(k){
+    const v = qs.get(k);
+    if(v !== null && v !== '' && !isNaN(Number(v))){ out[k] = Number(v); got = true; }
+  });
+  const c = qs.get('cash');
+  if(c !== null && c !== '' && !isNaN(Number(c))){ cash = Number(c); got = true; }
+  const r = qs.get('reputation');
+  if(r !== null && r !== '' && !isNaN(Number(r))){ reputation = Number(r); got = true; }
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(raw){
+      const data = JSON.parse(raw);
+      if(data && data.stats){
+        INHERIT_KEYS.forEach(function(k){
+          if(typeof data.stats[k] === 'number' && !(k in out)){ out[k] = data.stats[k]; got = true; }
+        });
+        if(typeof data.stats.cash === 'number' && !qs.get('cash')){ cash = data.stats.cash; got = true; }
+        if(typeof data.stats.reputation === 'number' && !qs.get('reputation')){ reputation = data.stats.reputation; got = true; }
+      }
+      if(data && data.flags){ Object.assign(flags, data.flags); }
+    }
+  }catch(e){}
+  /* 若没有继承到现金，给一个默认起始值（达能之争后剩余） */
+  if(!got || cash === 0){ cash = 1600; reputation = 40; }
+  return { out: out, flags: flags, got: got, cash: cash, reputation: reputation };
+}
+
+/* ---- 启动 ---- */
+const inherited = loadInherited();
+if(inherited.got){
+  Object.keys(inherited.out).forEach(function(k){ state.stats[k] = inherited.out[k]; });
+}
+state.cash = inherited.cash;
+state.reputation = inherited.reputation;
+Object.assign(state.flags, inherited.flags);
+bodyEl.classList.add('has-stats');
+setStream();
+bgEl.src = bgFor(SCENES[0]);
+renderHud();
+setTimeout(advance, 1600);
+
+document.addEventListener('click', function(){
+  if(fogOpen){ disperseFog(); return; }
+  advance();
+});
+document.addEventListener('keydown', function(e){
+  var k = e.key.toLowerCase();
+  if(k === ' ' || k === 'enter' || k === 'arrowdown' || k === 'arrowright' || k === 'z'){
+    e.preventDefault();
+    if(fogOpen){ disperseFog(); return; }
+    advance();
+  }
+  if(k === 'x'){
+    e.preventDefault();
+    if(typing) finishLine();
+  }
+});
+</script>
+</body>
+</html>

@@ -48,11 +48,6 @@
     <div class="pro-choices-title" id="choicesTitle"></div>
     <div class="pro-choices-list" id="choicesList"></div>
   </div>
-  <!-- ===== 配方研制小游戏(#) ===== -->
-  <div class="pro-game" id="gameBox" hidden>
-    <a class="pro-game-link" id="gameLink" href="#">配方研制小游戏 · 选材 → 熬制 → 试喝调试</a>
-    <p class="pro-game-tip" id="gameTip">把配方从"能喝"调到"好喝"，孩子的笑脸就是验收标准（占位链接，后续接入小游戏）</p>
-  </div>
   <!-- ===== 广告豪赌决策面板 ===== -->
   <div class="pro-gamble" id="gambleBox" hidden>
     <div class="pro-gamble-panel">
@@ -93,7 +88,7 @@ const GAMBLE_WIN_RATE = 0.80;
 const RESILIENCE_THRESHOLD = 15;
 /* =====================================================================
  * 行类型：{who,text} 对白/旁白；{if:'标志',who,text} 条件行；
- * {game:{...}} 配方研制小游戏占位；{gamble:true} 广告豪赌决策；
+ * {gamble:true} 广告豪赌决策；
  * {settle:{...}} 结算面板；{toast:'文本'} 只弹提示不占行。
  * ===================================================================== */
 const SCENES = [
@@ -138,7 +133,6 @@ const SCENES = [
       { who: 'zhujiaoshou', text: '（看了你很久，忽然笑了一声）……行。我帮你组这个方子。用红枣、山楂、山药这些家常东西做底，按老法子来。钱我不要你的，只提一个条件——做出来的东西，先给你自己的孩子喝，再给别人的孩子喝。' },
       { who: 'you', text: '（站起来，深深鞠了一躬）教授放心。我要是敢做假，第一个不放过我的，是我自己。' },
       { who: 'narration', text: '那几个月，我的经销部成了半个试验室。大锅煮红枣，小锅熬山楂，周老师记配方，范老师记火候，我一趟一趟往教授家跑，把试制品端给他尝。' },
-      { game: { label: '配方研制小游戏 · 选材 → 熬制 → 试喝调试', tip: '把配方从"能喝"调到"好喝"，孩子的笑脸就是验收标准（占位链接 #，后续接入小游戏）', href: '#' } },
       { who: 'narration', text: '终于，装在小瓶里的淡褐色营养液，先送到了我自家饭桌上。女儿·圆圆捧起瓶子，喝了一口，眼睛亮了，又喝了一口。' },
       { who: 'you', text: '（端详着那只小瓶子，慢慢说）东西成了。可要让满城孩子都喝上它，还差一个"名"和一张"嘴"。' },
       { who: 'narration', text: '取名字，我没找专家，而是去找了最该取的人——孩子。我让几家试喝的学校，各交一个名字上来。' },
@@ -234,9 +228,6 @@ const hudStats = document.getElementById('hudStats');
 const toastEl = document.getElementById('toast');
 const bgm = document.getElementById('bgm');
 const musicBtn = document.getElementById('musicBtn');
-const gameBox = document.getElementById('gameBox');
-const gameLink = document.getElementById('gameLink');
-const gameTip = document.getElementById('gameTip');
 const gambleBox = document.getElementById('gambleBox');
 const gambleOptions = document.getElementById('gambleOptions');
 const gambleResult = document.getElementById('gambleResult');
@@ -252,7 +243,6 @@ let timer = null;
 let stream = null;
 let pendingChoice = null;
 let choiceIdx = -1;
-let pendingGame = null;
 let pendingGamble = null;
 let pendingSettle = null;
 let musicOn = false;
@@ -415,28 +405,6 @@ function pickChoice(key){
   hintEl.style.visibility = 'visible';
   advance();
 }
-/* ---- 配方研制小游戏(#)---- */
-function showGame(g){
-  pendingGame = g;
-  gameLink.textContent = g.label || '配方研制小游戏';
-  gameLink.href = g.href || '#';
-  gameTip.textContent = g.tip || '';
-  lineEl.textContent = '';
-  gameBox.hidden = false;
-  hintEl.style.visibility = 'hidden';
-}
-function closeGame(){
-  if(!pendingGame) return;
-  pendingGame = null;
-  gameBox.hidden = true;
-  hintEl.style.visibility = 'visible';
-  advance();
-}
-gameLink.addEventListener('click', function(ev){
-  ev.preventDefault();
-  ev.stopPropagation();
-  toast('配方研制小游戏占位链接（#）：选材 → 熬制 → 试喝调试，后续接入');
-});
 /* =====================================================================
  * 广告豪赌决策
  * 两个选项：豪赌（21万黄金档，80%成功率，不显示概率）/ 稳妥（便宜时段小广告）
@@ -587,7 +555,6 @@ function advance(){
   if(pendingChoice) return;
   if(pendingGamble) return;
   if(pendingSettle) return;
-  if(pendingGame){ closeGame(); return; }
   if(finished){
     if(scene < SCENES.length - 1) switchScene();
     return;
@@ -597,7 +564,6 @@ function advance(){
     idx++;
     const l = getLines()[idx];
     if(l.choice){ showChoices(l.choice); return; }
-    if(l.game){ showGame(l.game); return; }
     if(l.gamble){ startGamble(); return; }
     if(l.settle){ showSettle(l.settle); return; }
     if(l.toast){

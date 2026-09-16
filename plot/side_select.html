@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>跳转中…</title>
+<style>
+  html,body{ margin:0; padding:0; width:100%; height:100%; background:#0a0807; overflow:hidden; }
+</style>
+</head>
+<body>
+<script>
+/* =====================================================================
+ * side_select · 静默读取 part6 合同解谜结果，决定进入 part7 还是 part7sideb
+ *  - contract_miss（漏选陷阱）→ part7sideb.html（坏结局 · 替别人做的嫁衣）
+ *  - contract_perfect / contract_partial（正常通过）→ part7.html（主线 · 联销体推行遇阻）
+ *  - 无存档或读取失败 → 默认进入 part7.html
+ * ===================================================================== */
+(function(){
+  var SAVE_KEY = 'zqh_level1_save';
+  var target = 'part7.html';
+  try{
+    var raw = localStorage.getItem(SAVE_KEY);
+    if(raw){
+      var data = JSON.parse(raw);
+      if(data && data.flags && data.flags.contract_miss){
+        target = 'part7sideb.html';
+      }
+    }
+  }catch(e){
+    /* localStorage 不可用或解析失败，默认走主线 */
+  }
+  location.replace(target);
+})();
+</script>
+</body>
+</html>
