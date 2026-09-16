@@ -153,6 +153,12 @@
             renderer.domElement.addEventListener('pointerdown', e => {
                 if (window.APP_SHELL_BLOCK_GAME) return;
                 if (e.button === 2) { tryCast(); return; }
+                /* 按住拖转视角的时候，鼠标一旦滑到别的UI上再松开，
+                   pointerup 就不会落在这块canvas上，dragInfo 会一直
+                   卡着不清空，导致鼠标回来之后视角还在莫名转动。
+                   setPointerCapture 之后，不管鼠标移到哪儿，这一串
+                   pointermove/pointerup 都还是发给这个canvas。 */
+                try { renderer.domElement.setPointerCapture(e.pointerId); } catch (err) { }
                 ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinchD = Math.hypot(a.x - b.x, a.y - b.y); pinchMode = true; didPinch = true; dragInfo = null; } else if (ptrs.size === 1) { dragInfo = { x: e.clientX, y: e.clientY, moved: 0 }; didPinch = false; }
             });
             renderer.domElement.addEventListener('pointermove', e => { if (ptrs.has(e.pointerId)) ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (pinchMode && ptrs.size >= 2) { const [a, b] = [...ptrs.values()]; const nd = Math.hypot(a.x - b.x, a.y - b.y); const diff = pinchD - nd; if (viewMode === 'fixed') fixDist = Math.max(4, Math.min(40, fixDist + diff * 0.02)); else viewDist = Math.max(1.4, Math.min(7.0, viewDist + diff * 0.006)); pinchD = nd; return; } if (!dragInfo) return; if (viewMode === 'fp' && isLocked()) return; const dx = e.clientX - dragInfo.x, dy = e.clientY - dragInfo.y; dragInfo.x = e.clientX; dragInfo.y = e.clientY; dragInfo.moved += Math.abs(dx) + Math.abs(dy); pendYaw -= dx * 0.0055; pendPitch += dy * 0.0045 * (viewMode === 'fp' ? -1 : 1); });
