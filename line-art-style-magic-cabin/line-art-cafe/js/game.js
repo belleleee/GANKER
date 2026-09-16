@@ -40,18 +40,22 @@ function flashScreen(color) {
     });
 }
 
+/* 累加，不是覆盖——玩家在小屋认领这笔钱之前，可能已经连续打了
+   好几局。之前这里直接拿本局 coins 覆盖存档，第二局一开始
+   beginGame() 又会把上一局还没被主游戏领走的钱清空，等于"连续打
+   两局只给一次的钱"。现在改成读出已经存的、还没被领走的金额，
+   加上本局赚的，一起存回去；真正清零只在主游戏那边领取之后
+   （claimCafeRevenue()）发生。 */
 function saveCafeRevenue() {
     try {
+        const existing = JSON.parse(localStorage.getItem(CAFE_REVENUE_KEY) || 'null');
+        const pending = existing && typeof existing === 'object'
+            ? Math.max(0, Math.trunc(Number(existing.amount) || 0))
+            : 0;
         localStorage.setItem(CAFE_REVENUE_KEY, JSON.stringify({
-            amount: Math.max(0, Math.trunc(Number(coins) || 0)),
+            amount: pending + Math.max(0, Math.trunc(Number(coins) || 0)),
             savedAt: new Date().toISOString()
         }));
-    } catch (err) { }
-}
-
-function clearCafeRevenue() {
-    try {
-        localStorage.removeItem(CAFE_REVENUE_KEY);
     } catch (err) { }
 }
 
@@ -69,7 +73,8 @@ const endTitle = document.getElementById('endTitle');
 const endDesc = document.getElementById('endDesc');
 
 function beginGame() {
-    clearCafeRevenue();
+    /* 不清空营业额存档——上一局如果还没被主游戏领走，这笔钱得先
+       攒着，不能被"再来一局"直接抹掉。 */
     coins = 0; lives = MAX_LIVES; heldItem = null;
     player.x = 0; player.z = -3.3; yaw = Math.PI; pitch = -0.22;
     for (const c of customers.slice()) disposeCustomer(c);
