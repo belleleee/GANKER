@@ -228,7 +228,8 @@ const MAIN_STORY_STAGES = [
     },
     {
         /* 问题：这次，我该听谁的？
-           机制：股市小屋出现一家"看不懂"的新公司，第一次没有标准答案
+           机制：完成第一笔预付订金的送货、尝到"拿现在换时间"的甜头
+           之后回一趟股市小屋，师傅这次没有替玩家拿主意
            碎片：他第一次承认自己判断不了——他也有边界
            钩子：不管结果如何，这是玩家第一次真正靠自己拿主意 */
         unlocks: null,
@@ -251,10 +252,22 @@ const MAIN_STORY_STAGES = [
 
         ],
         unlockToast: '📖 主线推进：这次你自己做了判断',
-        questLabel: '在股市小屋赚够 1000 金币',
+        questLabel: '完成第一笔预付订金的送货后，再回一趟股市小屋',
         target: { x: -12.0, z: 8.5 },
-        lockedHint: '先在股市小屋赚够 1000 金币的账面盈利。',
-        auto: () => typeof readSavedInvestmentPnl === 'function' && readSavedInvestmentPnl() >= 1000,
+        lockedHint: '先完成一笔用了预付订金的送货，再回股市小屋看看。',
+        auto: () => {
+            if (typeof storyStat !== 'function') return false;
+            if (storyStat('prepayDeliveryCount') < 1) return false;
+            const entries = storyStat('investmentEntries');
+            /* 预付订金刚完成那一刻，先记一下"当时已经进过几次股市小屋"，
+               不能拿这个存量直接达标——得是完成预付之后，玩家自己又
+               走回去一趟，才算"回到股市小屋"。 */
+            if (typeof mainStoryState.flags._prepayEntryBaseline !== 'number') {
+                mainStoryState.flags._prepayEntryBaseline = entries;
+                return false;
+            }
+            return entries > mainStoryState.flags._prepayEntryBaseline;
+        },
         choices: [
             {
                 label: '推出咖啡类产品',

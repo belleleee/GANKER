@@ -57,7 +57,8 @@ const ACHIEVEMENT_STAT_DEFAULTS = {
     cafeEntries: 0,
     coinShopEntries: 0,
     investmentEntries: 0,
-    deliveryCount: 0
+    deliveryCount: 0,
+    prepayDeliveryCount: 0
 };
 
 function makeAchievementStats(raw) {
@@ -119,6 +120,7 @@ function noteAchievementEvent(type, detail) {
         stats.investmentEntries++;
     } else if (type === 'deliveryDone') {
         stats.deliveryCount++;
+        if (data.prepaid) stats.prepayDeliveryCount++;
     } else {
         recorded = false;
     }

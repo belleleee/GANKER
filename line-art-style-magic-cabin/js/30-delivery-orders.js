@@ -213,7 +213,7 @@ function tryFulfillDelivery(order) {
         );
     }
     if (typeof window.noteAchievementEvent === 'function') {
-        window.noteAchievementEvent('deliveryDone', { cropId: order.cropId });
+        window.noteAchievementEvent('deliveryDone', { cropId: order.cropId, prepaid: !!order.prepaidAmount });
     }
     if (typeof window.noteDailyEvent === 'function') {
         window.noteDailyEvent('deliveryDone', { cropId: order.cropId, reward: order.reward });
