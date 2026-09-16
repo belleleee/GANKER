@@ -1,14 +1,9 @@
 'use strict';
 
 /* ================================================================
-   关于师傅：把"认识他有多深"这件事可视化
-   两块内容：
-   1. 人物碎片——跟主线十个章节一一对应，每完成一章解锁一条，
-      没解锁的先占位成"？？？"，不用额外的数据结构，直接复用
-      mainStoryState.stage 这个已有进度。
-   2. 关系数值——mainStoryState.mentor 的 trust/agreement/independence
-      三项本来就在记，只是从来没有界面展示出来，这里配上文字化的
-      档位描述，别只甩三个数字。
+   关于师傅：把"认识他有多深"这件事可视化——人物碎片，跟主线十个
+   章节一一对应，每完成一章解锁一条，没解锁的先占位成"？？？"，
+   不用额外的数据结构，直接复用 mainStoryState.stage 这个已有进度。
    ================================================================ */
 
 const MENTOR_FRAGMENTS = [
@@ -39,35 +34,9 @@ const MENTOR_HIDDEN_FRAGMENTS = [
 ];
 
 const mentorPanel = document.getElementById('mentorPanel');
-const mentorRelation = document.getElementById('mentorRelation');
 const mentorFragments = document.getElementById('mentorFragments');
 const closeMentorBtn = document.getElementById('closeMentorBtn');
 const mentorMenuBtn = document.getElementById('mentorMenuBtn');
-
-function mentorRelationBand(value, labels) {
-    const v = Math.max(0, Math.min(100, Number(value) || 0));
-    if (v < 30) return labels[0];
-    if (v < 60) return labels[1];
-    if (v < 85) return labels[2];
-    return labels[3];
-}
-
-function mentorRelationRow(icon, label, value, labels) {
-    const v = Math.max(0, Math.min(100, Number(value) || 0));
-    return '<div class="mentorRelationRow">' +
-        '<div class="mentorRelationHead"><span><i class="mentorRelationIcon">' + icon + '</i>' + label + '</span><strong>' + mentorRelationBand(v, labels) + '</strong></div>' +
-        '<div class="mentorRelationBar"><i style="width:' + v + '%"></i></div>' +
-        '</div>';
-}
-
-function renderMentorRelation() {
-    if (!mentorRelation) return;
-    const mentor = (typeof mainStoryState !== 'undefined' && mainStoryState.mentor) || { trust: 50, agreement: 50, independence: 50 };
-    mentorRelation.innerHTML =
-        mentorRelationRow('🤝', '信任', mentor.trust, ['还在观察你', '开始认你这个人', '信得过你', '把你当自己人']) +
-        mentorRelationRow('💭', '想法契合度', mentor.agreement, ['常常唱反调', '偶尔意见不合', '大多数时候想法一致', '几乎心有灵犀']) +
-        mentorRelationRow('🧭', '你的独立性', mentor.independence, ['还很依赖他的判断', '开始有自己的想法', '能独立拿主意了', '完全能自己扛事']);
-}
 
 function renderMentorFragments() {
     if (!mentorFragments) return;
@@ -94,7 +63,6 @@ function renderMentorFragments() {
 }
 
 function renderMentorPanel() {
-    renderMentorRelation();
     renderMentorFragments();
 }
 
