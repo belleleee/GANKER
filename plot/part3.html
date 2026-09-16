@@ -9,7 +9,6 @@
 <link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@400;700&display=swap">
 </head>
 <body class="zqh-prologue" data-scene="1">
-
   <!-- ===== 背景层 ===== -->
   <div class="pro-bg" id="bgStack">
     <img class="pro-bg-img" id="bg" src="./assets/bg/scene3-1.png" alt="校办经销部门脸" />
@@ -17,13 +16,10 @@
     <div class="pro-bottom-fade"></div>
     <div class="pro-grain"></div>
   </div>
-
   <!-- ===== 白雾转场层 ===== -->
   <div class="pro-fog" id="fog"></div>
-
   <!-- ===== 场景角标 ===== -->
   <div class="pro-scene-tag anim" id="sceneTag">杭州 · 上城区 · 一九八八年春</div>
-
   <!-- ===== 音乐开关 ===== -->
   <button class="pro-music" id="musicBtn" type="button" aria-label="背景音乐开关" title="背景音乐（占位）">
     <svg class="ico-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -33,13 +29,11 @@
       <path d="M9 18V5l11-2v13"/><circle cx="9" cy="18" r="3"/><circle cx="20" cy="16" r="3"/><line x1="3" y1="4" x2="21" y2="20"/>
     </svg>
   </button>
-
   <!-- ===== 数值面板 ===== -->
   <div class="pro-hud" id="hud">
     <div class="pro-hud-title">家　底</div>
     <div id="hudStats"></div>
   </div>
-
   <!-- ===== 对话框 ===== -->
   <div class="pro-dialog">
     <div class="pro-dialog-bar"></div>
@@ -49,19 +43,16 @@
     </div>
     <div class="pro-hint" id="hint">▼ 点击继续</div>
   </div>
-
   <!-- ===== 分支选择 ===== -->
   <div class="pro-choices" id="choicesBox" hidden>
     <div class="pro-choices-title" id="choicesTitle"></div>
     <div class="pro-choices-list" id="choicesList"></div>
   </div>
-
   <!-- ===== 配方研制小游戏(#) ===== -->
   <div class="pro-game" id="gameBox" hidden>
     <a class="pro-game-link" id="gameLink" href="#">配方研制小游戏 · 选材 → 熬制 → 试喝调试</a>
     <p class="pro-game-tip" id="gameTip">把配方从"能喝"调到"好喝"，孩子的笑脸就是验收标准（占位链接，后续接入小游戏）</p>
   </div>
-
   <!-- ===== 广告豪赌决策面板 ===== -->
   <div class="pro-gamble" id="gambleBox" hidden>
     <div class="pro-gamble-panel">
@@ -73,7 +64,6 @@
       <button class="pro-gamble-next" id="gambleNext" type="button" hidden>继　续</button>
     </div>
   </div>
-
   <!-- ===== 结算面板 ===== -->
   <div class="pro-settle" id="settleBox" hidden>
     <div class="pro-settle-panel">
@@ -84,12 +74,9 @@
       <button class="pro-settle-next" id="settleNext" type="button">继　续</button>
     </div>
   </div>
-
   <div class="pro-toast" id="toast"></div>
-
   <!-- 背景音乐 -->
   <audio id="bgm" src="./assets/bgm/test1.flac" loop preload="none"></audio>
-
 <script>
 /* =====================================================================
  * 配置区
@@ -117,8 +104,8 @@ const SCENES = [
     alt: '校办经销部门脸',
     lines: [
       { who: 'laozong', text: '（站在你旁边）前面都是小打小闹。这回要押上全部家当——你自己掂量。' },
-      { who: 'narration', text: '承包快一年了。你和两位老师起早贪黑，把经销部那本烂账，真的一笔一笔还活了。去年年底，你把整整 4 万上缴给文教局，一分不少，账就摆在那里，谁也说不出半个字。' },
-      { who: 'narration', text: '可你心里那件事，一直没放下——去年春天放学路上，那句"没有一样是专给孩子的"，像根刺，扎在你心里一整年。' },
+      { who: 'narration', text: '承包快一年了。我和两位老师起早贪黑，把经销部那本烂账，真的一笔一笔还活了。去年年底，我把整整 4 万上缴给文教局，一分不少，账就摆在那里，谁也说不出半个字。' },
+      { who: 'narration', text: '可我心里那件事，一直没放下——去年春天放学路上，那句"没有一样是专给孩子的"，像根刺，扎在我心里一整年。' },
       { who: 'fan', text: '（从本子上抬起头）哎，你还记得我跟你说过的吧？上礼拜我去区二小，保健老师拉住我直叹气——现在孩子条件好了，反倒不肯吃饭了。厌食、挑食、三天两头闹病，儿科门诊排得跟过年似的。' },
       { who: 'you', text: '（停下手里的货，慢慢直起腰）范老师，你说……大人有那么多补品，怎么就没有一样，是能让孩子好好吃口饭的？' },
       { who: 'zhou', text: '（在柜台后抬起头，扶了扶老花镜）你又想折腾。我劝你一句——补品这东西，水深得很。多少厂子打着"对孩子好"的旗号圈钱，做砸了名声，连经销部这碗饭都要砸。' },
@@ -131,11 +118,11 @@ const SCENES = [
     img: './assets/bg/scene3-2.png',
     alt: '教授楼楼下',
     lines: [
-      { who: 'narration', text: '你打听了很久，城里最懂孩子吃饭的人，是一位姓朱的营养学教授，年轻时研究了一辈子儿童营养。你跑了三趟医学院，才问到他家地址。' },
-      { who: 'narration', text: '头一回上门，你话还没说完，门里就传出一句硬邦邦的话。' },
+      { who: 'narration', text: '我打听了很久，城里最懂孩子吃饭的人，是一位姓朱的营养学教授，年轻时研究了一辈子儿童营养。我跑了三趟医学院，才问到他家地址。' },
+      { who: 'narration', text: '头一回上门，我话还没说完，门里就传出一句硬邦邦的话。' },
       { who: 'zhujiaoshou', text: '（隔着门，声音不高，却冷）又是做营养品的？打着孩子的旗号骗钱的人，我见得多了。你走吧，我这门，不给骗子的厂子开。' },
       { who: 'you', text: '（在门外站了一会儿，没走。把布袋放在门槛上，退后一步）朱教授，我不是来请您做广告的。这里面是我这一年攒下的东西——几十所学校、几百个孩子吃饭的记录。您要是肯看一眼，再赶我也不迟。' },
-      { who: 'narration', text: '门没有开。你放下布袋，走了。第二天再来，布袋还在，里面多了几张纸——是教授批注的字：哪些是家长吓出来的"厌食"，哪些是真该看的。你眼睛一亮。' }
+      { who: 'narration', text: '门没有开。我放下布袋，走了。第二天再来，布袋还在，里面多了几张纸——是教授批注的字：哪些是家长吓出来的"厌食"，哪些是真该看的。我眼睛一亮。' }
     ]
   },
   {
@@ -150,11 +137,11 @@ const SCENES = [
       { who: 'you', text: '（老实说）账上能动用的，都算上，不够。但我能一年一年挣，挣够了再做，绝不拿孩子的东西糊弄。' },
       { who: 'zhujiaoshou', text: '（看了你很久，忽然笑了一声）……行。我帮你组这个方子。用红枣、山楂、山药这些家常东西做底，按老法子来。钱我不要你的，只提一个条件——做出来的东西，先给你自己的孩子喝，再给别人的孩子喝。' },
       { who: 'you', text: '（站起来，深深鞠了一躬）教授放心。我要是敢做假，第一个不放过我的，是我自己。' },
-      { who: 'narration', text: '那几个月，你的经销部成了半个试验室。大锅煮红枣，小锅熬山楂，周老师记配方，范老师记火候，你一趟一趟往教授家跑，把试制品端给他尝。' },
+      { who: 'narration', text: '那几个月，我的经销部成了半个试验室。大锅煮红枣，小锅熬山楂，周老师记配方，范老师记火候，我一趟一趟往教授家跑，把试制品端给他尝。' },
       { game: { label: '配方研制小游戏 · 选材 → 熬制 → 试喝调试', tip: '把配方从"能喝"调到"好喝"，孩子的笑脸就是验收标准（占位链接 #，后续接入小游戏）', href: '#' } },
-      { who: 'narration', text: '终于，装在小瓶里的淡褐色营养液，先送到了你自家饭桌上。女儿·圆圆捧起瓶子，喝了一口，眼睛亮了，又喝了一口。' },
+      { who: 'narration', text: '终于，装在小瓶里的淡褐色营养液，先送到了我自家饭桌上。女儿·圆圆捧起瓶子，喝了一口，眼睛亮了，又喝了一口。' },
       { who: 'you', text: '（端详着那只小瓶子，慢慢说）东西成了。可要让满城孩子都喝上它，还差一个"名"和一张"嘴"。' },
-      { who: 'narration', text: '取名字，你没找专家，而是去找了最该取的人——孩子。你让几家试喝的学校，各交一个名字上来。' },
+      { who: 'narration', text: '取名字，我没找专家，而是去找了最该取的人——孩子。我让几家试喝的学校，各交一个名字上来。' },
       { who: 'students', text: '（七嘴八舌）叫"壮壮露"！叫"苗苗宝"！……对了对了，我妈老给我唱那支歌——"我们的祖国是花园，花园里花朵真鲜艳……娃哈哈呀娃哈哈"！' },
       { who: 'you', text: '（把这句"娃哈哈"在心里翻来覆去念了两遍，忽然笑出声来）……就它了。娃哈哈。孩子一听就想笑的名字，错不了。' }
     ]
@@ -166,11 +153,11 @@ const SCENES = [
     alt: '电视台广告部',
     lines: [
       { who: 'zhengzhuren', text: '（翻开合同）名字我们不管，广告嘛，只要给得起钱，谁都能上。不过我得先给你交个底——黄金时段的广告费，21 万，不打折。你们校办小厂，吃得起这个价么？' },
-      { who: 'narration', text: '21 万。这个数字，像一记闷棍。可你只在心里算了三秒，就翻开了账本。' },
+      { who: 'narration', text: '21 万。这个数字，像一记闷棍。可我只在心里算了三秒，就翻开了账本。' },
       { who: 'you', text: '（翻到最后一页，指着账面）这几个月，营养液在几家学校门口试卖，卖一瓶，就多一家的孩子追着要。我算过——要是只靠一张嘴一家一家说，十年也说不完。要是上电视，一夜之间，全城就都知道了。' },
       { who: 'zhengzhuren', text: '（把钢笔搁下，多说了两句）我劝你想清楚——上广告是能上，可 21 万不是小数。你要是舍不得，我们也有便宜得多的时段，白天档、插播，钱省一半还多，就是看的人少。怎么选，全在你自己。' },
       { gamble: true },
-      { if: 'gamble_win', who: 'narration', text: '签字的那个下午，你握笔的手很稳。回到经销部，你把合同摆在桌上，周老师看完，半天没说话；范老师眼圈红了，也一个字没劝。他们比谁都清楚，这一页纸，押上了他们陪你一年挣回来的全部。' },
+      { if: 'gamble_win', who: 'narration', text: '签字的那个下午，我握笔的手很稳。回到经销部，我把合同摆在桌上，周老师看完，半天没说话；范老师眼圈红了，也一个字没劝。他们比谁都清楚，这一页纸，押上了他们陪我一年挣回来的全部。' },
       { if: 'gamble_win', who: 'zhengzhuren', text: '（送你们出门，难得收了笑，补了一句）……说实话，我在这儿这么多年，头一回见人为了"孩子吃饭"这种事，把身家押上去。这广告，我给你们排最好的时段。' },
       { if: 'gamble_win', settle: {
         kicker: '第③部分 · 广告结算',
@@ -179,7 +166,7 @@ const SCENES = [
         items: ['现金 <b>×5</b>', '声誉 <b>+18</b>'],
         effects: { cash_mult: 5, reputation: 18 }
       } },
-      { if: 'gamble_lose', who: 'narration', text: '黄金时段的广告播了，钱也花了，销量却没能在头几天暴涨。账上见了底，经销部的灯，连着几个月亮到半夜。你咬着牙，把能省的每一分都省下来，一笔一笔还；你给自己立了规矩——东西是真的，就总有翻身的一天。' },
+      { if: 'gamble_lose', who: 'narration', text: '黄金时段的广告播了，钱也花了，销量却没能在头几天暴涨。账上见了底，经销部的灯，连着几个月亮到半夜。我咬着牙，把能省的每一分都省下来，一笔一笔还；我给自己立了规矩——东西是真的，就总有翻身的一天。' },
       { if: 'gamble_lose', settle: {
         kicker: '第③部分 · 广告结算',
         title: '豪赌 · 广告失利',
@@ -187,7 +174,7 @@ const SCENES = [
         items: ['现金 <b>×0.35</b>（韧性足够时保全 ×0.55）', '声誉 <b>−6</b>'],
         effects: { cash_mult_lose: true, reputation: -6 }
       } },
-      { if: 'gamble_safe', who: 'narration', text: '你把那份 21 万的合同推了回去，改签了便宜时段的广告。郑主任笑你胆子小，你没争——你的账本上，第一行从来都写着一个"稳"字。广告照做，照播，只是观众少些、来得慢些。' },
+      { if: 'gamble_safe', who: 'narration', text: '我把那份 21 万的合同推了回去，改签了便宜时段的广告。郑主任笑我胆子小，我没争——我的账本上，第一行从来都写着一个"稳"字。广告照做，照播，只是观众少些、来得慢些。' },
       { if: 'gamble_safe', settle: {
         kicker: '第③部分 · 广告结算',
         title: '稳妥 · 小广告',
@@ -207,20 +194,19 @@ const SCENES = [
       { if: 'gamble_win', who: 'narration', text: '第二天，天还没亮，门就被敲响了。来的是区一小旁边那家小卖部的老板，张口就问：那个"娃哈哈"，给我来一箱。' },
       { if: 'gamble_win', who: 'zhou', text: '（一边打算盘，一边摇头笑）……疯了。这还没到中午，订货的单子，比去年一年都厚。' },
       { if: 'gamble_win', who: 'fan', text: '（一路小跑进来，举着电话听筒）经销部！百货大楼问，能不能给他们供一千箱！' },
-      { if: 'gamble_safe', who: 'narration', text: '那晚看得人不多，头几天，街上也安安静静。你没慌，照旧一家学校、一家单位地跑，让人先尝。可广告像埋进土里的种子——半个月后，开始有人点名要"娃哈哈"，催货的电话一天比一天多。慢，却一步一个脚印。' },
-      { if: 'gamble_lose', who: 'narration', text: '黄金档的钱没有白砸——可它也没能一夜开花。头些日子，街面上没什么响动。你咬着牙，把广告往后又排了一段，一边跑口碑一边等。入冬前，那句话终于像慢火熬开了锅，"娃哈哈"三个字，开始在人们嘴里转。' },
+      { if: 'gamble_safe', who: 'narration', text: '那晚看得人不多，头几天，街上也安安静静。我没慌，照旧一家学校、一家单位地跑，让人先尝。可广告像埋进土里的种子——半个月后，开始有人点名要"娃哈哈"，催货的电话一天比一天多。慢，却一步一个脚印。' },
+      { if: 'gamble_lose', who: 'narration', text: '黄金档的钱没有白砸——可它也没能一夜开花。头些日子，街面上没什么响动。我咬着牙，把广告往后又排了一段，一边跑口碑一边等。入冬前，那句话终于像慢火熬开了锅，"娃哈哈"三个字，开始在人们嘴里转。' },
       { who: 'you', text: '（站在门口，看着院子里越堆越高的货箱，忽然说）周老师，范老师——光靠这间门脸，供不上了。' },
       { who: 'narration', text: '那一年，"娃哈哈"像一阵风，从学校门口刮进百货大楼，又刮向更远的城市。大赌有大赌的风，小赌有小赌的路——不管快慢，这个名字，到底被越来越多的人记住了。' },
-      { who: 'narration', text: '订单追着货车跑，货车追着厂房跑——你那间小小的经销部，再也装不下这个"读起来就让人开心的名字"了。' }
+      { who: 'narration', text: '订单追着货车跑，货车追着厂房跑——我那间小小的经销部，再也装不下这个"读起来就让人开心的名字"了。' }
     ]
   }
 ];
-
 /* =====================================================================
  * 引擎
  * ===================================================================== */
 const WHO_NAME = {
-  narration: '旁　白', you: '你', laozong: '老　宗',
+  narration: '旁　白', you: '我', laozong: '老　宗',
   zhou: '周老师', fan: '范老师', zhujiaoshou: '朱教授',
   zhengzhuren: '郑主任', yuanyuan: '圆　圆', students: '小学生们'
 };
@@ -228,14 +214,12 @@ const STAT_NAME = {
   resilience: '坚韧', ahai_bond: '与阿海的情谊', negotiation_skill: '谈判', father_bond: '与父亲的羁绊'
 };
 const STAT_ORDER = ['resilience', 'ahai_bond', 'negotiation_skill', 'father_bond'];
-
 const state = {
   stats: { resilience: 0, ahai_bond: 0, negotiation_skill: 0, father_bond: 0 },
   cash: 0,
   reputation: 0,
   flags: {}
 };
-
 const lineEl = document.getElementById('line');
 const hintEl = document.getElementById('hint');
 const speakerEl = document.getElementById('speaker');
@@ -259,7 +243,6 @@ const gambleResult = document.getElementById('gambleResult');
 const gambleNext = document.getElementById('gambleNext');
 const settleBox = document.getElementById('settleBox');
 const fogEl = document.getElementById('fog');
-
 let scene = 0;
 let idx = -1;
 let typing = false;
@@ -275,7 +258,6 @@ let pendingSettle = null;
 let musicOn = false;
 let toastTimer = null;
 let fogOpen = true;
-
 /* ---- 白雾转场 ---- */
 function resetFog(){
   fogOpen = true;
@@ -286,17 +268,14 @@ function disperseFog(){
   fogOpen = false;
   fogEl.classList.add('dispersed');
 }
-
 function bgFor(S){ return USE_DEBUG_BG ? DEBUG_BG : S.img; }
 function getLines(){ return stream; }
-
 function setStream(){
   stream = SCENES[scene].lines.filter(function(l){
     if(l.if && !state.flags[l.if]) return false;
     return true;
   });
 }
-
 /* ---- 打字机 ---- */
 function typeLine(l){
   const full = l.text;
@@ -323,7 +302,6 @@ function typeLine(l){
     }
   }, 55);
 }
-
 function finishLine(){
   const ls = getLines();
   if(idx < 0 || idx >= ls.length) return;
@@ -333,12 +311,10 @@ function finishLine(){
   if(idx === ls.length - 1){ finished = true; setEndHint(); }
   hintEl.style.visibility = 'visible';
 }
-
 function setSpeaker(who){
   speakerEl.textContent = WHO_NAME[who] || WHO_NAME.narration;
   speakerEl.className = 'pro-speaker' + (who === 'narration' ? '' : ' ' + who);
 }
-
 function setEndHint(){
   if(scene === SCENES.length - 1){
     hintEl.textContent = '第③部分 · 完 —— 下一篇：兼并国企（1991）';
@@ -349,14 +325,12 @@ function setEndHint(){
     hintEl.classList.remove('done');
   }
 }
-
 /* ---- 数值面板 ---- */
 function renderHud(){
   hudStats.innerHTML =
     '<div class="pro-hud-row"><span>现金</span><b>¥' + state.cash + '</b></div>' +
     '<div class="pro-hud-row"><span>声誉</span><b>' + state.reputation + '</b></div>';
 }
-
 /* ---- 数值存档 ---- */
 function saveStats(){
   try{
@@ -374,14 +348,12 @@ function saveStats(){
     }));
   }catch(e){}
 }
-
 function toast(msg){
   toastEl.textContent = msg;
   toastEl.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, 2600);
 }
-
 /* ---- 音效 ---- */
 function playSfx(path){
   if(!path) return;
@@ -396,7 +368,6 @@ function playSfx(path){
     if(path !== '#') toast('音效文件缺失：' + path);
   }
 }
-
 /* ---- 分支选择 ---- */
 function showChoices(c){
   pendingChoice = c;
@@ -418,14 +389,12 @@ function showChoices(c){
   choicesBox.hidden = false;
   renderHud();
 }
-
 function pickChoice(key){
   const c = pendingChoice;
   if(!c) return;
   const opt = c.options.find(function(o){ return o.key === key; });
   pendingChoice = null;
   choicesBox.hidden = true;
-
   if(opt.effects){
     Object.keys(opt.effects).forEach(function(k){
       if(k in state.stats) state.stats[k] += opt.effects[k];
@@ -433,7 +402,6 @@ function pickChoice(key){
     saveStats();
   }
   Object.assign(state.flags, opt.flags || {});
-
   const follow = [];
   if(opt.text) follow.push({ who: 'you', text: opt.text });
   if(c.after && c.after[key]){
@@ -441,14 +409,12 @@ function pickChoice(key){
   } else {
     follow.push.apply(follow, getLines().slice(choiceIdx + 1));
   }
-
   stream = follow;
   idx = -1; typing = false; finished = false;
   hintEl.classList.remove('done');
   hintEl.style.visibility = 'visible';
   advance();
 }
-
 /* ---- 配方研制小游戏(#)---- */
 function showGame(g){
   pendingGame = g;
@@ -459,7 +425,6 @@ function showGame(g){
   gameBox.hidden = false;
   hintEl.style.visibility = 'hidden';
 }
-
 function closeGame(){
   if(!pendingGame) return;
   pendingGame = null;
@@ -467,13 +432,11 @@ function closeGame(){
   hintEl.style.visibility = 'visible';
   advance();
 }
-
 gameLink.addEventListener('click', function(ev){
   ev.preventDefault();
   ev.stopPropagation();
   toast('配方研制小游戏占位链接（#）：选材 → 熬制 → 试喝调试，后续接入');
 });
-
 /* =====================================================================
  * 广告豪赌决策
  * 两个选项：豪赌（21万黄金档，80%成功率，不显示概率）/ 稳妥（便宜时段小广告）
@@ -485,7 +448,6 @@ const GAMBLE_OPTIONS = [
   { key: 'A', label: '豪赌 · 21 万黄金时段', text: '21 万，黄金时段。我签。', desc: '一夜之间，全城皆知——成了一步登天，败了倾家荡产。' },
   { key: 'B', label: '稳妥 · 便宜时段小广告', text: '先上便宜时段的广告，稳扎稳打。', desc: '钱省一半还多，观众少些、来得慢些，但账本上第一行写着"稳"。' }
 ];
-
 function startGamble(){
   pendingGamble = true;
   hintEl.style.visibility = 'hidden';
@@ -507,11 +469,13 @@ function startGamble(){
   });
   gambleBox.hidden = false;
 }
-
 function pickGamble(key){
   /* 禁用所有选项 */
   Array.prototype.forEach.call(gambleOptions.children, function(b){ b.disabled = true; });
-
+  /* 先清除全部三个豪赌分支 flag，避免 localStorage 继承的旧 flag 导致多分支同时生效 */
+  delete state.flags.gamble_win;
+  delete state.flags.gamble_lose;
+  delete state.flags.gamble_safe;
   if(key === 'A'){
     /* 豪赌：80% 成功率 */
     const win = Math.random() < GAMBLE_WIN_RATE;
@@ -533,17 +497,19 @@ function pickGamble(key){
     gambleResult.className = 'pro-gamble-result safe';
     gambleResult.textContent = '你把 21 万的合同推了回去，改签了便宜时段的广告。广告照做照播，只是观众少些、来得慢些——稳扎稳打。';
   }
-
   gambleResult.hidden = false;
   gambleNext.hidden = false;
 }
-
 gambleNext.addEventListener('click', function(ev){
   ev.stopPropagation();
   endGamble();
 });
-
 function endGamble(){
+  /* 未选择任何选项时，不允许继续，提示玩家先选择 */
+  if(!state.flags.gamble_win && !state.flags.gamble_lose && !state.flags.gamble_safe){
+    toast('请先选择一个选项');
+    return;
+  }
   pendingGamble = null;
   gambleBox.hidden = true;
   bodyEl.classList.add('has-stats');
@@ -560,7 +526,6 @@ function endGamble(){
   hintEl.style.visibility = 'visible';
   advance();
 }
-
 /* ---- 结算面板（支持现金乘法） ---- */
 function showSettle(s){
   pendingSettle = s;
@@ -577,7 +542,6 @@ function showSettle(s){
   settleBox.hidden = false;
   hintEl.style.visibility = 'hidden';
 }
-
 function endSettle(){
   const s = pendingSettle;
   if(!s) return;
@@ -585,7 +549,6 @@ function endSettle(){
   settleBox.hidden = true;
   const fx = s.effects || {};
   const parts = [];
-
   if(fx.cash_mult){
     const old = state.cash;
     state.cash = Math.round(old * fx.cash_mult);
@@ -601,7 +564,6 @@ function endSettle(){
     state.reputation += fx.reputation;
     parts.push((fx.reputation > 0 ? '+' : '') + fx.reputation + ' 声誉');
   }
-
   if(parts.length){
     renderHud();
     saveStats();
@@ -614,12 +576,10 @@ function endSettle(){
   hintEl.style.visibility = 'visible';
   advance();
 }
-
 document.getElementById('settleNext').addEventListener('click', function(ev){
   ev.stopPropagation();
   endSettle();
 });
-
 /* ---- 推进 ---- */
 function advance(){
   if(fogOpen) return;
@@ -654,14 +614,12 @@ function advance(){
     typeLine(l);
   }
 }
-
 function preloadNext(){
   if(scene + 1 < SCENES.length){
     const im = new Image();
     im.src = bgFor(SCENES[scene + 1]);
   }
 }
-
 /* ---- 切换至下一幕 ---- */
 function switchScene(){
   if(switching) return;
@@ -689,7 +647,6 @@ function switchScene(){
     setTimeout(function(){ switching = false; advance(); }, 1100);
   }, 600);
 }
-
 /* ---- 音乐开关 ---- */
 function toggleMusic(){
   if(musicOn){
@@ -716,13 +673,11 @@ musicBtn.addEventListener('click', function(ev){
   ev.stopPropagation();
   toggleMusic();
 });
-
 /* =====================================================================
  * 数值继承（从前序部分继承：心性数值 + 现金 + 声誉 + 分支标志）
  * 优先读取 URL 参数，其次读 localStorage 存档；都没有时从默认值开始。
  * ===================================================================== */
 const INHERIT_KEYS = ['resilience', 'ahai_bond', 'negotiation_skill', 'father_bond'];
-
 function loadInherited(){
   const out = {};
   const flags = {};
@@ -738,7 +693,6 @@ function loadInherited(){
   if(c !== null && c !== '' && !isNaN(Number(c))){ cash = Number(c); got = true; }
   const r = qs.get('reputation');
   if(r !== null && r !== '' && !isNaN(Number(r))){ reputation = Number(r); got = true; }
-
   try{
     const raw = localStorage.getItem(SAVE_KEY);
     if(raw){
@@ -753,13 +707,10 @@ function loadInherited(){
       if(data && data.flags){ Object.assign(flags, data.flags); }
     }
   }catch(e){}
-
   /* 若没有继承到现金，给一个默认起始值（经销部一年经营所得） */
   if(!got || cash === 0){ cash = 110; reputation = 4; }
-
   return { out: out, flags: flags, got: got, cash: cash, reputation: reputation };
 }
-
 /* ---- 启动 ---- */
 const inherited = loadInherited();
 if(inherited.got){
@@ -768,12 +719,15 @@ if(inherited.got){
 state.cash = inherited.cash;
 state.reputation = inherited.reputation;
 Object.assign(state.flags, inherited.flags);
+/* 清除 part3 豪赌决策残留 flag，避免上次游玩或 localStorage 旧数据干扰本次分支 */
+delete state.flags.gamble_win;
+delete state.flags.gamble_lose;
+delete state.flags.gamble_safe;
 bodyEl.classList.add('has-stats');
 setStream();
 bgEl.src = bgFor(SCENES[0]);
 renderHud();
 setTimeout(advance, 1600);
-
 document.addEventListener('click', function(){
   if(fogOpen){ disperseFog(); return; }
   advance();
