@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>宗庆后 · 第⑤部分 · 非常可乐 · 1998</title>
+<link rel="stylesheet" href="./style.css">
+<link rel="stylesheet" href="./level_one_pixel.css">
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@400;700&display=swap">
+</head>
+<body class="zqh-prologue" data-scene="1">
+
+  <!-- ===== 背景层 ===== -->
+  <div class="pro-bg" id="bgStack">
+    <img class="pro-bg-img" id="bg" src="./assets/bg/scene5-1.png" alt="杭州办公室" />
+    <div class="pro-vignette"></div>
+    <div class="pro-bottom-fade"></div>
+    <div class="pro-grain"></div>
+  </div>
+
+  <!-- ===== 白雾转场层 ===== -->
+  <div class="pro-fog" id="fog"></div>
+
+  <!-- ===== 场景角标 ===== -->
+  <div class="pro-scene-tag anim" id="sceneTag">杭州 · 一九九八年夏</div>
+
+  <!-- ===== 音乐开关 ===== -->
+  <button class="pro-music" id="musicBtn" type="button" aria-label="背景音乐开关" title="背景音乐">
+    <svg class="ico-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 18V5l11-2v13"/><circle cx="9" cy="18" r="3"/><circle cx="20" cy="16" r="3"/>
+    </svg>
+    <svg class="ico-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 18V5l11-2v13"/><circle cx="9" cy="18" r="3"/><circle cx="20" cy="16" r="3"/><line x1="3" y1="4" x2="21" y2="20"/>
+    </svg>
+  </button>
+
+  <!-- ===== 数值面板 ===== -->
+  <div class="pro-hud" id="hud">
+    <div class="pro-hud-title">家　底</div>
+    <div id="hudStats"></div>
+  </div>
+
+  <!-- ===== 对话框 ===== -->
+  <div class="pro-dialog">
+    <div class="pro-dialog-bar"></div>
+    <div class="pro-dialog-main">
+      <div class="pro-speaker" id="speaker">旁　白</div>
+      <p class="pro-line" id="line"></p>
+    </div>
+    <div class="pro-hint" id="hint">▼ 点击继续</div>
+  </div>
+
+  <!-- ===== 分支选择 ===== -->
+  <div class="pro-choices" id="choicesBox" hidden>
+    <div class="pro-choices-title" id="choicesTitle"></div>
+    <div class="pro-choices-list" id="choicesList"></div>
+  </div>
+
+  <!-- ===== 可乐对垒 · 三轮比点（田忌赛马） ===== -->
+  <div class="pro-duel" id="duelBox" hidden>
+    <div class="pro-duel-panel">
+      <span class="pro-duel-kicker">可乐对垒 · 第 <b id="duelRound">1</b> / 3 轮</span>
+      <h2>以巧取胜 · 田忌赛马</h2>
+      <p class="pro-duel-rules">三轮比点。两乐按【品牌积淀】【资金实力】【一二线渠道】出牌；你手里攥着【渠道深耕】【人情关系】【下沉市场】三张牌，逐轮选一张出——不跟它硬碰，专打它顾不上的地方。</p>
+      <div class="pro-duel-sides">
+        <div class="pro-duel-side">
+          <div class="pro-duel-name">两　乐 <small>· 出的牌</small></div>
+          <div class="pro-duel-card opp" id="duelOpp"><b id="oppKey">品牌积淀</b><span id="oppDesc"></span></div>
+          <p class="pro-duel-hint" id="duelHint"></p>
+        </div>
+        <div class="pro-duel-vs">VS</div>
+        <div class="pro-duel-side">
+          <div class="pro-duel-name">你 <small>· 手里攥着的牌</small></div>
+          <div class="pro-duel-cards" id="duelCards"></div>
+        </div>
+      </div>
+      <div class="pro-duel-log" id="duelLog"></div>
+      <div class="pro-duel-result" id="duelResult" hidden></div>
+      <button class="pro-duel-next" id="duelNext" type="button" hidden>继　续</button>
+    </div>
+  </div>
+
+  <!-- ===== 结算面板 ===== -->
+  <div class="pro-settle" id="settleBox" hidden>
+    <div class="pro-settle-panel">
+      <span class="pro-settle-kicker" id="settleKicker"></span>
+      <h2 class="pro-settle-title" id="settleTitle"></h2>
+      <p class="pro-settle-desc" id="settleDesc"></p>
+      <ul class="pro-settle-list" id="settleList"></ul>
+      <button class="pro-settle-next" id="settleNext" type="button">继　续</button>
+    </div>
+  </div>
+
+  <div class="pro-toast" id="toast"></div>
+
+  <!-- ===== 进入下一篇（结算后显示） ===== -->
+  <a class="pro-next-link" id="nextLink" hidden href="#">下一篇 · 第⑥部分 · 达能之争 →</a>
+
+  <!-- 背景音乐 -->
+  <audio id="bgm" src="./assets/bgm/test1.flac" loop preload="none"></audio>
+
+<script>
+/* =====================================================================
+ * 配置区
+ * ===================================================================== */
+const USE_DEBUG_BG = false;
+const DEBUG_BG = './assets/debug-bg.png';
+const NEXT_PAGE = 'part6.html';
+const SAVE_KEY = 'zqh_level1_save';
+
+/* =====================================================================
+ * 行类型：{who,text} 对白/旁白；{if:'标志',who,text} 条件行；
+ * {duel:true} 可乐对垒（三轮比点，胜/负分别进入对应分支）；
+ * {settle:{...}} 结算面板；{toast:'文本'} 只弹提示不占行。
+ * ===================================================================== */
+const SCENES = [
+  {
+    chapter: '第一幕 · 杭州办公室',
+    tag: '杭州 · 一九九八年夏',
+    img: './assets/bg/scene5-1.png',
+    alt: '杭州办公室·全国地图',
+    lines: [
+      { who: 'laozong', text: '（站在你旁边）全中国七个可乐，都死在洋人手里了。你还去不去？' },
+      { who: 'narration', text: '从 1991 年把罐头厂拧进自己手里算起，一晃七年。娃哈哈从小厂做到了大厂，瓶子从儿童营养液一路装到各种饮料；我手里最值钱的，却不是哪条产线，而是墙上这张网——十几年、一乡镇一乡镇铺出来的老关系。' },
+      { who: 'fan', text: '（举着一沓报纸进来，眉头拧着）厂长，你听听——今天又倒一个。连报纸上都在说，国产汽水完了，七个牌子，让两乐一个接一个收了编、挤垮了台。行里人都叹气，说这是"水淹七军"。' },
+      { who: 'zhou', text: '（推了推老花镜，慢悠悠补一句）水是人家洋可乐的水。咱这十来年，做的是孩子喝的营养液、饮料，井水不犯河水——犯不着蹚这浑水。' },
+      { who: 'you', text: '（没接话，只站在地图前，看了一会儿，忽然问）两乐那么大的水，能淹到这儿来么？' },
+      { who: 'narration', text: '我指的是地图上那些密密麻麻的小点——县城、乡镇、村口的小卖部。两乐的广告、货架、大商场，全砸在城里；而这些红点，两乐看不见，也懒得看。' },
+      { who: 'you', text: '（翻开那本卷了边的账本，一页页指过去）可这上面的每一家，我都认识。十几年，我是一瓶一瓶、一箱一箱，跟人家处出来的交情。城里头的水再深，也淹不到这条乡下的路。' },
+      { who: 'narration', text: '话说到这儿，我忽然停住，把那本账本合上，目光落回窗外新盖的厂房上。一个念头，像一粒种子，悄悄落了土。' }
+    ]
+  },
+  {
+    chapter: '第二幕 · 会议室',
+    tag: '会议室 · 当日',
+    img: './assets/bg/scene5-2.png',
+    alt: '会议室·报纸与布局图',
+    lines: [
+      { who: 'zhou', text: '（把报纸往桌心一推，先开了口）厂长，我丑话说前头——你要做可乐，我不赞成。你看看人家：一百年的牌子，全世界的钱，广告铺天盖地。咱这几间厂，拿什么跟它拼？' },
+      { who: 'fan', text: '（接过话头，声音不高却急）就是！老周说得对。咱是卖饮料的，好好卖咱的饮料，不好么？干嘛非去蹚那潭浑水？天府可乐、崂山可乐……哪个当初不比咱阔气？这会儿全躺水里了！' },
+      { who: 'managers', text: '（纷纷点头，七嘴八舌）是啊厂长，家底都是十几年攒的，别一时冲动搭进去。' },
+      { who: 'narration', text: '我等他们把话都说完了，才站起来，走到墙边那张地图前，指着那些密密麻麻的红点。' },
+      { who: 'you', text: '你们说的都对——城里，咱确实打不过它。那我问你们一句：两乐在咱这些乡镇的小卖部里，一家一家数，摆了几瓶？' },
+      { who: 'narration', text: '会议室安静下来。谁都答不上来。两乐看不上这些地方，嫌量小、路远、划不来。可谁也没想到——正因为没人看得上，这里才是一张白纸。' },
+      { who: 'you', text: '（翻开账本，慢慢念出一个个名字）杨家埠的老孙、青石桥的田老板、河口的陈婶……从当年代销汽水起，这些人就跟我打交道。我把货送到人家店里，人家从不压我的价。可乐这仗，咱不去城里跟它抢货架——咱打它顾不上、而我已经铺了十几年的地方。' },
+      { who: 'zhou', text: '（沉默半晌，把老花镜摘下来擦了擦，终于点头）……行。你要是非打这一仗，账，我陪你算到底。' },
+      { who: 'fan', text: '（也把心一横）那我也跟着。十几年都跟过来了，还差这一仗么！' }
+    ]
+  },
+  {
+    chapter: '第三幕 · 定名与摸底',
+    tag: '办公室·省城商超·乡镇杂货铺',
+    img: './assets/bg/scene5-3.png',
+    alt: '定名墙·候选可乐名',
+    lines: [
+      { who: 'narration', text: '做可乐，先得起个响当当的名字。大家七嘴八舌提了一堆，我都不满意。这天深夜，我对着满墙名字看了很久，忽然提笔，圈出两个字。' },
+      { who: 'you', text: '（轻声念）非常……可乐。非常，就是"不平常"。中国人自己的可乐，总得有个不平常的名字。' },
+      { who: 'fan', text: '（第二天听说了，直咂嘴）非常可乐？厂长，你听听——"非常可乐"，让外行人一念，倒像"非死不可"。多不吉利！' },
+      { who: 'you', text: '（笑了）非死不可？那咱就做给它们看——是"非常"，不是"非死"。而且你细品：这名字里还藏着一句给懂的人的悄悄话——非常，非常，future，future——未来。中国的可乐，要的就是往后的日子。' },
+      { who: 'narration', text: '名字定了，我亲自去摸市场的门。第一站，是省城最大的那家商超。采购经理金总坐在宽大的办公桌后，头也不抬，只顾翻手里的报价单。' },
+      { who: 'jinzong', text: '（抬眼扫了你一下，语气客气得像背书）先生，我们商场货架上，现在都是洋可乐。您这个……非常可乐？国产的？怕是不好动销。要摆，最底下一层，看有没有人拿。' },
+      { who: 'you', text: '（没恼，反而笑了笑）金总，最底下那层，我先不要。我今天来，就想问一句——要是哪天乡镇那些小店，一瓶一瓶都卖疯了，您这最上面一层，还轮不轮得到我？' },
+      { who: 'jinzong', text: '（微微一怔，随即也笑了，把报价单合上）……行，那我等着看您这"非常可乐"，怎么个卖疯法。' },
+      { who: 'narration', text: '金总的冷脸，我心里早就有数。我没在城里多留，转身就往乡下去——去敲老主顾田老板的门。' },
+      { who: 'tianlaoban', text: '（正躺在铺门口的躺椅上摇蒲扇，一见你，赶紧起身，咧嘴就笑）哟！宗厂长！哪阵风把您吹来了？快坐快坐，我给您泡茶！' },
+      { who: 'you', text: '（把一瓶样瓶从布袋里拿出来，放在柜台上）田老板，我不喝茶。我今天来，是想请你帮我摆一瓶东西——我自己做的可乐，非常可乐，中国人自己的可乐。' },
+      { who: 'tianlaoban', text: '（接过去，翻来覆去看了看那行红字，又抬头看看你，半晌，一拍大腿）别人让我摆洋汽水，我得掂量掂量利钱。你宗厂长让我摆的，不用掂量——你说能喝，我就敢摆！摆冰柜最中间，谁来都不让！' },
+      { who: 'narration', text: '我看着他把那瓶红字的可乐，整整齐齐码进冰柜最显眼的位置，心里那口气，忽然就踏实了。我忽然明白，这一仗能不能赢，不在城里那排货架上，就在这一个个红点上。' }
+    ]
+  },
+  {
+    chapter: '第四幕 · 可乐对垒',
+    tag: '对垒 · 三轮比点',
+    img: './assets/bg/scene5-4.png',
+    alt: '乡镇冰柜·非常可乐',
+    lines: [
+      { who: 'narration', text: '可乐这仗，说到底要过三关：它笑我便宜，它砸钱压我，它拿货架卡我。我偏偏不跟它硬碰——牌要一张一张出，出到它最疼、又最顾不上的地方去。' },
+      { duel: true },
+      { if: 'duel_win', who: 'narration', text: '"非常可乐，中国人自己的可乐！"这句话喊出去后，下沉市场先动了起来。田老板的冰柜里，红瓶子和洋瓶子并排站着——先卖光的，总是红的那一瓶。' },
+      { ifAll: ['duel_win', 'factory_bonus'], who: 'luchangzhang', text: '（从罐头厂打来电话，嗓门洪亮）宗厂长！罐头厂那几条老线，我全调过来灌可乐了！人手三班倒，货断不了——你只管往前冲，后头有我！' },
+      { if: 'duel_win', who: 'tianlaoban', text: '（乐呵呵地又添了一箱）宗厂长，我就说！咱中国人自己的可乐，凭啥卖不过洋的？这条街上，半条街的孩子都喝这个！' },
+      { if: 'duel_win', who: 'fan', text: '（举着电话跑进来，嗓门都劈了）厂长！乡镇要货的电话，从早到晚没断过！都说——红瓶的可乐，摆上就有人买！' },
+      { if: 'duel_win', who: 'you', text: '（放下电话，看着墙上那幅地图。那些红点，像是真的一个一个亮了起来）……下沉市场，动了。' },
+      { if: 'duel_win', settle: {
+        kicker: '第⑤部分 · 非常可乐结算',
+        title: '对垒 · 胜出',
+        desc: '下沉市场先动了起来，红瓶子摆上就有人买。',
+        items: ['现金 <b>×4</b>（带产能底牌时 <b>×5</b>）', '声誉 <b>+10</b>'],
+        effects: { cash_mult_cola_win: true, reputation: 10 }
+      } },
+      { if: 'duel_lose', who: 'narration', text: '正面硬拼并不轻松。城里的商场，到底还是没给那排红瓶子让路。可我早就不指望城里了——红瓶子进不了一线货架，就一瓶一瓶，在乡镇扎下根。' },
+      { if: 'duel_lose', who: 'narration', text: '田老板的冰柜，还是把非常可乐摆在最中间。买的人不多，可总有人认——认这十几年的交情，也认那句"中国人自己的可乐"。' },
+      { if: 'duel_lose', who: 'you', text: '（蹲在杂货铺门口，看着那排卖得不快、却一直有人买的红瓶子，慢慢说）……不急。守住了这儿，就守住了以后。' },
+      { if: 'duel_lose', settle: {
+        kicker: '第⑤部分 · 非常可乐结算',
+        title: '对垒 · 守住基本盘',
+        desc: '红瓶子进不了一线货架，却在乡镇扎下了根。',
+        items: ['现金 <b>×1.6</b>', '声誉 <b>+2</b>'],
+        effects: { cash_mult: 1.6, reputation: 2 }
+      } }
+    ]
+  },
+  {
+    chapter: '第五幕 · 衔接第六部分',
+    tag: '乡镇集市 · 黄昏',
+    img: './assets/bg/scene5-4.png',
+    alt: '乡镇集市冰柜',
+    lines: [
+      { who: 'narration', text: '这一仗，城里人或许不知道。可在广大的乡镇，红瓶子的非常可乐，正一瓶一瓶，摆进一家一家小店——我早年间铺下的那张网，头一回，替我把可乐送进了千家万户。' },
+      { who: 'zhou', text: '（拨着算盘，难得露出笑意）厂长，我算明白了——你打哪儿，都跟别人不一样。城里那么多人挤破头抢那排货架，你倒好，绕到后头，把后院给占了。' },
+      { who: 'you', text: '（望着窗外，若有所思）牌子，不是天上掉下来的。是一个镇一个镇、一家店一家店，喝出来的。' },
+      { who: 'narration', text: '话到这儿，电话忽然响了。我接起来，那头是我合作多年的老朋友，语气却不像往日热络，只淡淡地丢下一句——"老宗，有份合同，想请你过来当面聊聊。"' },
+      { who: 'you', text: '（握着电话，看着窗外渐沉的天色，忽然没来由地想起一句话）……明枪易躲，暗箭难防。' },
+      { who: 'narration', text: '我这才记起，跟这位老朋友合作这些年，我签过的每一份合同，都还没来得及一个字一个字，好好读过一遍。' }
+    ]
+  }
+];
+
+/* =====================================================================
+ * 引擎
+ * ===================================================================== */
+const WHO_NAME = {
+  narration: '旁　白', you: '我', laozong: '老　宗',
+  zhou: '周老师', fan: '范老师', managers: '几位厂长',
+  jinzong: '金　总', tianlaoban: '田老板', luchangzhang: '鲁厂长'
+};
+const STAT_NAME = {
+  resilience: '坚韧', ahai_bond: '与阿海的情谊', negotiation_skill: '谈判', father_bond: '与父亲的羁绊'
+};
+const STAT_ORDER = ['resilience', 'ahai_bond', 'negotiation_skill', 'father_bond'];
+
+const state = {
+  stats: { resilience: 0, ahai_bond: 0, negotiation_skill: 0, father_bond: 0 },
+  cash: 0,
+  reputation: 0,
+  flags: {}
+};
+
+const lineEl = document.getElementById('line');
+const hintEl = document.getElementById('hint');
+const speakerEl = document.getElementById('speaker');
+const bgEl = document.getElementById('bg');
+const sceneTagEl = document.getElementById('sceneTag');
+const stackEl = document.getElementById('bgStack');
+const bodyEl = document.body;
+const choicesBox = document.getElementById('choicesBox');
+const choicesTitle = document.getElementById('choicesTitle');
+const choicesList = document.getElementById('choicesList');
+const hudStats = document.getElementById('hudStats');
+const toastEl = document.getElementById('toast');
+const bgm = document.getElementById('bgm');
+const musicBtn = document.getElementById('musicBtn');
+const duelBox = document.getElementById('duelBox');
+const settleBox = document.getElementById('settleBox');
+const fogEl = document.getElementById('fog');
+
+let scene = 0;
+let idx = -1;
+let typing = false;
+let finished = false;
+let switching = false;
+let timer = null;
+let stream = null;
+let pendingChoice = null;
+let choiceIdx = -1;
+let pendingSettle = null;
+let musicOn = false;
+let toastTimer = null;
+let fogOpen = true;
+
+/* ---- 可乐对垒状态 ---- */
+let duelOpen = false;
+
+/* ---- 白雾转场 ---- */
+function resetFog(){
+  fogOpen = true;
+  fogEl.classList.remove('dispersed');
+}
+function disperseFog(){
+  if(!fogOpen) return;
+  fogOpen = false;
+  fogEl.classList.add('dispersed');
+}
+
+function bgFor(S){ return USE_DEBUG_BG ? DEBUG_BG : S.img; }
+function getLines(){ return stream; }
+
+function setStream(){
+  stream = SCENES[scene].lines.filter(function(l){
+    if(l.if && !state.flags[l.if]) return false;
+    if(l.ifAll){
+      for(var i = 0; i < l.ifAll.length; i++){
+        if(!state.flags[l.ifAll[i]]) return false;
+      }
+    }
+    return true;
+  });
+}
+
+/* ---- 打字机 ---- */
+function typeLine(l){
+  const full = l.text;
+  let pos = 0;
+  typing = true;
+  setSpeaker(l.who);
+  lineEl.classList.toggle('action', full.charAt(0) === '（');
+  hintEl.style.visibility = 'hidden';
+  lineEl.textContent = '';
+  clearInterval(timer);
+  timer = setInterval(function(){
+    pos++;
+    lineEl.textContent = full.slice(0, pos);
+    if(pos < full.length){
+      const caret = document.createElement('span');
+      caret.className = 'caret';
+      lineEl.appendChild(caret);
+    }
+    if(pos >= full.length){
+      clearInterval(timer);
+      typing = false;
+      if(idx === getLines().length - 1){ finished = true; setEndHint(); }
+      hintEl.style.visibility = 'visible';
+    }
+  }, 55);
+}
+
+function finishLine(){
+  const ls = getLines();
+  if(idx < 0 || idx >= ls.length) return;
+  clearInterval(timer);
+  lineEl.textContent = ls[idx].text;
+  typing = false;
+  if(idx === getLines().length - 1){ finished = true; setEndHint(); }
+  hintEl.style.visibility = 'visible';
+}
+
+function setSpeaker(who){
+  speakerEl.textContent = WHO_NAME[who] || WHO_NAME.narration;
+  speakerEl.className = 'pro-speaker' + (who === 'narration' ? '' : ' ' + who);
+}
+
+function setEndHint(){
+  if(scene === SCENES.length - 1){
+    hintEl.textContent = '第⑤部分 · 完 —— 下一篇：达能之争 · 逐字读合同（2007）';
+    hintEl.classList.add('done');
+    saveStats();
+    showNextLink();
+  } else {
+    hintEl.textContent = '▼ 进入下一幕';
+    hintEl.classList.remove('done');
+    hideNextLink();
+  }
+}
+
+/* ---- 数值面板 ---- */
+function renderHud(){
+  hudStats.innerHTML =
+    '<div class="pro-hud-row"><span>现金</span><b>¥' + state.cash + '</b></div>' +
+    '<div class="pro-hud-row"><span>声誉</span><b>' + state.reputation + '</b></div>';
+}
+
+/* ---- 数值存档（供下一篇继承） ---- */
+function saveStats(){
+  try{
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      stats: {
+        resilience: state.stats.resilience,
+        ahai_bond: state.stats.ahai_bond,
+        negotiation_skill: state.stats.negotiation_skill,
+        father_bond: state.stats.father_bond,
+        cash: state.cash,
+        reputation: state.reputation
+      },
+      flags: state.flags,
+      savedAt: new Date().toISOString()
+    }));
+  }catch(e){}
+}
+
+function showNextLink(){
+  const a = document.getElementById('nextLink');
+  const qs = STAT_ORDER.map(function(k){ return k + '=' + state.stats[k]; })
+    .concat(['cash=' + state.cash, 'reputation=' + state.reputation])
+    .join('&');
+  a.href = NEXT_PAGE + '?' + qs;
+  a.hidden = false;
+}
+
+function hideNextLink(){ document.getElementById('nextLink').hidden = true; }
+
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, 2600);
+}
+
+/* ---- 音效 ---- */
+function playSfx(path){
+  if(!path) return;
+  try{
+    const a = new Audio(path);
+    a.volume = 0.6;
+    const p = a.play();
+    if(p && p.catch){
+      p.catch(function(){ if(path !== '#') toast('音效文件缺失：' + path); });
+    }
+  }catch(e){
+    if(path !== '#') toast('音效文件缺失：' + path);
+  }
+}
+
+/* ---- 分支选择 ---- */
+function showChoices(c){
+  pendingChoice = c;
+  choiceIdx = idx;
+  choicesTitle.textContent = c.prompt;
+  choicesList.innerHTML = '';
+  c.options.forEach(function(opt){
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'pro-choice';
+    btn.textContent = opt.label;
+    btn.addEventListener('click', function(ev){
+      ev.stopPropagation();
+      playSfx(opt.sound);
+      pickChoice(opt.key);
+    });
+    choicesList.appendChild(btn);
+  });
+  choicesBox.hidden = false;
+  renderHud();
+}
+
+function pickChoice(key){
+  const c = pendingChoice;
+  if(!c) return;
+  const opt = c.options.find(function(o){ return o.key === key; });
+  pendingChoice = null;
+  choicesBox.hidden = true;
+
+  if(opt.effects){
+    Object.keys(opt.effects).forEach(function(k){
+      if(k in state.stats) state.stats[k] += opt.effects[k];
+    });
+    saveStats();
+  }
+  Object.assign(state.flags, opt.flags || {});
+
+  const follow = [];
+  if(opt.text) follow.push({ who: 'you', text: opt.text });
+  if(c.after && c.after[key]){
+    follow.push.apply(follow, c.after[key]);
+  } else {
+    follow.push.apply(follow, getLines().slice(choiceIdx + 1));
+  }
+
+  stream = follow;
+  idx = -1; typing = false; finished = false;
+  hintEl.classList.remove('done');
+  hintEl.style.visibility = 'visible';
+  advance();
+}
+
+/* =====================================================================
+ * 可乐对垒 · 三轮比点（田忌赛马）
+ * 两乐按【品牌积淀】【资金实力】【一二线渠道】出牌；
+ * 你的【渠道深耕】压【品牌积淀】、【人情关系】压【资金实力】、【下沉市场】压【一二线渠道】。
+ * 三轮中至少赢两轮，即对垒胜出（主线）；否则对垒落败（次要分支）。
+ * 若第④部分带产能底牌（factory_bonus），胜出时现金 ×5（基础 ×4 ×1.25）。
+ * ===================================================================== */
+const DUEL_OPP = [
+  { key: '品牌积淀', desc: '一百年的牌子，压得人抬不起头', hint: '一百年的老牌子，最怕有人把牌子攒在路上——走了十几年的路，认得每一户人家的门。' },
+  { key: '资金实力', desc: '烧钱，广告铺天盖地', hint: '烧钱砸广告的人，最怕有人烧的是腿——钱能买来版面，买不来店门口那个招呼。' },
+  { key: '一二线渠道', desc: '守死了城里的黄金货架', hint: '守死城里货架的人，最怕有人绕到后院——中国最广的地方，不只在城里。' }
+];
+const DUEL_MINE = [
+  { key: '渠道深耕', desc: '十几年走出来的路，认得每一户人家的门' },
+  { key: '人情关系', desc: '钱买不来的交情，越处越厚' },
+  { key: '下沉市场', desc: '城里货架让给你，乡镇是我的地盘' }
+];
+const DUEL_BEATS = { '渠道深耕': '品牌积淀', '人情关系': '资金实力', '下沉市场': '一二线渠道' };
+/* 每轮胜出时的台词（取自文案） */
+const DUEL_WIN_LINES = [
+  '（站在那条通往乡镇的土路上）牌子是攒出来的。你的攒在广告上，我的是攒在路上——这条路，我走了十几年，认得每一户人家的门。',
+  '你烧的是钱，我烧的是腿。钱能买来版面，买不来人家店门口那个招呼——钱花完就没了，交情，越处越厚。',
+  '（指着地图上密密麻麻的红点）城里的货架，我让给你。可中国人最广的那片地方，不只在城里——中国孩子的舌头爱喝什么，你未必比我懂。'
+];
+
+let duelRound = 0;
+let duelWins = 0;
+let duelUsed = [];
+
+function startDuel(){
+  duelOpen = true;
+  duelRound = 0;
+  duelWins = 0;
+  duelUsed = [];
+  hintEl.style.visibility = 'hidden';
+  document.getElementById('duelLog').textContent = '';
+  document.getElementById('duelResult').hidden = true;
+  document.getElementById('duelNext').hidden = true;
+  renderDuelCards();
+  showDuelRound();
+  duelBox.hidden = false;
+}
+
+function renderDuelCards(){
+  const box = document.getElementById('duelCards');
+  box.innerHTML = '';
+  DUEL_MINE.forEach(function(c){
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'pro-duel-card pick';
+    btn.dataset.key = c.key;
+    btn.innerHTML = '<b>' + c.key + '</b><span>' + c.desc + '</span>';
+    btn.addEventListener('click', function(){ pickDuelCard(c.key, btn); });
+    box.appendChild(btn);
+  });
+}
+
+function showDuelRound(){
+  document.getElementById('duelRound').textContent = String(duelRound + 1);
+  const opp = DUEL_OPP[duelRound];
+  document.getElementById('oppKey').textContent = opp.key;
+  document.getElementById('oppDesc').textContent = opp.desc;
+  document.getElementById('duelHint').textContent = '两乐打出【' + opp.key + '】——' + opp.hint;
+  document.getElementById('duelOpp').className = 'pro-duel-card opp';
+  document.querySelectorAll('#duelCards .pro-duel-card').forEach(function(el){
+    el.disabled = false;
+    el.classList.remove('used', 'win', 'lose');
+  });
+}
+
+function pickDuelCard(key, el){
+  if(duelUsed.indexOf(key) >= 0) return;
+  duelUsed.push(key);
+  document.querySelectorAll('#duelCards .pro-duel-card').forEach(function(b){ b.disabled = true; });
+  const opp = DUEL_OPP[duelRound];
+  const win = DUEL_BEATS[key] === opp.key;
+  if(win) duelWins++;
+  const oppEl = document.getElementById('duelOpp');
+  oppEl.className = 'pro-duel-card opp ' + (win ? 'lose' : 'win');
+  el.classList.remove('pick');
+  el.classList.add(win ? 'win' : 'lose');
+  const logText = win
+    ? '第' + (duelRound + 1) + '轮：你的【' + key + '】压过了两乐的【' + opp.key + '】——你胜。'
+    : '第' + (duelRound + 1) + '轮：你的【' + key + '】没能压过两乐的【' + opp.key + '】——你负。';
+  document.getElementById('duelLog').textContent = logText;
+  /* 胜出时播放对应台词 */
+  if(win){
+    typeLine({ who: 'you', text: DUEL_WIN_LINES[duelRound] });
+  }
+  setTimeout(function(){
+    duelRound++;
+    if(duelRound < 3) showDuelRound();
+    else finishDuel();
+  }, win ? 2800 : 1200);
+}
+
+function finishDuel(){
+  const win = duelWins >= 2;
+  const box = document.getElementById('duelResult');
+  box.hidden = false;
+  box.className = 'pro-duel-result ' + (win ? 'win' : 'lose');
+  if(win && state.flags.factory_bonus){
+    box.textContent = '三轮对垒，你以巧取胜——罐头厂的大产线全力灌装，不怕断货。下沉市场，动了。';
+  } else if(win){
+    box.textContent = '三轮对垒，你以巧取胜——两乐的牌，一张张被你压了下去。下沉市场，动了。';
+  } else {
+    box.textContent = '三轮对垒，你落了下风——两乐的品牌与渠道，压过了你的牌面。可乡镇的根，已经扎下了。';
+  }
+  const next = document.getElementById('duelNext');
+  next.hidden = false;
+  next.onclick = function(){ endDuel(win); };
+}
+
+function endDuel(win){
+  duelOpen = false;
+  duelBox.hidden = true;
+  const effects = win ? { negotiation_skill: 10, resilience: 5 } : { resilience: 5 };
+  applyEffects(effects);
+  toastEffects(effects);
+  state.flags[win ? 'duel_win' : 'duel_lose'] = true;
+  bodyEl.classList.add('has-stats');
+  renderHud();
+  saveStats();
+  setStream();
+  idx = -1;
+  for(let i = 0; i < stream.length; i++){
+    if(stream[i].duel){ idx = i; break; }
+  }
+  typing = false;
+  finished = (idx >= stream.length - 1);
+  if(finished) setEndHint();
+  hintEl.classList.remove('done');
+  hintEl.style.visibility = 'visible';
+  advance();
+}
+
+function applyEffects(effects){
+  if(!effects) return;
+  Object.keys(effects).forEach(function(k){
+    if(k in state.stats) state.stats[k] += effects[k];
+  });
+  renderHud();
+}
+
+function toastEffects(effects){
+  if(!effects) return;
+  const parts = [];
+  Object.keys(effects).forEach(function(k){
+    if(!(k in STAT_NAME)) return;
+    const v = effects[k];
+    parts.push((v > 0 ? '+' : '') + v + ' ' + STAT_NAME[k]);
+  });
+  if(parts.length) toast(parts.join(' · '));
+}
+
+/* ---- 结算面板（支持现金乘法 + 产能底牌加成） ---- */
+function showSettle(s){
+  pendingSettle = s;
+  document.getElementById('settleKicker').textContent = s.kicker || '';
+  document.getElementById('settleTitle').textContent = s.title || '';
+  document.getElementById('settleDesc').textContent = s.desc || '';
+  const list = document.getElementById('settleList');
+  list.innerHTML = '';
+  (s.items || []).forEach(function(it){
+    const li = document.createElement('li');
+    li.innerHTML = it;
+    list.appendChild(li);
+  });
+  settleBox.hidden = false;
+  hintEl.style.visibility = 'hidden';
+}
+
+function endSettle(){
+  const s = pendingSettle;
+  if(!s) return;
+  pendingSettle = null;
+  settleBox.hidden = true;
+  const fx = s.effects || {};
+  const parts = [];
+  if(fx.cash_mult_cola_win){
+    /* 非常可乐胜出：基础 ×4，带产能底牌时 ×5（×4 ×1.25） */
+    const mult = state.flags.factory_bonus ? 5 : 4;
+    const old = state.cash;
+    state.cash = Math.round(old * mult);
+    parts.push('现金 ¥' + old + ' → ¥' + state.cash + '（×' + mult + (state.flags.factory_bonus ? '，产能底牌加成' : '') + '）');
+  }
+  if(fx.cash_mult){
+    const old = state.cash;
+    state.cash = Math.round(old * fx.cash_mult);
+    parts.push('现金 ¥' + old + ' → ¥' + state.cash + '（×' + fx.cash_mult + '）');
+  }
+  if(fx.reputation){
+    state.reputation += fx.reputation;
+    parts.push((fx.reputation > 0 ? '+' : '') + fx.reputation + ' 声誉');
+  }
+  if(parts.length){
+    renderHud();
+    saveStats();
+    toast(parts.join(' · '));
+  }
+  if(idx === getLines().length - 1){
+    finished = true;
+    setEndHint();
+  }
+  hintEl.style.visibility = 'visible';
+  advance();
+}
+
+document.getElementById('settleNext').addEventListener('click', function(ev){
+  ev.stopPropagation();
+  endSettle();
+});
+
+/* ---- 推进 ---- */
+function advance(){
+  if(fogOpen) return;
+  if(switching) return;
+  if(pendingChoice) return;
+  if(duelOpen) return;
+  if(pendingSettle) return;
+  if(finished){
+    if(scene < SCENES.length - 1) switchScene();
+    return;
+  }
+  if(typing){ finishLine(); return; }
+  if(idx < getLines().length - 1){
+    idx++;
+    const l = getLines()[idx];
+    if(l.choice){ showChoices(l.choice); return; }
+    if(l.duel){ startDuel(); return; }
+    if(l.settle){ showSettle(l.settle); return; }
+    if(l.toast){
+      toast(l.toast);
+      if(idx === getLines().length - 1){
+        finished = true;
+        setEndHint();
+        hintEl.style.visibility = 'visible';
+      } else {
+        advance();
+      }
+      return;
+    }
+    typeLine(l);
+  }
+}
+
+function preloadNext(){
+  if(scene + 1 < SCENES.length){
+    const im = new Image();
+    im.src = bgFor(SCENES[scene + 1]);
+  }
+}
+
+/* ---- 切换至下一幕 ---- */
+function switchScene(){
+  if(switching) return;
+  if(scene >= SCENES.length - 1) return;
+  switching = true;
+  scene++;
+  const S = SCENES[scene];
+  stackEl.style.opacity = '0';
+  setTimeout(function(){
+    bgEl.src = bgFor(S);
+    bgEl.alt = S.alt;
+    sceneTagEl.textContent = S.tag;
+    document.title = S.chapter;
+    bodyEl.dataset.scene = String(scene + 1);
+    setStream();
+    idx = -1; typing = false; finished = false;
+    hintEl.classList.remove('done');
+    hintEl.textContent = '▼ 点击继续';
+    hintEl.style.visibility = 'visible';
+    stackEl.style.opacity = '1';
+    sceneTagEl.classList.remove('anim');
+    void sceneTagEl.offsetWidth;
+    sceneTagEl.classList.add('anim');
+    preloadNext();
+    setTimeout(function(){ switching = false; advance(); }, 1100);
+  }, 600);
+}
+
+/* ---- 音乐开关 ---- */
+function toggleMusic(){
+  if(musicOn){
+    bgm.pause();
+    musicOn = false;
+    musicBtn.classList.remove('is-on');
+    return;
+  }
+  const p = bgm.play();
+  if(p && p.catch){
+    p.catch(function(){
+      musicOn = false;
+      musicBtn.classList.remove('is-on');
+    });
+  }
+  musicOn = true;
+  musicBtn.classList.add('is-on');
+}
+bgm.addEventListener('error', function(){
+  musicOn = false;
+  musicBtn.classList.remove('is-on');
+});
+musicBtn.addEventListener('click', function(ev){
+  ev.stopPropagation();
+  toggleMusic();
+});
+
+/* =====================================================================
+ * 数值继承（从前序部分继承：心性数值 + 现金 + 声誉 + 分支标志）
+ * 优先读取 URL 参数，其次读 localStorage 存档；都没有时从默认值开始。
+ * 产能底牌（factory_bonus）从 flags 中读取，影响非常可乐胜出时的现金倍率。
+ * ===================================================================== */
+const INHERIT_KEYS = ['resilience', 'ahai_bond', 'negotiation_skill', 'father_bond'];
+
+function loadInherited(){
+  const out = {};
+  const flags = {};
+  let got = false;
+  let cash = 0;
+  let reputation = 0;
+  const qs = new URLSearchParams(location.search);
+  INHERIT_KEYS.forEach(function(k){
+    const v = qs.get(k);
+    if(v !== null && v !== '' && !isNaN(Number(v))){ out[k] = Number(v); got = true; }
+  });
+  const c = qs.get('cash');
+  if(c !== null && c !== '' && !isNaN(Number(c))){ cash = Number(c); got = true; }
+  const r = qs.get('reputation');
+  if(r !== null && r !== '' && !isNaN(Number(r))){ reputation = Number(r); got = true; }
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(raw){
+      const data = JSON.parse(raw);
+      if(data && data.stats){
+        INHERIT_KEYS.forEach(function(k){
+          if(typeof data.stats[k] === 'number' && !(k in out)){ out[k] = data.stats[k]; got = true; }
+        });
+        if(typeof data.stats.cash === 'number' && !qs.get('cash')){ cash = data.stats.cash; got = true; }
+        if(typeof data.stats.reputation === 'number' && !qs.get('reputation')){ reputation = data.stats.reputation; got = true; }
+      }
+      if(data && data.flags){ Object.assign(flags, data.flags); }
+    }
+  }catch(e){}
+  /* 若没有继承到现金，给一个默认起始值（兼并后经营所得） */
+  if(!got || cash === 0){ cash = 800; reputation = 30; }
+  return { out: out, flags: flags, got: got, cash: cash, reputation: reputation };
+}
+
+/* ---- 启动 ---- */
+const inherited = loadInherited();
+if(inherited.got){
+  Object.keys(inherited.out).forEach(function(k){ state.stats[k] = inherited.out[k]; });
+}
+state.cash = inherited.cash;
+state.reputation = inherited.reputation;
+Object.assign(state.flags, inherited.flags);
+/* 清除 part5 对垒残留 flag，避免上次游玩或 localStorage 旧数据干扰本次分支 */
+delete state.flags.duel_win;
+delete state.flags.duel_lose;
+bodyEl.classList.add('has-stats');
+setStream();
+bgEl.src = bgFor(SCENES[0]);
+renderHud();
+if(inherited.flags.factory_bonus){
+  toast('已继承「产能底牌」：非常可乐胜出时现金 ×5');
+}
+setTimeout(advance, 1600);
+
+document.addEventListener('click', function(){
+  if(fogOpen){ disperseFog(); return; }
+  advance();
+});
+document.addEventListener('keydown', function(e){
+  var k = e.key.toLowerCase();
+  if(k === ' ' || k === 'enter' || k === 'arrowdown' || k === 'arrowright' || k === 'z'){
+    e.preventDefault();
+    if(fogOpen){ disperseFog(); return; }
+    advance();
+  }
+  if(k === 'x'){
+    e.preventDefault();
+    if(typing) finishLine();
+  }
+});
+</script>
+</body>
+</html>
