@@ -53,6 +53,9 @@
     </svg>
   </button>
 
+  <!-- ===== 暂存退出 ===== -->
+  <button class="pro-save-exit" id="saveExitBtn" type="button" title="存下进度，回头能接着看">暂存退出</button>
+
   <!-- ===== 数值面板 ===== -->
   <div class="pro-hud" id="hud">
     <div class="pro-hud-title">心　性</div>
@@ -96,6 +99,9 @@ const DEBUG_BG = './assets/debug-bg.png';
 /* 下一篇页面文件名：第一幕结束时跳转到这里，数值通过 URL 参数 + localStorage 双重继承。
    若下一篇改了文件名，只需改这一处。 */
 const NEXT_PAGE = 'part1.html';
+/* 暂存退出用的进度存档键——跟下面"数值继承"用的 SAVE_KEY 是两码事，
+   这个记的是"看到第几幕了"，用来支持中途退出、下次接着看。 */
+const POS_KEY = 'zqh_first_pos';
 /* 存档键：数值写入 localStorage，供下一篇读取。 */
 const SAVE_KEY = 'zqh_level1_save';
 /* =====================================================================
@@ -647,6 +653,7 @@ function setEndHint(){
     hintEl.textContent = '序章 · 完 —— 下一篇：返城创业 · 承包谈判';
     hintEl.classList.add('done');
     saveStats();
+    clearPosition();
     showNextLink();
   } else {
     hintEl.textContent = '▼ 进入下一幕';
@@ -673,6 +680,37 @@ function saveStats(){
       savedAt: new Date().toISOString()
     }));
   }catch(e){ /* 存储不可用时静默失败，不影响游玩 */ }
+}
+
+/* ---- 暂存退出：记住看到第几幕，下次打开接着看 ---- */
+function savePosition(){
+  try{
+    localStorage.setItem(POS_KEY, JSON.stringify({
+      scene: scene,
+      stats: state.stats,
+      flags: state.flags,
+      savedAt: new Date().toISOString()
+    }));
+  }catch(e){ /* 存储不可用时静默失败 */ }
+}
+
+function loadPosition(){
+  try{
+    var raw = localStorage.getItem(POS_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+
+function clearPosition(){
+  try{ localStorage.removeItem(POS_KEY); }catch(e){}
+}
+
+function saveAndExit(){
+  savePosition();
+  toast('已保存到这一幕，可以关闭这个标签页了');
+  setTimeout(function(){
+    window.close();
+  }, 500);
 }
 
 function showNextLink(){
@@ -856,11 +894,26 @@ musicBtn.addEventListener('click', function(ev){
   toggleMusic();
 });
 
-/* ---- 启动 ---- */
+/* ---- 启动：有暂存进度就从那一幕接着看，没有就从头开始 ---- */
+(function resumeIfSaved(){
+  var saved = loadPosition();
+  if(saved && typeof saved.scene === 'number' && SCENES[saved.scene]){
+    scene = saved.scene;
+    if(saved.stats) Object.assign(state.stats, saved.stats);
+    if(saved.flags) Object.assign(state.flags, saved.flags);
+    disperseFog();
+  }
+})();
 setStream();
-bgEl.src = bgFor(SCENES[0]);
+bgEl.src = bgFor(SCENES[scene]);
+sceneTagEl.textContent = SCENES[scene].tag;
 renderHud();
 setTimeout(advance, 1600);
+
+document.getElementById('saveExitBtn').addEventListener('click', function(ev){
+  ev.stopPropagation();
+  saveAndExit();
+});
 
 document.addEventListener('click', function(){
   if(fogOpen){ disperseFog(); return; }

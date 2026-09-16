@@ -1007,6 +1007,15 @@
 }
 .zqh-prologue .pro-music:hover{ background:var(--px-panel-2); }
 .zqh-prologue .pro-music.is-on{ background:var(--px-panel-2); color:var(--px-cream); }
+.zqh-prologue .pro-save-exit{
+  border:4px solid var(--px-gold);
+  border-radius:0;
+  background:rgba(15,35,42,.92);
+  box-shadow:5px 5px 0 var(--px-shadow);
+  color:var(--px-gold);
+  font-family:"Courier New","Songti SC",monospace;
+}
+.zqh-prologue .pro-save-exit:hover{ background:var(--px-panel-2); color:var(--px-cream); }
 .zqh-prologue .pro-hud{ font-family:"Courier New","Songti SC",monospace; }
 .zqh-prologue .pro-hud-title{
   border:3px solid var(--px-gold);

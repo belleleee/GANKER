@@ -627,6 +627,21 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.32;ba
 .pro-music.is-on .ico-on{ display:block; }
 .pro-music.is-on .ico-off{ display:none; }
 
+/* ---- 暂存退出：存一下进度，回头能接着看 ---- */
+.pro-save-exit{
+  position:fixed; top:2.4%; left:calc(3% + 58px); z-index:25;
+  height:46px; padding:0 16px;
+  display:flex; align-items:center; gap:6px;
+  background:rgba(8,8,10,.6);
+  border:1px solid rgba(201,167,106,.35);
+  color:var(--pro-gold);
+  font:600 .8rem "Songti SC","STSong",serif;
+  letter-spacing:.05em;
+  cursor:pointer;
+  transition:color .25s, background .25s;
+}
+.pro-save-exit:hover{ background:rgba(201,167,106,.16); color:#fff6df; }
+
 /* ---- 数值面板 ---- */
 .pro-hud{
   position:fixed; left:3%; top:11%; z-index:25;

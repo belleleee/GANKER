@@ -34,6 +34,9 @@
     </svg>
   </button>
 
+  <!-- ===== 暂存退出 ===== -->
+  <button class="pro-save-exit" id="saveExitBtn" type="button" title="存下进度，回头能接着看">暂存退出</button>
+
   <!-- ===== 数值面板 ===== -->
   <div class="pro-hud" id="hud">
     <div class="pro-hud-title">家　底</div>
@@ -100,6 +103,9 @@ const USE_DEBUG_BG = false;
 const DEBUG_BG = './assets/debug-bg.png';
 /* 存档键：数值写入 localStorage，供下一篇读取。 */
 const SAVE_KEY = 'zqh_level1_save';
+/* 暂存退出用的进度存档键，记"看到第几幕了"，用来支持中途退出、
+   下次接着看，跟上面数值继承用的 SAVE_KEY 是两码事。 */
+const POS_KEY = 'zqh_part3_pos';
 /* 豪赌成功率：80%。选择时不向玩家显示实际概率。 */
 const GAMBLE_WIN_RATE = 0.80;
 /* 韧性阈值：豪赌失败时，若序章攒下的坚韧 >= 此值，现金最低保全 ×0.55；否则 ×0.35。 */
@@ -339,11 +345,42 @@ function setSpeaker(who){
   speakerEl.className = 'pro-speaker' + (who === 'narration' ? '' : ' ' + who);
 }
 
+/* ---- 暂存退出：记住看到第几幕，下次打开接着看 ---- */
+function savePosition(){
+  try{
+    localStorage.setItem(POS_KEY, JSON.stringify({
+      scene: scene,
+      state: state,
+      savedAt: new Date().toISOString()
+    }));
+  }catch(e){ /* 存储不可用时静默失败 */ }
+}
+
+function loadPosition(){
+  try{
+    var raw = localStorage.getItem(POS_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+
+function clearPosition(){
+  try{ localStorage.removeItem(POS_KEY); }catch(e){}
+}
+
+function saveAndExit(){
+  savePosition();
+  toast('已保存到这一幕，可以关闭这个标签页了');
+  setTimeout(function(){
+    window.close();
+  }, 500);
+}
+
 function setEndHint(){
   if(scene === SCENES.length - 1){
     hintEl.textContent = '第③部分 · 完 —— 下一篇：兼并国企（1991）';
     hintEl.classList.add('done');
     saveStats();
+    clearPosition();
   } else {
     hintEl.textContent = '▼ 进入下一幕';
     hintEl.classList.remove('done');
@@ -769,10 +806,23 @@ state.cash = inherited.cash;
 state.reputation = inherited.reputation;
 Object.assign(state.flags, inherited.flags);
 bodyEl.classList.add('has-stats');
+/* 有暂存进度的话，直接从那一幕接着看，盖过刚才继承来的初始值 */
+const savedPos = loadPosition();
+if(savedPos && typeof savedPos.scene === 'number' && SCENES[savedPos.scene]){
+  scene = savedPos.scene;
+  if(savedPos.state) Object.assign(state, savedPos.state);
+  disperseFog();
+}
 setStream();
-bgEl.src = bgFor(SCENES[0]);
+bgEl.src = bgFor(SCENES[scene]);
+sceneTagEl.textContent = SCENES[scene].tag;
 renderHud();
 setTimeout(advance, 1600);
+
+document.getElementById('saveExitBtn').addEventListener('click', function(ev){
+  ev.stopPropagation();
+  saveAndExit();
+});
 
 document.addEventListener('click', function(){
   if(fogOpen){ disperseFog(); return; }
