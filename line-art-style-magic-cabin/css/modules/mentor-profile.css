@@ -187,12 +187,17 @@
     font-style: italic;
 }
 
+.mentorMemoryList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
 .mentorMemoryEntry {
     display: flex;
     align-items: center;
     gap: 14px;
-    margin-top: 20px;
-    padding: 14px 18px;
+    padding: 12px 16px;
     border-radius: 12px;
     text-decoration: none;
     border: 1px solid rgba(58, 47, 34, .18);

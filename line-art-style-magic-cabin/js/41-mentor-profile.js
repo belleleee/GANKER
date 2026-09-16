@@ -38,13 +38,17 @@ const MENTOR_FRAGMENTS = [
     { stage: 8, text: '他说，回城那年他三十三岁，没人觉得这个岁数回来的人能有什么出息——连他自己都这么以为。' }
 ];
 
-/* 认出他是谁（真名揭晓那一章）之后，"关于师傅"面板才会冒出一个
-   入口，能走进一整段他年轻时的完整回忆——独立的一套页面
-   （memories/first.html 开头，自己链着 part1→part2→part3，
-   自带存档和分支，不需要这边额外接管）。碎片是"听说的只言片语"，
-   这个入口才是"真正走进去看"。 */
-const MENTOR_MEMORY_UNLOCK_STAGE = 5;
-const MENTOR_MEMORY_ENTRY = 'memories/first.html';
+/* 认出他是谁之后，"关于师傅"面板才会开始冒出"走进回忆"的入口——
+   四篇分开挂各自的 stage 门槛，跟着主线一章一章解锁，不是认出
+   名字那一刻就能把他后半辈子的故事一口气看完。独立页面自己链着
+   part1→part2→part3（见各文件里的"下一篇"按钮），这边只管每一篇
+   的入口什么时候亮起来。 */
+const MENTOR_MEMORY_CHAPTERS = [
+    { stage: 5, file: 'memories/first.html', title: '序章 · 1945—1978', desc: '家道中落，下乡插队的那些年' },
+    { stage: 6, file: 'memories/part1.html', title: '第①部分 · 代销小摊 · 1987', desc: '三十九岁，蹬三轮车摆摊攒第一桶金' },
+    { stage: 7, file: 'memories/part2.html', title: '第②部分 · 承包谈判 · 1987', desc: '接下连年亏损的校办经销部' },
+    { stage: 8, file: 'memories/part3.html', title: '第③部分 · 广告豪赌 · 1988', desc: '把全部身家押在一次电视广告上' }
+];
 
 /* 藏在小屋各处互动里的碎片——不按主线顺序解锁，碰到对应的
    成就就亮了。复用已经在记的 achievementState.unlocked，不用
@@ -88,22 +92,26 @@ function renderMentorFragments() {
             '<p>' + (unlocked ? f.text : '还没碰到这段记忆——在小屋里多摸摸看') + '</p>' +
             '</div>';
     }).join('');
-    const memoryUnlocked = stage > MENTOR_MEMORY_UNLOCK_STAGE;
-    const memoryEntry = memoryUnlocked
-        ? '<a class="mentorMemoryEntry on" href="' + MENTOR_MEMORY_ENTRY + '" target="_blank" rel="noopener">' +
-            '<span class="mentorMemoryIcon">📖</span>' +
-            '<span><b>走进他的回忆</b><small>完整地看一遍他年轻时的那些年</small></span>' +
-            '</a>'
-        : '<div class="mentorMemoryEntry">' +
+    const memoryChapterRows = MENTOR_MEMORY_CHAPTERS.map(chapter => {
+        const unlocked = stage > chapter.stage;
+        if (unlocked) {
+            return '<a class="mentorMemoryEntry on" href="' + chapter.file + '" target="_blank" rel="noopener">' +
+                '<span class="mentorMemoryIcon">📖</span>' +
+                '<span><b>' + chapter.title + '</b><small>' + chapter.desc + '</small></span>' +
+                '</a>';
+        }
+        return '<div class="mentorMemoryEntry">' +
             '<span class="mentorMemoryIcon">🔒</span>' +
-            '<span><b>走进他的回忆</b><small>认出他是谁之后，这道门才会打开</small></span>' +
+            '<span><b>' + chapter.title + '</b><small>主线再往前推进一些，这一篇才会打开</small></span>' +
             '</div>';
+    }).join('');
     mentorFragments.innerHTML =
         '<p class="mentorFragmentsCount">主线记忆 · ' + storyCount + '/' + MENTOR_FRAGMENTS.length + '</p>' +
         '<div class="mentorFragmentTimeline">' + storyCards + '</div>' +
         '<div class="mentorFragmentDivider"><span>🧩 藏在小屋里的记忆 · ' + hiddenUnlockedCount + '/' + MENTOR_HIDDEN_FRAGMENTS.length + '</span></div>' +
         '<div class="mentorHiddenGrid">' + hiddenCards + '</div>' +
-        memoryEntry;
+        '<div class="mentorFragmentDivider"><span>📖 走进他的回忆</span></div>' +
+        '<div class="mentorMemoryList">' + memoryChapterRows + '</div>';
 }
 
 function renderMentorPanel() {
