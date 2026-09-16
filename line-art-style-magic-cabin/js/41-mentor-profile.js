@@ -1,48 +1,63 @@
 'use strict';
 
 /* ================================================================
-   关于师傅：把"认识他有多深"这件事可视化——人物碎片，跟主线章节
-   挂钩，每条记着一个 stage 门槛（推进到超过这一章才解锁），没解锁
-   的先占位成"？？？"。一章可以挂不止一条碎片，不用碎片数量跟
-   章节数严格1:1——内容取材自他年轻时的真实经历（马目农场、绍兴
-   茶场、阿海、赵伯、代销小摊……），比只有一句话的版本更立体。
+   关于师傅：把"认识他有多深"这件事可视化——三个标签页，左边一列
+   章节，右边大字读物，翻页读。
+   1. 主线记忆——跟主线章节挂钩，每条记着一个 stage 门槛，一章可以
+      挂不止一条，内容取材自他年轻时的真实经历。
+   2. 生活碎片——藏在小屋各处互动里，不按顺序解锁，碰到对应的
+      成就就亮了，复用已经在记的 achievementState.unlocked。
+   3. 走进他的回忆——四篇独立的完整传记页面，各自挂 stage 门槛，
+      跟主线一章一章对齐解锁。
    ================================================================ */
 
 const MENTOR_FRAGMENTS = [
-    { stage: 0, text: '他好像也不知道自己怎么到这儿的——跟你一样懵。' },
-    { stage: 0, text: '他对钱格外较真，一分一角都要数清楚，像是刻在骨头里的习惯。' },
+    { stage: 0, tag: '小屋 · 初见', title: '懵然初遇', text: '他好像也不知道自己怎么到这儿的——跟你一样懵。' },
+    { stage: 0, tag: '小屋 · 初见', title: '锱铢必较', text: '他对钱格外较真，一分一角都要数清楚，像是刻在骨头里的习惯。' },
 
-    { stage: 1, text: '他对几块钱都格外认真，好像穷过很长一段日子。' },
-    { stage: 1, text: '他八九岁就蹲在门口炒米沿街叫卖，一毛钱一包，手背上常年是冻疮裂开的口子。' },
+    { stage: 1, tag: '巷口 · 幼年', title: '穷过的人', text: '他对几块钱都格外认真，好像穷过很长一段日子。' },
+    { stage: 1, tag: '巷口 · 幼年', title: '炒米叫卖', text: '他八九岁就蹲在门口炒米沿街叫卖，一毛钱一包，手背上常年是冻疮裂开的口子。' },
 
-    { stage: 2, text: '他把账本看得很重，却什么都没解释。' },
-    { stage: 2, text: '年轻时蹬过三轮车，一送就是好几年。' },
-    { stage: 2, text: '他年轻时在一个叫马目的地方待过——后来你才知道，那是个从前关犯人的地方。' },
+    { stage: 2, tag: '送货路上', title: '账本很重', text: '他把账本看得很重，却什么都没解释。' },
+    { stage: 2, tag: '送货路上', title: '蹬三轮车', text: '年轻时蹬过三轮车，一送就是好几年。' },
+    { stage: 2, tag: '送货路上', title: '马目农场', text: '他年轻时在一个叫马目的地方待过——后来你才知道，那是个从前关犯人的地方。' },
 
-    { stage: 3, text: '以前什么都卖过——冰棍、文具，什么赚钱干什么。' },
-    { stage: 3, text: '他说过一句怪话："干得好的，评先进、加工分；干不好的，扣口粮。"像是背书一样脱口而出。' },
+    { stage: 3, tag: '茶园 · 加工', title: '什么都卖过', text: '以前什么都卖过——冰棍、文具，什么赚钱干什么。' },
+    { stage: 3, tag: '茶园 · 加工', title: '评先进', text: '他说过一句怪话："干得好的，评先进、加工分；干不好的，扣口粮。"像是背书一样脱口而出。' },
 
-    { stage: 4, text: '嘴里漏出过"娃哈哈"这个词，随即改口说是"以前的事"。' },
-    { stage: 4, text: '他提过一个叫阿海的人，说是当年一起扛过苦日子的兄弟，后来再没见过。' },
+    { stage: 4, tag: '仓库 · 囤货', title: '漏了口风', text: '嘴里漏出过"娃哈哈"这个词，随即改口说是"以前的事"。' },
+    { stage: 4, tag: '仓库 · 囤货', title: '挚友阿海', text: '他提过一个叫阿海的人，说是当年一起扛过苦日子的兄弟，后来再没见过。' },
 
-    { stage: 5, text: '他的真名是宗庆后——娃哈哈的创始人。' },
-    { stage: 5, text: '他年轻时下乡插队十几年，从舟山到绍兴，种过茶、割过稻、挖过坝。' },
+    { stage: 5, tag: '股市小屋 · 身份', title: '真名揭晓', text: '他的真名是宗庆后——娃哈哈的创始人。' },
+    { stage: 5, tag: '股市小屋 · 身份', title: '下乡十年', text: '他年轻时下乡插队十几年，从舟山到绍兴，种过茶、割过稻、挖过坝。' },
 
-    { stage: 6, text: '当年也曾亲手定下让老伙计寒心的规矩，可他记得每一个人。' },
-    { stage: 6, text: '他说过，有个姓赵的老人曾经教他——"这世上的路看着有千万条，其实轮到自己走的，就一条，把它走通了就什么都有了。"' },
+    { stage: 6, tag: '账房 · 规矩', title: '寒心的规矩', text: '当年也曾亲手定下让老伙计寒心的规矩，可他记得每一个人。' },
+    { stage: 6, tag: '账房 · 规矩', title: '赵伯的道理', text: '他说过，有个姓赵的老人曾经教他——"这世上的路看着有千万条，其实轮到自己走的，就一条，把它走通了就什么都有了。"' },
 
-    { stage: 7, text: '他也有自己看不懂、不肯瞎判断的东西——谨慎是有边界的。' },
-    { stage: 7, text: '他很少提起自己的妻子，只说过一句：家里那套家具，是弟弟们打的，桌角刻了一对鸳鸯。' },
+    { stage: 7, tag: '投资 · 边界', title: '边界感', text: '他也有自己看不懂、不肯瞎判断的东西——谨慎是有边界的。' },
+    { stage: 7, tag: '投资 · 边界', title: '刻鸳鸯的家具', text: '他很少提起自己的妻子，只说过一句：家里那套家具，是弟弟们打的，桌角刻了一对鸳鸯。' },
 
-    { stage: 8, text: '他不会魔法，却在临走前教会了你怎么把日子过明白。' },
-    { stage: 8, text: '他说，回城那年他三十三岁，没人觉得这个岁数回来的人能有什么出息——连他自己都这么以为。' }
+    { stage: 8, tag: '坩埚旁 · 临别', title: '临别的教诲', text: '他不会魔法，却在临走前教会了你怎么把日子过明白。' },
+    { stage: 8, tag: '坩埚旁 · 临别', title: '三十三岁回城', text: '他说，回城那年他三十三岁，没人觉得这个岁数回来的人能有什么出息——连他自己都这么以为。' }
 ];
 
-/* 认出他是谁之后，"关于师傅"面板才会开始冒出"走进回忆"的入口——
-   四篇分开挂各自的 stage 门槛，跟着主线一章一章解锁，不是认出
-   名字那一刻就能把他后半辈子的故事一口气看完。独立页面自己链着
-   part1→part2→part3（见各文件里的"下一篇"按钮），这边只管每一篇
-   的入口什么时候亮起来。 */
+/* 藏在小屋各处互动里的碎片——不按主线顺序解锁，碰到对应的
+   成就就亮了。复用已经在记的 achievementState.unlocked，不用
+   另起一套触发和存档逻辑。title 直接借用对应成就的标题。 */
+const MENTOR_HIDDEN_FRAGMENTS = [
+    { achievementId: 'explore_fire', icon: '🔥', tag: '壁炉旁', title: '炉火可亲', text: '他说，冷天里第一件事是先点炉子，不是先算账——"人都冻透了，算什么都算不准。"' },
+    { achievementId: 'explore_cat', icon: '🐱', tag: '猫窝边', title: '唤醒猫咪', text: '他看着睡着的猫说："会享福的东西，走到哪儿都饿不着。"语气说不清是羡慕还是感慨。' },
+    { achievementId: 'explore_chest', icon: '📦', tag: '储物箱前', title: '百宝箱', text: '翻箱子的时候他破例没拦你——"旧东西留着，不是舍不得扔，是记得当年怎么来的。"' },
+    { achievementId: 'well_keeper', icon: '💧', tag: '水井边', title: '井边熟客', text: '打水时他随口说："我年轻那会儿，水比钱难攒。"再问，他就不接话了。' },
+    { achievementId: 'newspaper_reader', icon: '📰', tag: '报架前', title: '读报的人', text: '他不太爱看报纸上的大新闻，倒是每次都翻到"物价"那一栏，看得很认真。' },
+    { achievementId: 'magic_touch', icon: '🪄', tag: '法阵旁', title: '魔法手感', text: '他从不碰魔法道具，却总站在旁边看你摆弄——"这些我不懂，但看着你捣鼓，挺好。"' },
+    { achievementId: 'coin_bankrupt', icon: '📉', tag: '钱滚钱商店', title: '血本无归', text: '看你在钱滚钱商店输光那次，他没说教，只说了句："输得起，才输得明白。"' },
+    { achievementId: 'interaction_collector', icon: '✨', tag: '走遍小屋', title: '什么都要碰一下', text: '你把屋里能碰的都碰了一遍那天，他笑了："好奇心不是坏毛病，就怕光好奇不算账。"' }
+];
+
+/* 认出他是谁之后，才会开始一篇一篇解锁完整的独立传记页面——
+   memories/ 下四个自成一体的页面，自己链着 part1→part2→part3
+   （见各文件里的"下一篇"按钮），这边只管每一篇什么时候亮起来。 */
 const MENTOR_MEMORY_CHAPTERS = [
     { stage: 5, file: 'memories/first.html', title: '序章 · 1945—1978', desc: '家道中落，下乡插队的那些年' },
     { stage: 6, file: 'memories/part1.html', title: '第①部分 · 代销小摊 · 1987', desc: '三十九岁，蹬三轮车摆摊攒第一桶金' },
@@ -50,72 +65,212 @@ const MENTOR_MEMORY_CHAPTERS = [
     { stage: 8, file: 'memories/part3.html', title: '第③部分 · 广告豪赌 · 1988', desc: '把全部身家押在一次电视广告上' }
 ];
 
-/* 藏在小屋各处互动里的碎片——不按主线顺序解锁，碰到对应的
-   成就就亮了。复用已经在记的 achievementState.unlocked，不用
-   另起一套触发和存档逻辑。 */
-const MENTOR_HIDDEN_FRAGMENTS = [
-    { achievementId: 'explore_fire', icon: '🔥', text: '他说，冷天里第一件事是先点炉子，不是先算账——"人都冻透了，算什么都算不准。"' },
-    { achievementId: 'explore_cat', icon: '🐱', text: '他看着睡着的猫说："会享福的东西，走到哪儿都饿不着。"语气说不清是羡慕还是感慨。' },
-    { achievementId: 'explore_chest', icon: '📦', text: '翻箱子的时候他破例没拦你——"旧东西留着，不是舍不得扔，是记得当年怎么来的。"' },
-    { achievementId: 'well_keeper', icon: '💧', text: '打水时他随口说："我年轻那会儿，水比钱难攒。"再问，他就不接话了。' },
-    { achievementId: 'newspaper_reader', icon: '📰', text: '他不太爱看报纸上的大新闻，倒是每次都翻到"物价"那一栏，看得很认真。' },
-    { achievementId: 'magic_touch', icon: '✨', text: '他从不碰魔法道具，却总站在旁边看你摆弄——"这些我不懂，但看着你捣鼓，挺好。"' },
-    { achievementId: 'coin_bankrupt', icon: '🎲', text: '看你在钱滚钱商店输光那次，他没说教，只说了句："输得起，才输得明白。"' },
-    { achievementId: 'interaction_collector', icon: '🧭', text: '你把屋里能碰的都碰了一遍那天，他笑了："好奇心不是坏毛病，就怕光好奇不算账。"' }
+const MENTOR_QUOTES = [
+    '做生意，也是做人。',
+    '地不哄人，你种下去多少心思，它就给你长多少东西。',
+    '几块钱也是钱。',
+    '先把眼前的事做好，日子总会好起来的。',
+    '这世上的路看着有千万条，其实轮到自己走的，就一条。'
+];
+
+const MENTOR_TABS = [
+    { id: 'story', label: '主线记忆', icon: '📖' },
+    { id: 'hidden', label: '生活碎片', icon: '☕' },
+    { id: 'memory', label: '走进他的回忆', icon: '📜' }
 ];
 
 const mentorPanel = document.getElementById('mentorPanel');
-const mentorFragments = document.getElementById('mentorFragments');
+const mentorHeroQuote = document.getElementById('mentorHeroQuote');
+const mentorTabsEl = document.getElementById('mentorTabs');
+const mentorReaderList = document.getElementById('mentorReaderList');
+const mentorReaderDetail = document.getElementById('mentorReaderDetail');
 const closeMentorBtn = document.getElementById('closeMentorBtn');
 const mentorMenuBtn = document.getElementById('mentorMenuBtn');
 
-function renderMentorFragments() {
-    if (!mentorFragments) return;
-    const stage = typeof mainStoryState !== 'undefined' ? mainStoryState.stage : 0;
-    const storyCount = MENTOR_FRAGMENTS.filter(f => stage > f.stage).length;
-    const storyCards = MENTOR_FRAGMENTS.map((frag, i) => {
-        const unlocked = stage > frag.stage;
-        if (!unlocked) {
-            return '<div class="mentorFragmentCard"><span class="mentorFragmentIndex">🔒</span><p>？？？</p></div>';
-        }
-        return '<div class="mentorFragmentCard on">' +
-            '<span class="mentorFragmentIndex">' + (i + 1) + '</span>' +
-            '<p>' + frag.text + '</p>' +
-            '</div>';
+let mentorActiveTab = 'story';
+let mentorSelectedIndex = { story: 0, hidden: 0, memory: 0 };
+
+function mentorCurrentStage() {
+    return typeof mainStoryState !== 'undefined' ? mainStoryState.stage : 0;
+}
+
+function mentorStoryItems() {
+    const stage = mentorCurrentStage();
+    return MENTOR_FRAGMENTS.map((f, i) => ({
+        unlocked: stage > f.stage,
+        number: i + 1,
+        tag: f.tag,
+        title: f.title,
+        body: f.text
+    }));
+}
+
+function mentorHiddenItems() {
+    return MENTOR_HIDDEN_FRAGMENTS.map(f => ({
+        unlocked: typeof achievementState !== 'undefined' && !!achievementState.unlocked[f.achievementId],
+        icon: f.icon,
+        tag: f.tag,
+        title: f.title,
+        body: f.text
+    }));
+}
+
+function mentorMemoryItems() {
+    const stage = mentorCurrentStage();
+    return MENTOR_MEMORY_CHAPTERS.map(c => ({
+        unlocked: stage > c.stage,
+        title: c.title,
+        desc: c.desc,
+        file: c.file
+    }));
+}
+
+function mentorItemsForTab(tab) {
+    if (tab === 'hidden') return mentorHiddenItems();
+    if (tab === 'memory') return mentorMemoryItems();
+    return mentorStoryItems();
+}
+
+function mentorUnlockedCount(items) {
+    return items.filter(it => it.unlocked).length;
+}
+
+function renderMentorTabs() {
+    if (!mentorTabsEl) return;
+    mentorTabsEl.innerHTML = MENTOR_TABS.map(tab => {
+        const items = mentorItemsForTab(tab.id);
+        const count = mentorUnlockedCount(items);
+        return '<button type="button" class="mentorTabBtn' + (tab.id === mentorActiveTab ? ' on' : '') + '" data-tab="' + tab.id + '">' +
+            '<span class="mentorTabIcon">' + tab.icon + '</span>' + tab.label +
+            '<em>' + count + '/' + items.length + '</em>' +
+            '</button>';
     }).join('');
-    const hiddenUnlockedCount = MENTOR_HIDDEN_FRAGMENTS.filter(f =>
-        typeof achievementState !== 'undefined' && achievementState.unlocked[f.achievementId]).length;
-    const hiddenCards = MENTOR_HIDDEN_FRAGMENTS.map(f => {
-        const unlocked = typeof achievementState !== 'undefined' && !!achievementState.unlocked[f.achievementId];
-        return '<div class="mentorHiddenChip' + (unlocked ? ' on' : '') + '">' +
-            '<span class="mentorHiddenIcon">' + (unlocked ? f.icon : '🔒') + '</span>' +
-            '<p>' + (unlocked ? f.text : '还没碰到这段记忆——在小屋里多摸摸看') + '</p>' +
+}
+
+function renderMentorList() {
+    if (!mentorReaderList) return;
+    const items = mentorItemsForTab(mentorActiveTab);
+    const selected = mentorSelectedIndex[mentorActiveTab] || 0;
+    if (mentorActiveTab === 'story') {
+        mentorReaderList.innerHTML =
+            '<p class="mentorListHead">主线进度</p>' +
+            '<p class="mentorListCount">' + mentorUnlockedCount(items) + ' / ' + items.length + '</p>' +
+            '<div class="mentorListTimeline">' +
+            items.map((it, i) => '<div class="mentorListRow' + (i === selected ? ' on' : '') + (it.unlocked ? ' unlocked' : ' locked') + '" data-index="' + i + '">' +
+                '<span class="mentorListNum">' + it.number + '</span>' +
+                '<span class="mentorListLabel">' + (it.unlocked ? it.title : '？？？') + '</span>' +
+                '</div>').join('') +
             '</div>';
-    }).join('');
-    const memoryChapterRows = MENTOR_MEMORY_CHAPTERS.map(chapter => {
-        const unlocked = stage > chapter.stage;
-        if (unlocked) {
-            return '<a class="mentorMemoryEntry on" href="' + chapter.file + '" target="_blank" rel="noopener">' +
-                '<span class="mentorMemoryIcon">📖</span>' +
-                '<span><b>' + chapter.title + '</b><small>' + chapter.desc + '</small></span>' +
-                '</a>';
-        }
-        return '<div class="mentorMemoryEntry">' +
-            '<span class="mentorMemoryIcon">🔒</span>' +
-            '<span><b>' + chapter.title + '</b><small>主线再往前推进一些，这一篇才会打开</small></span>' +
+    } else if (mentorActiveTab === 'hidden') {
+        mentorReaderList.innerHTML =
+            '<p class="mentorListHead">生活碎片</p>' +
+            '<p class="mentorListCount">' + mentorUnlockedCount(items) + ' / ' + items.length + '</p>' +
+            '<div class="mentorListTimeline">' +
+            items.map((it, i) => '<div class="mentorListRow' + (i === selected ? ' on' : '') + (it.unlocked ? ' unlocked' : ' locked') + '" data-index="' + i + '">' +
+                '<span class="mentorListNum">' + (it.unlocked ? it.icon : '🔒') + '</span>' +
+                '<span class="mentorListLabel">' + (it.unlocked ? it.title : '？？？') + '</span>' +
+                '</div>').join('') +
             '</div>';
-    }).join('');
-    mentorFragments.innerHTML =
-        '<p class="mentorFragmentsCount">主线记忆 · ' + storyCount + '/' + MENTOR_FRAGMENTS.length + '</p>' +
-        '<div class="mentorFragmentTimeline">' + storyCards + '</div>' +
-        '<div class="mentorFragmentDivider"><span>🧩 藏在小屋里的记忆 · ' + hiddenUnlockedCount + '/' + MENTOR_HIDDEN_FRAGMENTS.length + '</span></div>' +
-        '<div class="mentorHiddenGrid">' + hiddenCards + '</div>' +
-        '<div class="mentorFragmentDivider"><span>📖 走进他的回忆</span></div>' +
-        '<div class="mentorMemoryList">' + memoryChapterRows + '</div>';
+    } else {
+        mentorReaderList.innerHTML =
+            '<p class="mentorListHead">走进他的回忆</p>' +
+            '<p class="mentorListCount">' + mentorUnlockedCount(items) + ' / ' + items.length + '</p>' +
+            '<div class="mentorListTimeline">' +
+            items.map((it, i) => '<div class="mentorListRow' + (i === selected ? ' on' : '') + (it.unlocked ? ' unlocked' : ' locked') + '" data-index="' + i + '">' +
+                '<span class="mentorListNum">' + (it.unlocked ? '📖' : '🔒') + '</span>' +
+                '<span class="mentorListLabel">' + it.title + '</span>' +
+                '</div>').join('') +
+            '</div>';
+    }
+}
+
+function mentorClampIndex(tab, items) {
+    const idx = mentorSelectedIndex[tab] || 0;
+    return Math.max(0, Math.min(items.length - 1, idx));
+}
+
+function renderMentorDetail() {
+    if (!mentorReaderDetail) return;
+    const items = mentorItemsForTab(mentorActiveTab);
+    if (!items.length) { mentorReaderDetail.innerHTML = ''; return; }
+    const idx = mentorClampIndex(mentorActiveTab, items);
+    mentorSelectedIndex[mentorActiveTab] = idx;
+    const it = items[idx];
+    const prevDisabled = idx <= 0;
+    const nextDisabled = idx >= items.length - 1;
+    const nav = '<div class="mentorDetailNav">' +
+        '<button type="button" class="mentorNavBtn" data-nav="prev"' + (prevDisabled ? ' disabled' : '') + '>‹ 上一章</button>' +
+        '<button type="button" class="mentorNavBtn" data-nav="next"' + (nextDisabled ? ' disabled' : '') + '>下一章 ›</button>' +
+        '</div>';
+
+    if (mentorActiveTab === 'memory') {
+        const badge = it.unlocked ? '<span class="mentorDetailBadge on">已解锁 ✓</span>' : '<span class="mentorDetailBadge">未解锁 🔒</span>';
+        mentorReaderDetail.innerHTML =
+            '<div class="mentorDetailHead"><h3>' + it.title + '</h3>' + badge + '</div>' +
+            '<p class="mentorDetailBody">' + (it.unlocked ? it.desc : '主线再往前推进一些，这一篇才会打开。') + '</p>' +
+            (it.unlocked
+                ? '<a class="mentorDetailEnter" href="' + it.file + '" target="_blank" rel="noopener">📜 进入这一章（新标签页）</a>'
+                : '') +
+            nav;
+        return;
+    }
+
+    const badge = it.unlocked ? '<span class="mentorDetailBadge on">已解锁 ✓</span>' : '<span class="mentorDetailBadge">未解锁 🔒</span>';
+    const tagHtml = it.tag ? '<span class="mentorDetailTag">📍 ' + it.tag + '</span>' : '';
+    mentorReaderDetail.innerHTML =
+        '<div class="mentorDetailKicker">' + (mentorActiveTab === 'story' ? ('第 ' + it.number + ' 章') : '生活碎片') + '</div>' +
+        '<div class="mentorDetailHead"><h3>' + (it.unlocked ? it.title : '？？？') + '</h3>' + tagHtml + badge + '</div>' +
+        '<p class="mentorDetailBody">' + (it.unlocked ? it.body : '还没解锁这段记忆。') + '</p>' +
+        nav;
 }
 
 function renderMentorPanel() {
-    renderMentorFragments();
+    if (mentorHeroQuote) {
+        const q = MENTOR_QUOTES[Math.floor(Math.random() * MENTOR_QUOTES.length)];
+        mentorHeroQuote.innerHTML = '“' + q + '”<br>——宗庆后';
+    }
+    renderMentorTabs();
+    renderMentorList();
+    renderMentorDetail();
+}
+
+function mentorSelectTab(tab) {
+    if (tab === mentorActiveTab) return;
+    mentorActiveTab = tab;
+    renderMentorPanel();
+}
+
+function mentorSelectIndex(i) {
+    mentorSelectedIndex[mentorActiveTab] = i;
+    renderMentorList();
+    renderMentorDetail();
+}
+
+function mentorNav(dir) {
+    const items = mentorItemsForTab(mentorActiveTab);
+    const idx = mentorClampIndex(mentorActiveTab, items);
+    const next = dir === 'next' ? idx + 1 : idx - 1;
+    if (next < 0 || next >= items.length) return;
+    mentorSelectIndex(next);
+}
+
+if (mentorTabsEl) {
+    mentorTabsEl.addEventListener('click', event => {
+        const btn = event.target.closest('[data-tab]');
+        if (btn) mentorSelectTab(btn.dataset.tab);
+    });
+}
+if (mentorReaderList) {
+    mentorReaderList.addEventListener('click', event => {
+        const row = event.target.closest('[data-index]');
+        if (row) mentorSelectIndex(Number(row.dataset.index));
+    });
+}
+if (mentorReaderDetail) {
+    mentorReaderDetail.addEventListener('click', event => {
+        const btn = event.target.closest('[data-nav]');
+        if (btn && !btn.disabled) mentorNav(btn.dataset.nav);
+    });
 }
 
 function openMentorPanel() {

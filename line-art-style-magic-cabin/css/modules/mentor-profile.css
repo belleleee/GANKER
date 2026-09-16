@@ -1,5 +1,9 @@
 .mentorCard {
-    width: min(680px, 94vw);
+    width: min(920px, 96vw);
+    height: min(640px, 88vh);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .mentorHero {
@@ -21,6 +25,11 @@
     box-shadow: 0 0 0 3px rgba(200, 150, 44, .55), 0 6px 18px rgba(58, 47, 34, .3);
 }
 
+.mentorHeroText {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
 .mentorHero .achievementsKicker {
     margin: 0 0 2px;
 }
@@ -30,223 +39,269 @@
 }
 
 .mentorFragmentsHint {
-    margin: 0 0 16px;
+    margin: 4px 0 0;
     color: #6b5a41;
     font-size: 12px;
     line-height: 1.6;
 }
 
-.mentorFragmentsCount {
-    margin: 0 0 10px;
-    color: #a8763c;
-    font: 700 11px/1.5 "Songti SC", "STSong", Georgia, serif;
-    letter-spacing: .12em;
-}
-
-.mentorFragmentTimeline {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding-left: 4px;
-}
-
-.mentorFragmentTimeline::before {
-    content: '';
-    position: absolute;
-    left: 17px;
-    top: 4px;
-    bottom: 4px;
-    width: 1px;
-    background: rgba(58, 47, 34, .2);
-}
-
-.mentorFragmentCard {
-    position: relative;
-    display: flex;
-    gap: 13px;
-    align-items: center;
-    padding: 4px 0;
-}
-
-.mentorFragmentCard p {
-    margin: 0;
-    padding: 9px 13px;
-    flex: 1 1 auto;
-    font-size: 13px;
-    line-height: 1.65;
-    border-radius: 8px;
-}
-
-.mentorFragmentCard:not(.on) p {
-    color: #a89a80;
-    background: rgba(58, 47, 34, .04);
-    border: 1px dashed rgba(58, 47, 34, .16);
-    letter-spacing: .3em;
-}
-
-.mentorFragmentCard.on p {
-    color: #362b1e;
-    background: linear-gradient(120deg, rgba(200, 150, 44, .12), rgba(255, 250, 236, .6) 70%);
-    box-shadow: 0 1px 0 rgba(255, 255, 255, .5) inset, 0 2px 6px rgba(58, 47, 34, .08);
-}
-
-.mentorFragmentIndex {
-    position: relative;
-    z-index: 1;
+.mentorHeroQuote {
     flex: 0 0 auto;
-    width: 34px;
-    height: 34px;
-    display: grid;
-    place-items: center;
-    border-radius: 50%;
-    background: #f6ead0;
-    border: 1px solid rgba(58, 47, 34, .2);
-    font: 700 13px/1 "Songti SC", "STSong", Georgia, serif;
-    color: #a8916c;
+    max-width: 220px;
+    margin: 0;
+    padding-left: 16px;
+    border-left: 2px solid rgba(200, 150, 44, .4);
+    color: #8a6a3c;
+    font: italic 600 12px/1.6 "Songti SC", "STSong", Georgia, serif;
+    text-align: right;
 }
 
-.mentorFragmentCard.on .mentorFragmentIndex {
-    background: radial-gradient(circle at 32% 28%, #ffe6a3, #c8962c 78%);
-    border-color: #c8962c;
-    color: #4a3410;
-    box-shadow: 0 0 0 3px rgba(200, 150, 44, .18), 0 2px 6px rgba(58, 47, 34, .25);
+/* ---- 标签页 ---- */
+.mentorTabs {
+    flex: 0 0 auto;
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
 }
 
-.mentorFragmentDivider {
+.mentorTabBtn {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin: 18px 0 12px;
-    color: #a8763c;
-    font: 700 11.5px/1.5 "Songti SC", "STSong", Georgia, serif;
-    letter-spacing: .06em;
+    gap: 7px;
+    padding: 10px 16px;
+    border-radius: 10px 10px 0 0;
+    border: 1px solid rgba(58, 47, 34, .18);
+    border-bottom: none;
+    background: rgba(58, 47, 34, .05);
+    color: #8a7a5c;
+    font: 700 13px/1.4 "Songti SC", "STSong", Georgia, serif;
+    cursor: pointer;
 }
 
-.mentorFragmentDivider::before,
-.mentorFragmentDivider::after {
-    content: '';
+.mentorTabBtn.on {
+    background: linear-gradient(180deg, rgba(200, 150, 44, .18), rgba(255, 250, 236, .85));
+    color: #362b1e;
+    border-color: rgba(200, 150, 44, .55);
+    box-shadow: 0 -2px 8px rgba(58, 47, 34, .06);
+}
+
+.mentorTabIcon {
+    font-size: 14px;
+}
+
+.mentorTabBtn em {
+    font-style: normal;
+    margin-left: 2px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: rgba(58, 47, 34, .1);
+    color: #8a6a3c;
+    font-size: 10.5px;
+}
+
+.mentorTabBtn.on em {
+    background: #c8962c;
+    color: #fff;
+}
+
+/* ---- 读物：左列表 + 右详情 ---- */
+.mentorReader {
     flex: 1 1 auto;
-    height: 1px;
-    background: repeating-linear-gradient(90deg, rgba(58, 47, 34, .3) 0 4px, transparent 4px 8px);
-}
-
-.mentorHiddenGrid {
+    min-height: 0;
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 9px;
+    grid-template-columns: 220px 1fr;
+    gap: 16px;
+    border-top: 1px solid rgba(58, 47, 34, .16);
+    padding-top: 14px;
 }
 
-@media (max-width: 560px) {
-    .mentorHiddenGrid {
+@media (max-width: 720px) {
+    .mentorReader {
         grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
     }
 }
 
-.mentorHiddenChip {
+.mentorReaderList {
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+.mentorListHead {
+    margin: 0 0 2px;
+    color: #8a6a3c;
+    font: 700 11px/1.5 "Songti SC", "STSong", Georgia, serif;
+    letter-spacing: .1em;
+}
+
+.mentorListCount {
+    margin: 0 0 10px;
+    font-size: 20px;
+    font-weight: 800;
+    color: #362b1e;
+}
+
+.mentorListTimeline {
+    position: relative;
     display: flex;
-    gap: 9px;
-    align-items: flex-start;
-    padding: 10px 11px;
-    background: rgba(58, 47, 34, .04);
-    border: 1px dashed rgba(58, 47, 34, .18);
-    border-radius: 10px;
+    flex-direction: column;
+    gap: 2px;
 }
 
-.mentorHiddenChip.on {
-    border: 1px solid rgba(91, 143, 168, .5);
-    background: linear-gradient(135deg, rgba(91, 143, 168, .14), rgba(255, 250, 236, .7) 70%);
-    box-shadow: 0 2px 6px rgba(58, 47, 34, .08);
+.mentorListRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 8px;
+    border-radius: 8px;
+    cursor: pointer;
 }
 
-.mentorHiddenIcon {
+.mentorListRow:hover {
+    background: rgba(58, 47, 34, .06);
+}
+
+.mentorListRow.on {
+    background: linear-gradient(120deg, rgba(200, 150, 44, .18), rgba(255, 250, 236, .6) 80%);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .5) inset;
+}
+
+.mentorListNum {
     flex: 0 0 auto;
     width: 26px;
     height: 26px;
     display: grid;
     place-items: center;
     border-radius: 50%;
-    background: rgba(58, 47, 34, .07);
-    font-size: 13px;
+    background: #f6ead0;
+    border: 1px solid rgba(58, 47, 34, .2);
+    font: 700 11px/1 "Songti SC", "STSong", Georgia, serif;
+    color: #a8916c;
 }
 
-.mentorHiddenChip.on .mentorHiddenIcon {
-    background: #5b8fa8;
-    box-shadow: 0 0 0 2px rgba(91, 143, 168, .2);
+.mentorListRow.unlocked .mentorListNum {
+    background: radial-gradient(circle at 32% 28%, #ffe6a3, #c8962c 78%);
+    border-color: #c8962c;
+    color: #4a3410;
 }
 
-.mentorHiddenChip p {
-    margin: 0;
-    font-size: 12px;
-    line-height: 1.55;
-    color: #3a2f22;
+.mentorListLabel {
+    font-size: 12.5px;
+    line-height: 1.4;
+    color: #362b1e;
 }
 
-.mentorHiddenChip:not(.on) p {
+.mentorListRow.locked .mentorListLabel {
     color: #a89a80;
     font-style: italic;
 }
 
-.mentorMemoryList {
+/* ---- 右侧详情读物 ---- */
+.mentorReaderDetail {
+    overflow-y: auto;
+    padding: 4px 6px 4px 18px;
+    border-left: 1px dashed rgba(58, 47, 34, .18);
     display: flex;
     flex-direction: column;
-    gap: 8px;
 }
 
-.mentorMemoryEntry {
+.mentorDetailKicker {
+    color: #a8763c;
+    font: 700 11px/1.5 "Songti SC", "STSong", Georgia, serif;
+    letter-spacing: .1em;
+    margin-bottom: 4px;
+}
+
+.mentorDetailHead {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 12px 16px;
-    border-radius: 12px;
-    text-decoration: none;
-    border: 1px solid rgba(58, 47, 34, .18);
-    background: rgba(58, 47, 34, .04);
-    color: inherit;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
 }
 
-.mentorMemoryEntry.on {
-    cursor: pointer;
-    border: 1px solid rgba(200, 150, 44, .6);
-    background: linear-gradient(120deg, rgba(200, 150, 44, .18), rgba(255, 250, 236, .75) 70%);
-    box-shadow: 0 4px 14px rgba(58, 47, 34, .12);
-    transition: transform .15s ease, box-shadow .15s ease;
-}
-
-.mentorMemoryEntry.on:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 8px 20px rgba(58, 47, 34, .18);
-}
-
-.mentorMemoryIcon {
-    flex: 0 0 auto;
-    width: 40px;
-    height: 40px;
-    display: grid;
-    place-items: center;
-    border-radius: 50%;
-    font-size: 19px;
-    background: rgba(58, 47, 34, .08);
-}
-
-.mentorMemoryEntry.on .mentorMemoryIcon {
-    background: radial-gradient(circle at 32% 28%, #ffe6a3, #c8962c 78%);
-    box-shadow: 0 0 0 3px rgba(200, 150, 44, .18);
-}
-
-.mentorMemoryEntry b {
-    display: block;
-    font: 700 14px/1.4 "Songti SC", "STSong", Georgia, serif;
+.mentorDetailHead h3 {
+    margin: 0;
+    font-size: 22px;
     color: #362b1e;
 }
 
-.mentorMemoryEntry:not(.on) b {
+.mentorDetailTag {
+    font-size: 11.5px;
+    color: #8a6a3c;
+    background: rgba(58, 47, 34, .06);
+    padding: 3px 9px;
+    border-radius: 999px;
+}
+
+.mentorDetailBadge {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(58, 47, 34, .08);
     color: #8a7a5c;
 }
 
-.mentorMemoryEntry small {
-    display: block;
-    margin-top: 2px;
-    font-size: 11.5px;
-    color: #6b5a41;
+.mentorDetailBadge.on {
+    background: rgba(91, 168, 114, .18);
+    color: #3f8a5c;
+}
+
+.mentorDetailBody {
+    flex: 1 1 auto;
+    margin: 0 0 16px;
+    font-size: 15px;
+    line-height: 1.85;
+    color: #3a2f22;
+    white-space: pre-line;
+}
+
+.mentorDetailEnter {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 10px 18px;
+    border-radius: 999px;
+    text-decoration: none;
+    border: 1px solid rgba(200, 150, 44, .6);
+    background: linear-gradient(120deg, rgba(200, 150, 44, .18), rgba(255, 250, 236, .75) 70%);
+    color: #362b1e;
+    font: 700 13px/1.4 "Songti SC", "STSong", Georgia, serif;
+    box-shadow: 0 4px 14px rgba(58, 47, 34, .12);
+}
+
+.mentorDetailEnter:hover {
+    box-shadow: 0 8px 20px rgba(58, 47, 34, .18);
+}
+
+.mentorDetailNav {
+    display: flex;
+    justify-content: space-between;
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px dashed rgba(58, 47, 34, .16);
+}
+
+.mentorNavBtn {
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(58, 47, 34, .25);
+    background: rgba(255, 253, 242, .6);
+    color: #362b1e;
+    font: 700 12.5px/1.4 "Songti SC", "STSong", Georgia, serif;
+    cursor: pointer;
+}
+
+.mentorNavBtn:hover:not(:disabled) {
+    background: rgba(200, 150, 44, .16);
+    border-color: rgba(200, 150, 44, .5);
+}
+
+.mentorNavBtn:disabled {
+    opacity: .4;
+    cursor: default;
 }
