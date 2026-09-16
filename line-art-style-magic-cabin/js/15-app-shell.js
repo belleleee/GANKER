@@ -885,7 +885,6 @@ function captureSaveState() {
         gameplayLoop: typeof captureGameplayLoopState === 'function' ? captureGameplayLoopState() : null,
         cafeTotalRevenue: cafeTotalRevenue,
         toolUnlock: typeof captureToolUnlockState === 'function' ? captureToolUnlockState() : null,
-        prologue: typeof capturePrologueState === 'function' ? capturePrologueState() : null,
         gamblingRisk: typeof captureGamblingRiskState === 'function' ? captureGamblingRiskState() : null,
         coloring: typeof captureColoringState === 'function' ? captureColoringState() : null
     };
@@ -1207,9 +1206,6 @@ function applySaveState(save) {
     }
     if (typeof applyGameplayLoopState === 'function') {
         applyGameplayLoopState(save.gameplayLoop);
-    }
-    if (typeof applyPrologueState === 'function') {
-        applyPrologueState(save.prologue);
     }
     if (typeof applyGamblingRiskState === 'function') {
         applyGamblingRiskState(save.gamblingRisk);

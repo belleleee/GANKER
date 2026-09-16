@@ -232,15 +232,21 @@ const MAIN_STORY_STAGES = [
         unlocks: null,
         title: '这一次，我不听你的',
         lines: [
-            { speaker: '旁白', text: '魔法道具铺这几天像换了个公司——广告打得凶，账上却是净亏损。你翻着基本面，翻了老半天。' },
-            { speaker: '旁白', text: '你把自己算的估值填了上去，比现价还高一截。' },
-            { speaker: '你', text: '我觉得这家还能再涨。' },
-            { speaker: '宗庆后', text: '我不投。' },
-            { speaker: '你', text: '为什么？你不是看两眼就能算明白吗？' },
-            { speaker: '宗庆后', text: '算得明白的，是我干过的生意——种地、送货、开店，这些账我闭着眼都能算。这种烧钱换增长的路数，我没干过，不该装懂。' },
-            { speaker: '你', text: '那我这估值……' },
-            { speaker: '宗庆后', text: '你自己填的，你自己担。这次我不替你拿主意。' },
-            { speaker: '旁白', text: '这是他第一次，没能——或者说，没打算——替你做这个决定。' }
+            { speaker: '旁白', text: '最近市场上饮品越来越多，娃哈哈的市场份额在持续下降' },
+            { speaker: '旁白', text: '你在心里算了算账，形势很不乐观' },
+            { speaker: '你', text: '我觉得得推新品。' },
+            { speaker: '宗庆后', text: '不行' },
+            { speaker: '你', text: '为什么？现在是市场推着我们走' },
+            { speaker: '宗庆后', text: '你以为我没有尝试过吗？童装、奶粉、商业零售、白酒我都做过，但是远没有达到预期。' },
+            { speaker: '宗庆后', text: '对于公司来说，太冒险了。' },
+            { speaker: '你', text: '但是维持现状就没有机会了，只会越来越差' },
+            { speaker: '宗庆后', text: '。。。。。。' },
+            { speaker: '旁白', text: '这是他第一次，没能——或者说，没打算——替你做这个决定。' },
+            { speaker: '宗庆后', text: '不行（声音小了下去）' },
+            { speaker: '你', text: '（沉默）' },
+            { speaker: '宗庆后', text: '（叹气😮‍💨）那你放手做吧' },
+            { speaker: '你', text: '嗯，相信我。' },
+
         ],
         unlockToast: '📖 主线推进：这次你自己做了判断',
         questLabel: '在股市小屋赚够 1000 金币',
@@ -249,21 +255,21 @@ const MAIN_STORY_STAGES = [
         auto: () => typeof readSavedInvestmentPnl === 'function' && readSavedInvestmentPnl() >= 1000,
         choices: [
             {
-                label: '跟投（相信自己这些天攒下的判断）',
+                label: '推出咖啡类产品',
                 resultText: '',
                 flag: 'trustedOwnJudgment',
                 mentor: { trust: 2, agreement: -6, independence: 14 },
                 marketEvent: {
-                    impact: -0.04, delay: 2, headline: '非共识判断短期承压：市场还没看懂这家新公司',
-                    phase2: { impact: 0.22, delay: 6, headline: '几个月后：当初没人看懂的公司，业绩验证了判断' }
+                    impact: -0.04, delay: 2, headline: '奶制品和咖啡的强烈反差让市场感到新鲜',
+                    phase2: { impact: 0.22, delay: 6, headline: '但是拓展一个新的业务使得公司账面转不过来，不得不停了这个新业务' }
                 }
             },
             {
-                label: '听他的，不投（稳妥，但可能错过）',
+                label: '推出（奶）茶类产品',
                 resultText: '',
                 flag: null,
                 mentor: { trust: 4, agreement: 8, independence: -6 },
-                marketEvent: { impact: -0.05, delay: 3, headline: '谨慎策略错过一波新经济行情' }
+                marketEvent: { impact: -0.05, delay: 3, headline: '公司有了新的起色' }
             }
         ]
     },
@@ -961,9 +967,6 @@ function advanceMainStoryStage(stage, resultText) {
     if (typeof SND !== 'undefined') SND.play('chim');
     if (stage.reflection && typeof window.showThemeReflection === 'function') {
         window.showThemeReflection(stage.reflection);
-    }
-    if (typeof stage.prologuePartAfter === 'number' && typeof window.openProloguePart === 'function') {
-        setTimeout(() => window.openProloguePart(stage.prologuePartAfter), 2200);
     }
     closeMainStoryStage(true);
 }
