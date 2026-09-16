@@ -60,25 +60,31 @@ const mentorMenuBtn = document.getElementById('mentorMenuBtn');
 function renderMentorFragments() {
     if (!mentorFragments) return;
     const stage = typeof mainStoryState !== 'undefined' ? mainStoryState.stage : 0;
+    const storyCount = MENTOR_FRAGMENTS.filter(f => stage > f.stage).length;
     const storyCards = MENTOR_FRAGMENTS.map((frag, i) => {
         const unlocked = stage > frag.stage;
-        return '<div class="mentorFragmentCard' + (unlocked ? ' on' : '') + '">' +
-            '<span class="mentorFragmentIndex">' + (unlocked ? (i + 1) : '🔒') + '</span>' +
-            '<p>' + (unlocked ? frag.text : '还没解锁这段记忆') + '</p>' +
+        if (!unlocked) {
+            return '<div class="mentorFragmentCard"><span class="mentorFragmentIndex">🔒</span><p>？？？</p></div>';
+        }
+        return '<div class="mentorFragmentCard on">' +
+            '<span class="mentorFragmentIndex">' + (i + 1) + '</span>' +
+            '<p>' + frag.text + '</p>' +
             '</div>';
     }).join('');
     const hiddenUnlockedCount = MENTOR_HIDDEN_FRAGMENTS.filter(f =>
         typeof achievementState !== 'undefined' && achievementState.unlocked[f.achievementId]).length;
     const hiddenCards = MENTOR_HIDDEN_FRAGMENTS.map(f => {
         const unlocked = typeof achievementState !== 'undefined' && !!achievementState.unlocked[f.achievementId];
-        return '<div class="mentorFragmentCard mentorFragmentCard--hidden' + (unlocked ? ' on' : '') + '">' +
-            '<span class="mentorFragmentIndex">' + (unlocked ? f.icon : '🔒') + '</span>' +
+        return '<div class="mentorHiddenChip' + (unlocked ? ' on' : '') + '">' +
+            '<span class="mentorHiddenIcon">' + (unlocked ? f.icon : '🔒') + '</span>' +
             '<p>' + (unlocked ? f.text : '还没碰到这段记忆——在小屋里多摸摸看') + '</p>' +
             '</div>';
     }).join('');
-    mentorFragments.innerHTML = storyCards +
-        '<p class="mentorFragmentsSubhead">藏在小屋里的记忆 · ' + hiddenUnlockedCount + '/' + MENTOR_HIDDEN_FRAGMENTS.length + '</p>' +
-        hiddenCards;
+    mentorFragments.innerHTML =
+        '<p class="mentorFragmentsCount">主线记忆 · ' + storyCount + '/' + MENTOR_FRAGMENTS.length + '</p>' +
+        '<div class="mentorFragmentTimeline">' + storyCards + '</div>' +
+        '<div class="mentorFragmentDivider"><span>🧩 藏在小屋里的记忆 · ' + hiddenUnlockedCount + '/' + MENTOR_HIDDEN_FRAGMENTS.length + '</span></div>' +
+        '<div class="mentorHiddenGrid">' + hiddenCards + '</div>';
 }
 
 function renderMentorPanel() {

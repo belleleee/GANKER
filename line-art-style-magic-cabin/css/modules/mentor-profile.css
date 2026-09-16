@@ -6,7 +6,9 @@
     display: flex;
     align-items: center;
     gap: 16px;
-    margin-bottom: 18px;
+    margin-bottom: 14px;
+    padding-bottom: 16px;
+    border-bottom: 3px double rgba(58, 47, 34, .3);
 }
 
 .mentorHeroAvatar {
@@ -34,95 +36,153 @@
     line-height: 1.6;
 }
 
-.mentorFragments {
+.mentorFragmentsCount {
+    margin: 0 0 10px;
+    color: #a8763c;
+    font: 700 11px/1.5 "Songti SC", "STSong", Georgia, serif;
+    letter-spacing: .12em;
+}
+
+.mentorFragmentTimeline {
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding-left: 14px;
+    gap: 8px;
+    padding-left: 4px;
 }
 
-.mentorFragments::before {
+.mentorFragmentTimeline::before {
     content: '';
     position: absolute;
-    left: 26px;
-    top: 8px;
-    bottom: 8px;
-    width: 2px;
-    background: repeating-linear-gradient(180deg, rgba(58, 47, 34, .22) 0 4px, transparent 4px 9px);
+    left: 17px;
+    top: 4px;
+    bottom: 4px;
+    width: 1px;
+    background: rgba(58, 47, 34, .2);
 }
 
 .mentorFragmentCard {
     position: relative;
     display: flex;
-    gap: 12px;
-    align-items: flex-start;
-    padding: 11px 14px;
-    background: rgba(255, 253, 242, .45);
-    border: 1px solid rgba(58, 47, 34, .14);
-    border-radius: 10px;
-    opacity: .6;
-    transition: opacity .2s ease, border-color .2s ease, background .2s ease, transform .15s ease;
+    gap: 13px;
+    align-items: center;
+    padding: 4px 0;
 }
 
-.mentorFragmentCard.on {
-    opacity: 1;
-    border: 1px solid rgba(200, 150, 44, .55);
-    background: linear-gradient(135deg, rgba(200, 150, 44, .14), transparent 65%), rgba(255, 250, 236, .92);
-    box-shadow: 0 3px 10px rgba(200, 150, 44, .15);
+.mentorFragmentCard p {
+    margin: 0;
+    padding: 9px 13px;
+    flex: 1 1 auto;
+    font-size: 13px;
+    line-height: 1.65;
+    border-radius: 8px;
+}
+
+.mentorFragmentCard:not(.on) p {
+    color: #a89a80;
+    background: rgba(58, 47, 34, .04);
+    border: 1px dashed rgba(58, 47, 34, .16);
+    letter-spacing: .3em;
+}
+
+.mentorFragmentCard.on p {
+    color: #362b1e;
+    background: linear-gradient(120deg, rgba(200, 150, 44, .12), rgba(255, 250, 236, .6) 70%);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .5) inset, 0 2px 6px rgba(58, 47, 34, .08);
 }
 
 .mentorFragmentIndex {
     position: relative;
     z-index: 1;
     flex: 0 0 auto;
-    width: 28px;
-    height: 28px;
+    width: 34px;
+    height: 34px;
     display: grid;
     place-items: center;
     border-radius: 50%;
     background: #f6ead0;
     border: 1px solid rgba(58, 47, 34, .2);
-    font: 700 12px/1 monospace;
+    font: 700 13px/1 "Songti SC", "STSong", Georgia, serif;
     color: #a8916c;
 }
 
 .mentorFragmentCard.on .mentorFragmentIndex {
-    background: #c8962c;
+    background: radial-gradient(circle at 32% 28%, #ffe6a3, #c8962c 78%);
     border-color: #c8962c;
-    color: #fff;
-    box-shadow: 0 0 0 3px rgba(200, 150, 44, .2);
+    color: #4a3410;
+    box-shadow: 0 0 0 3px rgba(200, 150, 44, .18), 0 2px 6px rgba(58, 47, 34, .25);
 }
 
-.mentorFragmentCard p {
+.mentorFragmentDivider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 18px 0 12px;
+    color: #a8763c;
+    font: 700 11.5px/1.5 "Songti SC", "STSong", Georgia, serif;
+    letter-spacing: .06em;
+}
+
+.mentorFragmentDivider::before,
+.mentorFragmentDivider::after {
+    content: '';
+    flex: 1 1 auto;
+    height: 1px;
+    background: repeating-linear-gradient(90deg, rgba(58, 47, 34, .3) 0 4px, transparent 4px 8px);
+}
+
+.mentorHiddenGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+}
+
+@media (max-width: 560px) {
+    .mentorHiddenGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.mentorHiddenChip {
+    display: flex;
+    gap: 9px;
+    align-items: flex-start;
+    padding: 10px 11px;
+    background: rgba(58, 47, 34, .04);
+    border: 1px dashed rgba(58, 47, 34, .18);
+    border-radius: 10px;
+}
+
+.mentorHiddenChip.on {
+    border: 1px solid rgba(91, 143, 168, .5);
+    background: linear-gradient(135deg, rgba(91, 143, 168, .14), rgba(255, 250, 236, .7) 70%);
+    box-shadow: 0 2px 6px rgba(58, 47, 34, .08);
+}
+
+.mentorHiddenIcon {
+    flex: 0 0 auto;
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: rgba(58, 47, 34, .07);
+    font-size: 13px;
+}
+
+.mentorHiddenChip.on .mentorHiddenIcon {
+    background: #5b8fa8;
+    box-shadow: 0 0 0 2px rgba(91, 143, 168, .2);
+}
+
+.mentorHiddenChip p {
     margin: 0;
-    padding-top: 4px;
-    font-size: 13.5px;
-    line-height: 1.6;
+    font-size: 12px;
+    line-height: 1.55;
     color: #3a2f22;
 }
 
-.mentorFragmentCard:not(.on) p {
-    color: #9c8f76;
+.mentorHiddenChip:not(.on) p {
+    color: #a89a80;
     font-style: italic;
-}
-
-.mentorFragmentsSubhead {
-    margin: 12px 0 -2px;
-    padding-top: 12px;
-    border-top: 1px dashed rgba(58, 47, 34, .22);
-    color: #a8763c;
-    font: 700 11px/1.6 monospace;
-    letter-spacing: .08em;
-}
-
-.mentorFragmentCard--hidden.on {
-    border-color: rgba(91, 143, 168, .55);
-    background: linear-gradient(135deg, rgba(91, 143, 168, .14), transparent 65%), rgba(255, 250, 236, .92);
-}
-
-.mentorFragmentCard--hidden.on .mentorFragmentIndex {
-    background: #5b8fa8;
-    border-color: #5b8fa8;
-    box-shadow: 0 0 0 3px rgba(91, 143, 168, .2);
 }
