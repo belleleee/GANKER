@@ -713,14 +713,19 @@ const MAIN_STORY_STAGES = [
         }
         ],
         unlockToast: '📖 主线推进：材料集齐，可以做最后一次炼金了',
-        questLabel: '钱攒够 10000 金币，再回书架前把那本旧书重新翻开',
+        questLabel: '钱攒够 10000 金币，再回到小屋那口坩埚旁边',
         target: { x: -2.35, z: -0.45 },
         coinRequirement: 10000,
-        lockedHint: '钱攒够 10000 金币，再回书架前把那本旧书重新翻开。',
-        readyHint: '💰 钱已经攒够 10000 了——回书架前，把那本旧书重新翻开，就能做最后一次炼金了。',
+        lockedHint: '钱攒够 10000 金币，再回到小屋那口坩埚旁边。',
+        readyHint: '💰 钱已经攒够 10000 了——回到小屋那口坩埚旁边，就能做最后一次炼金了。',
         postDialogueHint: '📜 先别急着按下去——点开左上角菜单里的"主线地图"，回头看看这一路走过的选择，再来做最后的决定。',
-        auto: () => currentCoins() >= 10000 &&
-            typeof wasAlchemyBookReopened === 'function' && wasAlchemyBookReopened(),
+        auto: () => {
+            if (currentCoins() < 10000) return false;
+            if (typeof player === 'undefined' || !player.pos) return false;
+            const dx = -2.35 - player.pos.x;
+            const dz = -0.45 - player.pos.z;
+            return Math.hypot(dx, dz) < 2.2;
+        },
         choices: [
             {
                 label: '把这段情分放在心上，体面地送他走',

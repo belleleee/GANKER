@@ -13,10 +13,7 @@ const alchemyIntroState = {
     complete: false,
     startedStory: false,
     dialogScene: 'wake',
-    dialogIndex: 0,
-    /* 结局那一章要求玩家回到这本书架前，把这本已经读过的书重新打开
-       一次——呼应"回到开局那口坩埚"的收尾，不是单纯攒够金币就行。 */
-    finalBookReopened: false
+    dialogIndex: 0
 };
 
 let alchemyBookGlow = null;
@@ -34,12 +31,12 @@ const ALCHEMY_INTRO_DIALOGUES = {
     wake: [
         { speaker: '???', text: '……你醒了。' },
         { speaker: '???', text: '屋里暗得不正常。看向右侧的书架，那里有一本散发着微光的书。' },
-        { speaker: '???', text: '去打开它吧。或许这里有改变现状的方法。' }
+        { speaker: '???', text: '去打开它吧。或许奇妙的事情发生。' }
     ],
     book: [
         { speaker: '旁白', text: '书页自动翻到最后一页，纸边像被火燎过。封面这时才看清标题——《炼金术入门》。' },
         { speaker: '旁白', text: '扉页上写着一句话：将微不足道之物，炼成更有价值之物。' },
-        { speaker: '你', text: '把一枚硬币变成两枚，应该也算"更有价值"吧。' },
+        { speaker: '你', text: '点石成金？✨✨（两眼放光' },
         { speaker: '旁白', text: '配方下面浮出一行小字：旧硬币、茶叶、星尘。墙上的瓶架似乎刚好有这些东西。' }
     ],
     reagents: [
@@ -51,7 +48,7 @@ const ALCHEMY_INTRO_DIALOGUES = {
     meet: [
         { speaker: '旁白', text: '材料落进锅里，绿色的火光从锅沿爬出来。' },
         { speaker: '你', text: '看起来……好像成功了？' },
-        { speaker: '???', text: '别急。赚钱这事，最怕你以为自己已经成功了。' },
+        { speaker: '???', text: '别急。' },
         { speaker: '旁白', text: '下一秒，魔法阵亮得像白昼——砰。' },
         { speaker: '旁白', text: '光散去，屋子第一次被真正照亮。你这才看清自己住的地方，乱糟糟的——而且多了一个人。' },
         { speaker: '你', text: '你……是谁？' },
@@ -72,8 +69,7 @@ const ALCHEMY_INTRO_DIALOGUES = {
         { speaker: '你', text: '怎么挣？' },
         { speaker: '旁白', text: '他看向窗外那块荒地。' },
         { speaker: '???', text: '不是有地吗？' },
-        { speaker: '你', text: '那我先叫你"师傅"了——总不能一直喊"喂"。' },
-        { speaker: '???', text: '随你。' }
+        { speaker: '你', text: '那好吧。' }
     ]
 };
 
@@ -301,10 +297,6 @@ function ensureAlchemyStageBeacons() {
 function openAlchemyIntroBook() {
     if (alchemyIntroState.complete) {
         setAlchemyRecipeVisible(!alchemyRecipeBoard || !alchemyRecipeBoard.visible);
-        if (!alchemyIntroState.finalBookReopened) {
-            alchemyIntroState.finalBookReopened = true;
-            if (typeof saveGameState === 'function') saveGameState(false);
-        }
         return;
     }
     alchemyIntroState.bookRead = true;
@@ -516,10 +508,6 @@ function isAlchemyIntroStoryStarted() {
     return !!alchemyIntroState.startedStory;
 }
 
-function wasAlchemyBookReopened() {
-    return !!alchemyIntroState.finalBookReopened;
-}
-
 function captureAlchemyIntroState() {
     return Object.assign({}, alchemyIntroState);
 }
@@ -531,7 +519,6 @@ function applyAlchemyIntroState(raw) {
     alchemyIntroState.cauldronUsed = !!raw.cauldronUsed;
     alchemyIntroState.complete = !!raw.complete;
     alchemyIntroState.startedStory = !!raw.startedStory;
-    alchemyIntroState.finalBookReopened = !!raw.finalBookReopened;
     /* 自愈：老存档可能卡在已经删掉的 'cauldron' 场景里（坩埚用完了，
        但开场戏没讲完，又找不到旧场景），统一收敛到 meet 场景重讲一遍
        "第一次见面"，不会卡死在读不到的场景名上。 */
@@ -551,7 +538,6 @@ window.alchemyIntroHint = alchemyIntroHint;
 window.placePlayerAtAlchemyIntroStart = placePlayerAtAlchemyIntroStart;
 window.isAlchemyIntroComplete = isAlchemyIntroComplete;
 window.isAlchemyIntroStoryStarted = isAlchemyIntroStoryStarted;
-window.wasAlchemyBookReopened = wasAlchemyBookReopened;
 window.captureAlchemyIntroState = captureAlchemyIntroState;
 window.applyAlchemyIntroState = applyAlchemyIntroState;
 
