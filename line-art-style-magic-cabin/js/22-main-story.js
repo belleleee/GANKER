@@ -275,17 +275,421 @@ const MAIN_STORY_STAGES = [
         unlocks: null,
         title: '最后一次炼金',
         lines: [
-            { speaker: '旁白', text: '材料终于凑齐了——月银、星尘、灵魂石，都摆在了当年那口坩埚旁边。屋子里的一切，和第一天几乎一模一样。' },
-            { speaker: '旁白', text: '你顺手又翻开了书架上那本旧书——还是第一天翻开的那几页，只是这次，你已经看得懂了。' },
-            { speaker: '你', text: '（习惯性地）这次怎么做？' },
-            { speaker: '宗庆后', text: '你不是会了吗？' },
-            { speaker: '你', text: '我问的是炼金。' },
-            { speaker: '宗庆后', text: '我又不会魔法。' },
-            { speaker: '旁白', text: '你笑了一下，转身面对坩埚。' },
-            { speaker: '你', text: '这些天，谢谢你。' },
-            { speaker: '宗庆后', text: '谢什么。地是你种的，账是你算的，我就在旁边看着。' },
-            { speaker: '你', text: '看着，也是陪着。' },
-            { speaker: '旁白', text: '他没接话，只是把手背在身后，等着你动手。真正送走他之前，还有最后一件事要想清楚。' }
+        {
+
+            speaker: '旁白',
+
+            text: '月银、星尘、灵魂石。最后一样材料被放上桌时，你们两个都安静了一会儿。'
+
+        },
+
+        {
+
+            speaker: '旁白',
+
+            text: '屋子还是第一次见面时的样子。书架、坩埚、散落的瓶瓶罐罐，连那本闯了祸的炼金书都还在原来的位置。'
+
+        },
+
+        {
+
+            speaker: '宗庆后',
+
+            text: '总算凑齐了。'
+
+        },
+
+        {
+
+            speaker: '你',
+
+            text: '听起来你等这一天等很久了。'
+
+        },
+
+        {
+
+            speaker: '宗庆后',
+
+            text: '回得去当然好。不过真到了这一天……还挺快。'
+
+        },
+
+        {
+
+            speaker: '旁白',
+
+            text: '他说完，低头把桌边几个碍事的瓶子挪开，给你腾出位置。'
+
+        },
+
+        {
+
+            speaker: '你',
+
+            text: '宗师傅。'
+
+        },
+
+        {
+
+            speaker: '宗庆后',
+
+            text: '嗯？'
+
+        },
+
+        {
+
+            speaker: '你',
+
+            text: '你还记得第一天吗？'
+
+        },
+
+        {
+
+            speaker: '宗庆后',
+
+            text: '怎么不记得。锅炸了，屋里全是烟。你站那儿半天没说出一句话。'
+
+        },
+
+        {
+
+            speaker: '你',
+
+            text: '……这种事情就不用记这么清楚了。'
+
+        },
+
+        {
+
+            speaker: '宗庆后',
+
+            text: '哈哈，那可不容易忘。'
+
+        },
+
+        {
+
+            speaker: '旁白',
+
+            text: '你重新翻开那本炼金书。那些第一次见时像天书一样的符号，现在已经能一点点读下去了。'
+
+        },
+
+        {
+
+            speaker: '你',
+
+            text: '月银先放，等火变蓝，再加星尘……最后是灵魂石。'
+
+        },
+
+        {
+
+            speaker: '宗庆后',
+
+            text: '这回不用我在旁边瞎出主意了。'
+
+        },
+
+        {
+
+            speaker: '你',
+
+            text: '你还知道自己以前是瞎出主意？'
+
+        },
+
+        {
+
+            speaker: '宗庆后',
+
+            text: '炼金我是不懂。种地、卖货、算账，还能陪你琢磨琢磨。'
+
+        },
+
+        {
+
+            speaker: '旁白',
+
+            text: '你照着书上的步骤点起火。月银慢慢熔化，星尘落下去，蓝色的光一点点铺满房间。'
+
+        },
+
+        {
+
+            speaker: '宗庆后',
+
+            text: '手比第一次稳多了。'
+
+        },
+
+        {
+
+            speaker: '你',
+
+            text: '那当然。'
+
+        },
+
+        {
+
+            speaker: '宗庆后',
+
+            text: '不只是炼金。'
+
+        },
+
+        {
+
+            speaker: '你',
+
+            text: '……什么意思？'
+
+        },
+
+        {
+
+            speaker: '宗庆后',
+
+            text: '刚认识你的时候，一碰到事情，你先想的是来问我怎么办。'
+
+        },
+
+        {
+
+            speaker: '宗庆后',
+
+            text: '后来种什么、货怎么卖、钱往哪儿投，你有时候跟我想得不一样，也敢自己拿主意了。'
+
+        },
+
+        {
+
+            speaker: '宗庆后',
+
+            text: '挺好。'
+
+        },
+
+        {
+
+            speaker: '你',
+
+            text: '你居然夸我了。'
+
+        },
+
+        {
+
+            speaker: '宗庆后',
+
+            text: '做得好当然要夸。'
+
+        },
+
+        {
+
+            speaker: '旁白',
+
+            text: '他说得很自然。你反倒愣了一下。'
+
+        },
+
+        {
+
+            speaker: '你',
+
+            text: '那我现在算会赚钱了吗？'
+
+        },
+
+        {
+
+            speaker: '宗庆后',
+
+            text: '会不会赚钱，我说了不算。'
+
+        },
+
+        {
+
+            speaker: '宗庆后',
+
+            text: '不过你现在知道一块钱是怎么挣来的，也知道做错了决定得自己担着。以后慢慢做，总不会太差。'
+
+        },
+
+        {
+
+            speaker: '你',
+
+            text: '听起来还是不怎么像夸人。'
+
+        },
+
+        {
+
+            speaker: '宗庆后',
+
+            text: '那就再加一句。'
+
+        },
+
+        {
+
+            speaker: '宗庆后',
+
+            text: '这段时间，你做得不错。'
+
+        },
+
+        {
+
+            speaker: '旁白',
+
+            text: '蓝色的火光晃了一下。你低下头，假装继续看书。'
+
+        },
+
+        {
+
+            speaker: '你',
+
+            text: '……哦。'
+
+        },
+
+        {
+
+            speaker: '宗庆后',
+
+            text: '怎么，刚才不是还嫌我不会夸人？'
+
+        },
+
+        {
+
+            speaker: '你',
+
+            text: '你突然这么说，我不习惯。'
+
+        },
+
+        {
+
+            speaker: '旁白',
+
+            text: '他笑了笑，没有再逗你。'
+
+        },
+
+        {
+
+            speaker: '旁白',
+
+            text: '坩埚里的光越来越亮。现在只剩最后一样材料。'
+
+        },
+
+        {
+
+            speaker: '旁白',
+
+            text: '灵魂石躺在你的掌心。只要把它放进去，这场从一次失败的炼金开始的意外，就真的要结束了。'
+
+        },
+
+        {
+
+            speaker: '你',
+
+            text: '宗师傅。'
+
+        },
+
+        {
+
+            speaker: '宗庆后',
+
+            text: '我在。'
+
+        },
+
+        {
+
+            speaker: '你',
+
+            text: '回去以后，你会记得这里吗？'
+
+        },
+
+        {
+
+            speaker: '宗庆后',
+
+            text: '不知道。'
+
+        },
+
+        {
+
+            speaker: '宗庆后',
+
+            text: '不过一起种过地、卖过东西、赔过钱，也赚过钱。就算记不住地方，这些日子总归是真的。'
+
+        },
+
+        {
+
+            speaker: '你',
+
+            text: '……嗯。'
+
+        },
+
+        {
+
+            speaker: '宗庆后',
+
+            text: '你呢？'
+
+        },
+
+        {
+
+            speaker: '你',
+
+            text: '我肯定记得。'
+
+        },
+
+        {
+
+            speaker: '旁白',
+
+            text: '他点了点头。没有催你，只是像过去许多个下午一样，安静地站在旁边。'
+
+        },
+
+        {
+
+            speaker: '宗庆后',
+
+            text: '什么时候准备好了，什么时候放。'
+
+        },
+
+        {
+
+            speaker: '旁白',
+
+            text: '这一次，决定权完完整整地留在了你手里。'
+
+        }
         ],
         unlockToast: '📖 主线推进：材料集齐，可以做最后一次炼金了',
         questLabel: '钱攒够 10000 金币，再回书架前把那本旧书重新翻开',
@@ -293,6 +697,7 @@ const MAIN_STORY_STAGES = [
         coinRequirement: 10000,
         lockedHint: '钱攒够 10000 金币，再回书架前把那本旧书重新翻开。',
         readyHint: '💰 钱已经攒够 10000 了——回书架前，把那本旧书重新翻开，就能做最后一次炼金了。',
+        postDialogueHint: '📜 先别急着按下去——点开左上角菜单里的"主线地图"，回头看看这一路走过的选择，再来做最后的决定。',
         auto: () => currentCoins() >= 10000 &&
             typeof wasAlchemyBookReopened === 'function' && wasAlchemyBookReopened(),
         choices: [
@@ -463,7 +868,15 @@ function renderMainStoryCard(stage) {
     }
     mainStoryBody.innerHTML = html;
     mainStoryBody.classList.toggle('dialogStep', !linesDone);
-    if (linesDone) mainStoryStageSeen[mainStoryState.stage] = true;
+    if (linesDone) {
+        const alreadySeen = mainStoryStageSeen[mainStoryState.stage];
+        mainStoryStageSeen[mainStoryState.stage] = true;
+        /* 台词第一次读完的那一刻提醒一句——比如结局前想让玩家先回
+           剧情地图翻翻这一路的选择，不用每次重开这一章都念叨一遍。 */
+        if (!alreadySeen && stage.postDialogueHint && typeof showHintOverride === 'function') {
+            showHintOverride(stage.postDialogueHint);
+        }
+    }
     if (mainStoryPanel) {
         const card = mainStoryPanel.querySelector('.mainStoryCard');
         if (card) card.scrollTop = card.scrollHeight;
