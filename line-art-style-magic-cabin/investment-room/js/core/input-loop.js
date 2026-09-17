@@ -32,6 +32,10 @@ dashBody.addEventListener('click', event => {
       acquireCompany(button.dataset.stock);
       return;
     }
+    if (button.dataset.action === 'resolveControlEvent') {
+      resolveControlEvent(button.dataset.choice);
+      return;
+    }
     if (button.dataset.action === 'repayMargin') {
       repayMargin(button.dataset.amount);
       return;

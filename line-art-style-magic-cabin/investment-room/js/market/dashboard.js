@@ -566,8 +566,10 @@ function acquireCompany(targetId) {
   company.treasury -= cost;
   stock.acquired = true;
   company.acquisitions = Array.isArray(company.acquisitions) ? company.acquisitions.concat(target.id) : [target.id];
-  const waha = getStock('WAHA');
-  waha.pressure = Math.min(.2, waha.pressure + .05);
+  /* 每次并购给 WAHA 自己的股价加一点点常驻涨幅——不是一次性的新闻
+     冲击（那种几天就衰减没了），是真的写进 advanceMarketDay() 定价
+     公式里的持续加成，公司面板里也看得到具体数字。 */
+  company.acquisitionDrift = Math.min(.05, (company.acquisitionDrift || 0) + .008);
   marketState.news.push({
     title: '娃哈哈完成并购："' + stock.name + '"并入版图',
     targetStock: 'WAHA',
@@ -937,6 +939,7 @@ function wahaCompanyDashboardHtml(stock) {
     '<section class="wahaHero">' +
     '<p>FOUNDER COMPANY</p><h3>娃哈哈</h3><span>' + status + ' · 创始人公司</span>' +
     '</section>' +
+    controlEventHtml(company) +
     '<section class="wahaMetrics">' +
     '<div><small>创始人</small><strong class="' + controlClass + '">' + founderPct + '%</strong></div>' +
     '<div><small>公开流通</small><strong>' + publicPct + '%</strong></div>' +
@@ -949,11 +952,93 @@ function wahaCompanyDashboardHtml(stock) {
     '</section>' +
     '<p class="wahaNextStep">' + nextStep + '</p>' +
     (company.acquisitions.length
-      ? '<section class="wahaAcquired"><small>已收购</small><strong>' +
+      ? '<section class="wahaAcquired"><small>已收购 · 并购加成每日 +' + Math.round((company.acquisitionDrift || 0) * 1000) / 10 + '%</small><strong>' +
         company.acquisitions.map(id => { const s = STOCKS.find(item => item.id === id); return s ? s.name : id; }).join(' · ') +
         '</strong></section>'
       : '') +
     '</div>';
+}
+
+/* ---------------- 控制权事件 ----------------
+   创始人持股跌破关键线之后，advanceMarketDay() 会按概率往
+   company.pendingControlEvent 里挂一件事——不再是风险标签自己说说
+   而已，是真的会打断玩家、要求做一次选择。 */
+function controlEventHtml(company) {
+  const evt = company.pendingControlEvent;
+  if (!evt) return '';
+  if (evt.type === 'veto') {
+    return '<div class="founderEmergencyBox">' +
+      '<p class="founderEmergencyTitle">董事会否决</p>' +
+      '<p class="dashRumorHint warn">持股不过半，你说了不算——董事会这次直接把你的一项提案给否了，声誉受损。</p>' +
+      '<div class="dashTradeActions"><button class="ghost founderSaleBtn" data-action="resolveControlEvent" data-choice="ack">认了</button></div>' +
+      '</div>';
+  }
+  const stock = getStock('WAHA');
+  const price = Math.max(1, Math.round(stock.price * 1.15));
+  const cost = evt.shares * price;
+  const affordable = state.coins >= cost;
+  return '<div class="founderEmergencyBox">' +
+    '<p class="founderEmergencyTitle">恶意收购警报 · 有人在场外悄悄扫货，想拿下公司</p>' +
+    '<div class="founderChoiceTable">' +
+    '<div class="founderChoiceRow">' +
+    '<b>买回股份守住控制权</b>' +
+    '<span>需要 <em>' + evt.shares + '</em> 股</span>' +
+    '<span>溢价 <em>15%</em> · 每股 <em>' + price + '</em></span>' +
+    '<span>花费 <em>' + cost + '</em></span>' +
+    '<button class="ghost founderSaleBtn" data-action="resolveControlEvent" data-choice="defend"' +
+    (affordable ? '' : ' disabled') + '>就这么办</button>' +
+    '</div>' +
+    '<div class="founderChoiceRow">' +
+    '<b>不管它，赌一把</b>' +
+    '<span>不花钱</span>' +
+    '<span>声誉会掉</span>' +
+    '<span>外部资本话语权变大</span>' +
+    '<button class="ghost founderSaleBtn" data-action="resolveControlEvent" data-choice="ignore">不管了</button>' +
+    '</div>' +
+    '</div>' +
+    '</div>';
+}
+
+function resolveControlEvent(choice) {
+  const company = companyState();
+  const evt = company.pendingControlEvent;
+  if (!evt) return;
+  if (evt.type === 'veto') {
+    company.pendingControlEvent = null;
+    state.investment.reputation = Math.max(0, state.investment.reputation - 3);
+    if (typeof showMarketFeedback === 'function') {
+      showMarketFeedback(0, '董事会否决', '一项提案被董事会否了 · 声誉 -3', { countMilestone: false });
+    }
+  } else if (evt.type === 'hostile') {
+    const stock = getStock('WAHA');
+    if (choice === 'defend') {
+      const price = Math.max(1, Math.round(stock.price * 1.15));
+      const cost = evt.shares * price;
+      if (state.coins < cost) {
+        if (typeof showToast === 'function') showToast('金币不够，买不回这些股份');
+        return;
+      }
+      state.coins -= cost;
+      company.publicShares = Math.max(0, company.publicShares - evt.shares);
+      company.founderShares = Math.min(company.totalShares, company.founderShares + evt.shares);
+      company.pendingControlEvent = null;
+      if (typeof showMarketFeedback === 'function') {
+        showMarketFeedback(-cost, '守住控制权',
+          '溢价买回 ' + evt.shares + ' 股 · 花费 ' + cost + ' · 创始人持股回到 ' + wahaFounderPct(company) + '%', {
+            toastLabel: '个人现金 -'
+          });
+      }
+    } else {
+      company.pendingControlEvent = null;
+      state.investment.reputation = Math.max(0, state.investment.reputation - 8);
+      if (typeof showMarketFeedback === 'function') {
+        showMarketFeedback(0, '控制权旁落', '你没有出手，外部资本拿到了更多话语权 · 声誉 -8', { countMilestone: false });
+      }
+    }
+  }
+  redrawScreens();
+  renderScreenPanel(activeScreen);
+  saveState();
 }
 
 function rumorPanelHtml(stock) {

@@ -316,7 +316,24 @@ function normalizeCompanyState(raw) {
     lockupUntilDay: intValue(raw && raw.lockupUntilDay, -1, -1, 999999),
     acquisitions: Array.isArray(raw && raw.acquisitions)
       ? raw.acquisitions.filter(id => STOCKS.some(item => item.id === id && !item.isPlayerCompany)).slice(0, 8)
-      : []
+      : [],
+    /* 每完成一次并购，给 WAHA 自己的股价加一点点"吃不掉的"每日常驻
+       涨幅——之前并购只往 waha.pressure 里加数，但 WAHA 的价格公式
+       根本不看 pressure（只看 shock），所以并购买了跟没买一样。现在
+       这笔加成是真实、持续生效的（见 advanceMarketDay 里的 change
+       公式），并且在公司面板里能看到具体数字。 */
+    acquisitionDrift: finiteNumber(raw && raw.acquisitionDrift, 0, 0, .05),
+    /* 创始人持股跌破关键线之后，股市小屋会不定期弹出"董事会否决"或
+       "恶意收购警报"——控制权风险不再只是好看的文字标签。一次只挂一件
+       待处理事件，玩家没处理完之前不会再叠加新的。 */
+    pendingControlEvent: (raw && raw.pendingControlEvent && typeof raw.pendingControlEvent === 'object' &&
+      (raw.pendingControlEvent.type === 'veto' || raw.pendingControlEvent.type === 'hostile'))
+      ? {
+        type: raw.pendingControlEvent.type,
+        day: intValue(raw.pendingControlEvent.day, 0, 0, 999999),
+        shares: intValue(raw.pendingControlEvent.shares, 0, 0, totalShares)
+      }
+      : null
   };
 }
 
@@ -1003,7 +1020,7 @@ function advanceMarketDay() {
       const fv = fairValue(stock);
       revert = MEAN_REVERT_ALPHA * (fv - prevPrice) / prevPrice;
     }
-    const change = item.isPlayerCompany ? shock
+    const change = item.isPlayerCompany ? shock + (state.investment.company ? state.investment.company.acquisitionDrift : 0)
       : baseFluctuation() + newsImpact(item.id, marketState.day) + playerImpact(item.id) + shock * .4 + revert;
     stock.prev = prevPrice;
     stock.price = Math.max(1, Math.round(clampPrice(prevPrice * (1 + change), prevPrice, shock ? .32 : .1) * 10) / 10);
@@ -1022,6 +1039,24 @@ function advanceMarketDay() {
     setMarginDebt(marginDebt() * (1 + MARGIN_INTEREST_RATE));
     if (portfolioEquity() < marginDebt() * MARGIN_CALL_RATIO) {
       forceLiquidateMargin();
+    }
+  }
+  /* 创始人持股跌破关键线，就有机会摊上"董事会否决"/"恶意收购"这类
+     控制权事件——一次只挂一件，玩家处理掉之前不会再抽新的，避免
+     事件叠事件。具体阈值/概率跟 founderControlRiskLabel() 用的分界
+     线（67/51/34）对齐，"有被联合否决的风险"对应否决事件，
+     "控制权已经不在你手上"对应恶意收购。 */
+  const company = state.investment.company;
+  if (company && company.listed && !company.pendingControlEvent) {
+    const founderPct = typeof wahaFounderPct === 'function' ? wahaFounderPct(company) : 100;
+    if (founderPct < 34 && Math.random() < .30) {
+      company.pendingControlEvent = {
+        type: 'hostile',
+        day: marketState.day,
+        shares: Math.max(50, Math.round(company.totalShares * .05))
+      };
+    } else if (founderPct < 51 && Math.random() < .22) {
+      company.pendingControlEvent = { type: 'veto', day: marketState.day, shares: 0 };
     }
   }
   checkWeeklyRetrospective();
