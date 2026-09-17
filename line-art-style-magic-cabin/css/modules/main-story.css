@@ -1,5 +1,5 @@
-/* 对话框式：跟开局炼金对话/租地对话同一套底部深色对话框，
-   不再是屏幕正中央的羊皮纸卡片。 */
+/* 线稿风暖色纸卡对话框——跟师傅面板/成就面板同一套米纸+墨线+金色调，
+   卡片固定尺寸（内部单独滚动），不会随台词变多而长高、跟顶部状态栏叠在一起。 */
 .mainStoryPanel {
     position: fixed;
     inset: 0;
@@ -8,7 +8,7 @@
     align-items: flex-end;
     justify-content: center;
     padding: 0 24px 42px;
-    background: rgba(10, 8, 4, .28);
+    background: rgba(58, 47, 34, .22);
 }
 
 .mainStoryPanel[hidden] {
@@ -18,15 +18,16 @@
 .mainStoryCard {
     position: relative;
     width: min(1120px, calc(100vw - 60px));
-    max-height: min(70vh, 560px);
-    overflow: auto;
+    height: min(560px, 72vh);
+    display: flex;
+    flex-direction: column;
     padding: 22px 30px 24px;
-    color: #f7f0dc;
-    background: linear-gradient(180deg, rgba(18, 22, 28, .92), rgba(8, 11, 16, .95));
-    border: 1px solid rgba(255, 255, 255, .32);
-    border-radius: 12px;
-    box-shadow: 0 18px 40px rgba(0, 0, 0, .4);
-    font: 500 17px/1.7 system-ui, -apple-system, BlinkMacSystemFont, "Microsoft YaHei", sans-serif;
+    color: #3a2f22;
+    background: linear-gradient(180deg, #fdf8ec, #f3e8d0);
+    border: 1px solid rgba(58, 47, 34, .26);
+    border-radius: 16px;
+    box-shadow: 0 24px 60px rgba(40, 30, 18, .3), inset 0 0 0 1px rgba(255, 255, 255, .5);
+    font: 500 17px/1.7 "Songti SC", "STSong", "PingFang SC", serif;
 }
 
 .mainStoryClose {
@@ -35,20 +36,21 @@
     right: 12px;
     width: 30px;
     height: 30px;
-    border: 1px solid rgba(255, 255, 255, .3);
+    border: 1px solid rgba(58, 47, 34, .28);
     border-radius: 50%;
-    background: rgba(255, 255, 255, .08);
-    color: #f7f0dc;
+    background: #fffdf6;
+    color: #3a2f22;
     font-size: 17px;
     line-height: 1;
     cursor: pointer;
     transition: .15s;
+    box-shadow: 0 2px 6px rgba(58, 47, 34, .12);
 }
 
 .mainStoryClose:hover {
-    background: rgba(255, 255, 255, .18);
-    color: #fff;
-    border-color: rgba(255, 255, 255, .5);
+    background: #fff;
+    border-color: rgba(58, 47, 34, .5);
+    box-shadow: 0 3px 10px rgba(58, 47, 34, .18);
 }
 
 @keyframes mainStoryShake {
@@ -69,23 +71,27 @@
 
 .mainStoryKicker {
     margin: 0;
+    flex: none;
     letter-spacing: .24em;
     text-transform: uppercase;
-    color: #ffd778;
-    font: 700 11px/1.3 monospace;
+    color: #a8763c;
+    font: 700 11px/1.3 "Songti SC", "STSong", serif;
 }
 
 #mainStoryTitle {
     margin: 5px 0 14px;
+    flex: none;
     font-size: clamp(18px, 3.6vw, 22px);
     line-height: 1.2;
-    color: #fff;
-    font-family: 'Noto Serif SC', serif;
+    color: #2e2317;
+    font-family: 'Noto Serif SC', "Songti SC", serif;
 }
 
 .mainStoryBody {
     position: relative;
-    min-height: 64px;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
     padding: 4px 34px 4px 2px;
     margin-bottom: 16px;
 }
@@ -93,10 +99,12 @@
 /* 台词一句一句走的时候，右下角加个闪动的箭头，提示还能点"继续"翻下一句 */
 .mainStoryBody.dialogStep::after {
     content: '▼';
-    position: absolute;
+    position: sticky;
+    display: block;
     right: 6px;
     bottom: 2px;
-    color: #ffd778;
+    text-align: right;
+    color: #a8763c;
     font-size: 15px;
     animation: mainStoryDialogArrow 1s ease-in-out infinite;
 }
@@ -116,59 +124,64 @@
     margin-right: 8px;
     padding: 3px 12px 3px 3px;
     border-radius: 999px;
-    background: rgba(222, 199, 154, .92);
-    color: #211a14;
-    font: 800 12px/1.6 monospace;
+    background: rgba(200, 150, 44, .16);
+    border: 1px solid rgba(58, 47, 34, .18);
+    color: #3a2f22;
+    font: 800 12px/1.6 "Songti SC", "STSong", serif;
 }
 
 .mainStorySpeaker:not(:has(.mentorAvatar)) {
     padding: 2px 10px;
 }
 
-/* 师傅/宗庆后说话的时候，名字前带个小头像——不管出现在主线卡片、
-   租地对话还是新功能提示里，都是同一套样式，一眼认出是他。 */
+/* 师傅/宗庆后说话的时候，名字前带个立绘小卡——线稿肖像装进带墨线边框的
+   方卡里，不再是压扁的圆形头像，跟成就/师傅面板的"立绘卡"是同一路子。 */
 .mainStorySpeakerMentor {
-    background: #ffd778 !important;
+    background: rgba(200, 150, 44, .28) !important;
+    border-color: rgba(200, 150, 44, .5) !important;
 }
 
 .mentorAvatar {
     display: inline-block;
-    width: 48px;
-    height: 48px;
-    margin-right: 7px;
-    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    margin-right: 8px;
+    border-radius: 8px;
     object-fit: cover;
-    object-position: 50% 15%;
+    object-position: 50% 22%;
     vertical-align: middle;
-    box-shadow: 0 0 0 2px rgba(33, 26, 20, .4);
+    background: #fffdf6;
+    box-shadow: 0 0 0 2px #fffdf6, 0 0 0 3px rgba(58, 47, 34, .4);
 }
 
 .mainStoryCoinNote {
     margin-top: 10px !important;
+    flex: none;
     padding: 8px 10px;
-    border: 1px dashed rgba(255, 148, 110, .5);
+    border: 1px dashed rgba(209, 80, 63, .5);
     border-radius: 6px;
-    background: rgba(255, 148, 110, .1);
-    color: #ffb595;
-    font: 700 13px/1.5 monospace !important;
+    background: rgba(209, 80, 63, .08);
+    color: #a3392b;
+    font: 700 13px/1.5 "Songti SC", "STSong", serif !important;
     text-align: left !important;
 }
 
 .mainStoryCoinNote.met {
-    border-color: rgba(139, 224, 106, .55);
-    background: rgba(139, 224, 106, .12);
-    color: #bdf09a;
+    border-color: rgba(47, 158, 92, .5);
+    background: rgba(47, 158, 92, .1);
+    color: #1f6e40;
 }
 
 #mainStoryNextBtn[disabled] {
-    background: rgba(255, 255, 255, .1);
-    border-color: rgba(255, 255, 255, .2);
-    color: rgba(247, 240, 220, .45);
+    background: rgba(58, 47, 34, .08);
+    border-color: rgba(58, 47, 34, .2);
+    color: rgba(58, 47, 34, .35);
     cursor: not-allowed;
 }
 
 .mainStoryChoices {
     display: flex;
+    flex: none;
     flex-direction: column;
     gap: 10px;
 }
@@ -181,18 +194,18 @@
     appearance: none;
     text-align: left;
     padding: 12px 14px;
-    border: 1px solid rgba(255, 255, 255, .28);
+    border: 1px solid rgba(58, 47, 34, .22);
     border-radius: 8px;
-    background: rgba(255, 255, 255, .06);
-    color: #f7f0dc;
-    font: 600 14px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Microsoft YaHei", sans-serif;
+    background: #fffdf6;
+    color: #3a2f22;
+    font: 600 14px/1.5 "Songti SC", "STSong", "PingFang SC", serif;
     cursor: pointer;
     transition: background .15s ease, border-color .15s ease;
 }
 
 .mainStoryChoiceBtn:hover:not([disabled]) {
-    background: rgba(255, 215, 120, .14);
-    border-color: #ffd778;
+    background: rgba(200, 150, 44, .14);
+    border-color: #c8962c;
 }
 
 .mainStoryChoiceBtn[disabled] {
@@ -433,12 +446,13 @@
 #mainStoryNextBtn,
 .featureIntroCloseBtn {
     display: block;
+    flex: none;
     margin-left: auto;
-    border: 1px solid #ffd778;
+    border: 1px solid #c8962c;
     border-radius: 999px;
     padding: 9px 20px;
-    background: #ffd778;
-    color: #211a14;
-    font: 700 13px/1 monospace;
+    background: #c8962c;
+    color: #2e2317;
+    font: 700 13px/1 "Songti SC", "STSong", serif;
     cursor: pointer;
 }
