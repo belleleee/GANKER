@@ -394,6 +394,10 @@ function launchWahaIpo(planId) {
     if (typeof showToast === 'function') showToast('娃哈哈已经上市了，后续只能通过二级市场交易。');
     return;
   }
+  if (wahaFounderPct(company) < 50) {
+    if (typeof showToast === 'function') showToast('创始人持股还没过半，公司还不是你说了算，谈不上上市。');
+    return;
+  }
   const stock = getStock('WAHA');
   /* 上市定价跟着市场情绪走：狂热的时候投资人愿意多付钱，恐慌的时候
      只愿意打折买——同一个发行方案，挑的时机不同，融到的钱能差出一截。 */
@@ -778,6 +782,17 @@ function tradePanelHtml(stock) {
 function wahaCompanyPanelHtml(stock) {
   const company = companyState();
   const holding = getHolding('WAHA');
+  const founderPctNow = wahaFounderPct(company);
+  if (!company.listed && founderPctNow < 50) {
+    return '<div class="dashTradeHead"><h3>还没拿到控制权</h3>' +
+      '<p>娃哈哈现在不是你说了算——创始人持股只有 <b>' + founderPctNow + '%</b>，过半才能决定要不要上市融资。</p></div>' +
+      '<div class="dashTradeInfo">' +
+      '<div><span>创始人持股</span><strong>' + founderPctNow + '%</strong></div>' +
+      '<div><span>还差多少过半</span><strong>' + Math.max(0, Math.round((50 - founderPctNow) * 100) / 100) + '%</strong></div>' +
+      '</div>' +
+      '<p class="dashRumorHint">日子里偶尔会有人主动找上门，愿意把手里的原始股折价转让——留意小屋里弹出的"融资请求"。</p>' +
+      '<button class="dashNextDay" data-action="nextDay">下一交易日 · Day ' + (marketState.day + 1) + '</button>';
+  }
   if (!company.listed) {
     const sentiment = typeof marketSentimentLabel === 'function' ? marketSentimentLabel() : { label: '平稳' };
     const sentimentMult = typeof sentimentIpoMultiplier === 'function' ? sentimentIpoMultiplier() : 1;
@@ -915,7 +930,9 @@ function wahaCompanyDashboardHtml(stock) {
   const controlClass = founderPct >= 67 ? 'strong' : founderPct >= 51 ? 'watch' : 'risk';
   const nextStep = company.listed
     ? '后续主线里的广告、兼并、渠道选择，会继续影响 WAHA 股价。'
-    : '先在右侧选择上市方案：决定卖给谁、卖多少股、定什么价格。';
+    : (founderPct >= 50
+      ? '先在右侧选择上市方案：决定卖给谁、卖多少股、定什么价格。'
+      : '创始人持股还没过半，先想办法把股份攒够——留意小屋里弹出的"融资请求"。');
   return '<div class="wahaDashboard">' +
     '<section class="wahaHero">' +
     '<p>FOUNDER COMPANY</p><h3>娃哈哈</h3><span>' + status + ' · 创始人公司</span>' +

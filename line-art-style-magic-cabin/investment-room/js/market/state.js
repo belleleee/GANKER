@@ -297,7 +297,11 @@ function normalizeInvestment(raw) {
 function normalizeCompanyState(raw) {
   const listed = !!(raw && raw.listed);
   const totalShares = intValue(raw && raw.totalShares, 10000, 1000, 1000000);
-  const founderShares = intValue(raw && raw.founderShares, totalShares, 0, totalShares);
+  /* 新存档不再默认给玩家100%创始股——娃哈哈不是白送的，得靠小屋那边
+     "融资请求"里那些愿意让股的card，一点一点买/攒回来，直到过半数
+     才算真正拿到公司的控制权（见 dashboard.js 里 wahaCompanyPanelHtml
+     对上市面板的持股门槛判断）。 */
+  const founderShares = intValue(raw && raw.founderShares, 0, 0, totalShares);
   const publicShares = intValue(raw && raw.publicShares, listed ? Math.max(0, totalShares - founderShares) : 0, 0, totalShares);
   const treasury = intValue(raw && raw.treasury, 0, 0, 999999999);
   return {
