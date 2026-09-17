@@ -18,7 +18,7 @@
 .mainStoryCard {
     position: relative;
     width: min(1120px, calc(100vw - 60px));
-    height: min(260px, 42vh);
+    height: min(200px, 42vh);
     display: flex;
     flex-direction: column;
     padding: 20px 30px 22px;
@@ -27,7 +27,7 @@
     backdrop-filter: blur(6px);
     border: 1px solid rgba(58, 47, 34, .26);
     border-radius: 16px;
-    box-shadow: 0 24px 60px rgba(40, 30, 18, .26), inset 0 0 0 1px rgba(255, 255, 255, .4);
+    box-shadow: 0 24px 60px rgba(40, 30, 18, .26), inset 0 0 0 1px rgba(255, 255, 255, .6);
     font: 500 17px/1.7 "Songti SC", "STSong", "PingFang SC", serif;
 }
 
@@ -80,12 +80,7 @@
 }
 
 #mainStoryTitle {
-    margin: 5px 0 14px;
-    flex: none;
-    font-size: clamp(18px, 3.6vw, 22px);
-    line-height: 1.2;
-    color: #2e2317;
-    font-family: 'Noto Serif SC', "Songti SC", serif;
+    display: none;
 }
 
 .mainStoryBody {
