@@ -18,15 +18,16 @@
 .mainStoryCard {
     position: relative;
     width: min(1120px, calc(100vw - 60px));
-    height: min(560px, 72vh);
+    height: min(260px, 42vh);
     display: flex;
     flex-direction: column;
-    padding: 22px 30px 24px;
+    padding: 20px 30px 22px;
     color: #3a2f22;
-    background: linear-gradient(180deg, #fdf8ec, #f3e8d0);
+    background: linear-gradient(180deg, rgba(253, 248, 236, .84), rgba(243, 232, 208, .84));
+    backdrop-filter: blur(6px);
     border: 1px solid rgba(58, 47, 34, .26);
     border-radius: 16px;
-    box-shadow: 0 24px 60px rgba(40, 30, 18, .3), inset 0 0 0 1px rgba(255, 255, 255, .5);
+    box-shadow: 0 24px 60px rgba(40, 30, 18, .26), inset 0 0 0 1px rgba(255, 255, 255, .4);
     font: 500 17px/1.7 "Songti SC", "STSong", "PingFang SC", serif;
 }
 
