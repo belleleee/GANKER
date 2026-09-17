@@ -23,27 +23,26 @@
     flex-direction: column;
     padding: 20px 30px 22px;
     color: #3a2f22;
-    background: linear-gradient(180deg, rgba(253, 248, 236, .84), rgba(243, 232, 208, .84));
+    background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 200' preserveAspectRatio='none'%3E%3Cpath d='M0,160 L120,90 L230,140 L340,60 L460,130 L560,40 L660,110 L780,70 L900,150 L1020,90 L1120,130 L1200,80 L1200,200 L0,200 Z' fill='%23a8763c' fill-opacity='0.12'/%3E%3Cpath d='M0,180 L150,120 L260,170 L400,100 L520,160 L650,90 L760,150 L880,110 L1000,175 L1120,120 L1200,160 L1200,200 L0,200 Z' fill='%238a6a3a' fill-opacity='0.16'/%3E%3C/svg%3E") bottom / 100% auto no-repeat,
+        linear-gradient(180deg, rgba(253, 248, 236, .84), rgba(243, 232, 208, .84));
     backdrop-filter: blur(6px);
-    border: 1px solid rgba(58, 47, 34, .26);
+    border: 2px solid rgba(200, 150, 44, .55);
     border-radius: 16px;
     box-shadow: 0 24px 60px rgba(40, 30, 18, .26), inset 0 0 0 1px rgba(255, 255, 255, .6);
     font: 500 17px/1.7 "Songti SC", "STSong", "PingFang SC", serif;
 }
 
-/* 师傅/宗庆后说话时，卡片右侧贴一张小立绘——底边跟卡片底边对齐，
-   不再探出卡片本身太多；名牌还是用"你"/"旁白"同一套圆角小标签，
-   不另做一套竖排样式，只是把内文里的小圆头像藏起来别重复。 */
-.mainStoryCard.hasMentorPortrait {
-    padding-right: 128px;
-}
-
+/* 师傅/宗庆后说话时，一张大立绘贴在卡片正上方——底边跟卡片顶边对齐
+   （position:absolute + bottom:100%，天然贴齐，不会探进卡片内容区），
+   名牌还是用"你"/"旁白"同一套圆角小标签，只把内文里的小圆头像藏起来
+   别重复报名字。 */
 .mainStoryMentorPortrait {
     position: absolute;
-    right: 14px;
-    bottom: 0;
-    width: 128px;
-    height: 128px;
+    left: 26px;
+    bottom: 100%;
+    width: 400px;
+    height: 300px;
     z-index: 1;
     pointer-events: none;
 }
@@ -58,7 +57,7 @@
     height: 100%;
     object-fit: contain;
     object-position: 50% 100%;
-    filter: drop-shadow(0 8px 12px rgba(40, 30, 18, .24));
+    filter: drop-shadow(0 10px 16px rgba(40, 30, 18, .22));
 }
 
 .mainStoryCard .mainStoryBody .mentorAvatar {
@@ -484,11 +483,18 @@
     display: block;
     flex: none;
     margin-left: auto;
-    border: 1px solid #c8962c;
+    border: 2px solid #c8962c;
     border-radius: 999px;
-    padding: 9px 20px;
-    background: #c8962c;
+    padding: 10px 22px;
+    background: linear-gradient(180deg, #ecc067, #c8962c);
     color: #2e2317;
     font: 700 13px/1 "Songti SC", "STSong", serif;
     cursor: pointer;
+    box-shadow: 0 4px 10px rgba(168, 118, 60, .3);
+}
+
+#mainStoryNextBtn:not([disabled])::after {
+    content: '→';
+    margin-left: 8px;
+    font-weight: 800;
 }
