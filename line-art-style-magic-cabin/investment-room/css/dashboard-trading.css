@@ -1,112 +1,110 @@
-.dashMainHead h3{margin:0;font-size:19px;color:#eafcff;text-shadow:0 0 10px rgba(96,244,255,.35)}
+.dashMainHead h3{margin:0;font-size:19px;color:var(--ink)}
 .dashMainHead .dashPrice{font-size:24px;font-weight:700}
-.dashMainHead small{color:#c9f7ff;font-size:12px;text-shadow:0 0 7px rgba(96,244,255,.45)}
-.chartCanvas{flex:1;width:100%;min-height:0;border:1px solid rgba(96,244,255,.12);border-radius:6px;background:rgba(4,10,13,.5)}
+.dashMainHead small{color:var(--soft);font-size:12px}
+.chartCanvas{flex:1;width:100%;min-height:0;border:1px solid var(--border);border-radius:8px;background:#fffefa}
 
-.dashTradeHead h3{margin:0 0 2px;font-size:17px;color:#eafcff}
-.dashTradeHead p{margin:0 0 12px;color:#c9f7ff;font-size:12px;text-shadow:0 0 7px rgba(96,244,255,.35)}
+.dashTradeHead h3{margin:0 0 2px;font-size:17px;color:var(--ink)}
+.dashTradeHead p{margin:0 0 12px;color:var(--soft);font-size:12px}
 .dashTradeActions{display:flex;gap:8px;margin-bottom:14px}
 .dashTradeActionsWrap{flex-wrap:wrap}
 .dashTradeActionsWrap button{flex:1 1 64px}
 .dashTradeActions button{
-  flex:1;border:1px solid #39ff9c;border-radius:6px;padding:10px;
-  background:rgba(57,255,156,.12);color:#9dffce;font:700 13px monospace;cursor:pointer;
-  text-shadow:0 0 8px rgba(57,255,156,.5);transition:.15s;
+  flex:1;border:1px solid rgba(47,158,92,.5);border-radius:8px;padding:10px;
+  background:rgba(47,158,92,.1);color:#1f6e40;font:700 13px "Songti SC","PingFang SC",serif;cursor:pointer;
+  transition:.15s;
 }
-.dashTradeActions button:hover{background:rgba(57,255,156,.26);box-shadow:0 0 16px rgba(57,255,156,.35)}
-.dashTradeActions button.ghost{border-color:#ff6f91;background:rgba(255,111,145,.1);color:#ffbdd0;text-shadow:0 0 8px rgba(255,111,145,.45)}
-.dashTradeActions button.ghost:hover{background:rgba(255,111,145,.22);box-shadow:0 0 16px rgba(255,111,145,.3)}
-.dashTradeActions button.short{border-color:#c58bff;background:rgba(197,139,255,.12);color:#e4cfff;text-shadow:0 0 8px rgba(197,139,255,.5)}
-.dashTradeActions button.short:hover{background:rgba(197,139,255,.26);box-shadow:0 0 16px rgba(197,139,255,.35)}
-.dashTradeActions button.rumor{border-color:#ffd666;background:rgba(255,214,102,.1);color:#ffe9ad;text-shadow:0 0 8px rgba(255,214,102,.45)}
-.dashTradeActions button.rumor:hover{background:rgba(255,214,102,.22);box-shadow:0 0 16px rgba(255,214,102,.3)}
-.dashTradeActions button.rumor.ghost{border-color:#ff6f91;background:rgba(255,111,145,.1);color:#ffbdd0;text-shadow:0 0 8px rgba(255,111,145,.45)}
-.dashTradeActions button.rumor.ghost:hover{background:rgba(255,111,145,.22);box-shadow:0 0 16px rgba(255,111,145,.3)}
-.dashTradeActions button.margin{border-color:#ff9f5b;background:rgba(255,159,91,.12);color:#ffd9b8;text-shadow:0 0 8px rgba(255,159,91,.5)}
-.dashTradeActions button.margin:hover{background:rgba(255,159,91,.26);box-shadow:0 0 16px rgba(255,159,91,.35)}
-.dashTradeActions button[disabled]{opacity:.35;cursor:not-allowed;box-shadow:none}
+.dashTradeActions button:hover{background:rgba(47,158,92,.2);box-shadow:0 2px 8px rgba(47,158,92,.2)}
+.dashTradeActions button.ghost{border-color:rgba(209,80,63,.5);background:rgba(209,80,63,.08);color:#a3392b}
+.dashTradeActions button.ghost:hover{background:rgba(209,80,63,.18);box-shadow:0 2px 8px rgba(209,80,63,.18)}
+.dashTradeActions button.short{border-color:rgba(139,99,201,.5);background:rgba(139,99,201,.1);color:#5f4291}
+.dashTradeActions button.short:hover{background:rgba(139,99,201,.2);box-shadow:0 2px 8px rgba(139,99,201,.2)}
+.dashTradeActions button.rumor{border-color:rgba(200,150,44,.5);background:rgba(200,150,44,.1);color:var(--gold-soft)}
+.dashTradeActions button.rumor:hover{background:rgba(200,150,44,.2);box-shadow:0 2px 8px rgba(200,150,44,.2)}
+.dashTradeActions button.rumor.ghost{border-color:rgba(209,80,63,.5);background:rgba(209,80,63,.08);color:#a3392b}
+.dashTradeActions button.rumor.ghost:hover{background:rgba(209,80,63,.18);box-shadow:0 2px 8px rgba(209,80,63,.18)}
+.dashTradeActions button.margin{border-color:rgba(199,124,43,.5);background:rgba(199,124,43,.1);color:#a1632a}
+.dashTradeActions button.margin:hover{background:rgba(199,124,43,.2);box-shadow:0 2px 8px rgba(199,124,43,.2)}
+.dashTradeActions button[disabled]{opacity:.4;cursor:not-allowed;box-shadow:none}
 
 .dashMarginBox{
   margin:0 0 14px;
   padding:10px 12px;
-  border:1px dashed rgba(255,159,91,.4);
+  border:1px dashed rgba(199,124,43,.4);
   border-radius:8px;
-  background:rgba(255,159,91,.05);
+  background:rgba(199,124,43,.06);
 }
 .dashMarginBox.danger{
-  border-color:rgba(255,93,117,.6);
-  background:rgba(255,93,117,.08);
+  border-color:rgba(209,80,63,.55);
+  background:rgba(209,80,63,.08);
 }
 .dashMarginRow{
   display:flex;
   justify-content:space-between;
   font-size:12px;
   padding:3px 0;
-  color:#ffd9b8;
+  color:#8a5a2a;
 }
-.dashMarginRow strong{color:#fff;text-shadow:0 0 6px rgba(255,159,91,.4)}
+.dashMarginRow strong{color:var(--ink)}
 .dashRumor{margin:2px 0 14px}
-.dashRumorHint{margin:0 0 8px;font-size:11px;color:#d7f7ff;line-height:1.5;text-shadow:0 0 6px rgba(96,244,255,.32)}
-.dashRumorHint.warn{color:#ffb04d;text-shadow:0 0 8px rgba(255,176,77,.45)}
+.dashRumorHint{margin:0 0 8px;font-size:11px;color:var(--soft);line-height:1.5}
+.dashRumorHint.warn{color:#a1632a}
 .dashTradeInfo{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;font-size:13px}
-.dashTradeInfo div{display:flex;justify-content:space-between;border-bottom:1px dashed rgba(96,244,255,.22);padding-bottom:6px}
-.dashTradeInfo span{color:#8fd3e6}
-.dashTradeInfo strong{color:#eafcff;text-shadow:0 0 6px rgba(96,244,255,.3)}
+.dashTradeInfo div{display:flex;justify-content:space-between;border-bottom:1px dashed var(--border);padding-bottom:6px}
+.dashTradeInfo span{color:var(--soft)}
+.dashTradeInfo strong{color:var(--ink)}
 .dashNextDay{
-  width:100%;border:1px solid rgba(96,244,255,.4);border-radius:6px;padding:10px;
-  background:rgba(96,244,255,.1);color:#9ff1ff;font:700 12px monospace;cursor:pointer;
-  text-shadow:0 0 8px rgba(96,244,255,.5);transition:.15s;
+  width:100%;border:1px solid rgba(58,47,34,.3);border-radius:8px;padding:10px;
+  background:var(--card);color:var(--ink);font:700 12px "Songti SC","PingFang SC",serif;cursor:pointer;transition:.15s;
 }
-.dashNextDay:hover{background:rgba(96,244,255,.22);box-shadow:0 0 16px rgba(96,244,255,.35)}
+.dashNextDay:hover{background:#fff;box-shadow:0 2px 8px rgba(58,47,34,.14)}
 .wahaIpoBox{display:grid;gap:8px;margin-bottom:14px}
 .wahaIpoPlan{
-  width:100%;border:1px solid rgba(255,214,102,.38);border-radius:6px;padding:10px;
-  background:rgba(255,214,102,.07);
-  color:#eafcff;text-align:left;cursor:pointer;font-family:monospace;
+  width:100%;border:1px solid rgba(200,150,44,.4);border-radius:8px;padding:10px;
+  background:rgba(200,150,44,.06);
+  color:var(--ink);text-align:left;cursor:pointer;font-family:"Songti SC","PingFang SC",serif;
 }
-.wahaIpoPlan:hover{background:rgba(255,214,102,.16);box-shadow:0 0 14px rgba(255,214,102,.18)}
-.wahaIpoPlan b{display:block;margin-bottom:5px;color:#ffd666;font-size:13px;text-shadow:0 0 8px rgba(255,214,102,.42)}
-.wahaIpoPlan span{display:block;color:#c9f7ff;font-size:12px;line-height:1.45}
-.wahaIpoPlan small{display:block;margin-top:4px;color:#8fd3e6;font-size:11px;line-height:1.45}
+.wahaIpoPlan:hover{background:rgba(200,150,44,.14);box-shadow:0 2px 10px rgba(200,150,44,.16)}
+.wahaIpoPlan b{display:block;margin-bottom:5px;color:var(--gold-soft);font-size:13px}
+.wahaIpoPlan span{display:block;color:var(--ink);font-size:12px;line-height:1.45}
+.wahaIpoPlan small{display:block;margin-top:4px;color:var(--soft);font-size:11px;line-height:1.45}
 .wahaDashboard{display:grid;gap:10px;min-height:0;overflow:auto}
 .wahaHero{
-  border:1px solid rgba(255,214,102,.26);border-radius:8px;padding:14px;
-  background:rgba(255,214,102,.07);
+  border:1px solid rgba(200,150,44,.3);border-radius:10px;padding:14px;
+  background:rgba(200,150,44,.06);
 }
-.wahaHero p{margin:0 0 4px;color:#ffd666;font:800 10px monospace;letter-spacing:.24em;text-shadow:0 0 8px rgba(255,214,102,.45)}
-.wahaHero h3{margin:0;color:#eafcff;font-size:26px;text-shadow:0 0 12px rgba(255,214,102,.20)}
-.wahaHero span{display:block;margin-top:7px;color:#c9f7ff;font-size:13px}
+.wahaHero p{margin:0 0 4px;color:var(--gold-soft);font:800 10px "Songti SC",serif;letter-spacing:.2em}
+.wahaHero h3{margin:0;color:var(--ink);font-size:26px}
+.wahaHero span{display:block;margin-top:7px;color:var(--soft);font-size:13px}
 .wahaMetrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
 .wahaMetrics div{
-  min-height:64px;border:1px solid rgba(96,244,255,.14);border-radius:7px;padding:9px;
-  background:rgba(6,16,20,.55);
+  min-height:64px;border:1px solid var(--border);border-radius:8px;padding:9px;
+  background:var(--card);
 }
-.wahaMetrics small{display:block;color:#8fd3e6;font-size:11px;margin-bottom:8px}
-.wahaMetrics strong{display:block;color:#eafcff;font-size:19px;text-shadow:0 0 8px rgba(96,244,255,.28)}
-.wahaMetrics strong.strong{color:#39ff9c}
-.wahaMetrics strong.watch{color:#ffd666}
-.wahaMetrics strong.risk{color:#ff5d75}
+.wahaMetrics small{display:block;color:var(--soft);font-size:11px;margin-bottom:8px}
+.wahaMetrics strong{display:block;color:var(--ink);font-size:19px}
+.wahaMetrics strong.strong{color:var(--up)}
+.wahaMetrics strong.watch{color:var(--gold-soft)}
+.wahaMetrics strong.risk{color:var(--down)}
 .wahaEquity{
-  border:1px solid rgba(96,244,255,.14);border-radius:8px;padding:12px;background:rgba(6,16,20,.42);
+  border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--card);
 }
-.wahaEquityBar{height:18px;display:flex;overflow:hidden;border:1px solid rgba(96,244,255,.22);border-radius:999px;background:rgba(96,244,255,.06)}
-.wahaEquityBar i{display:block;background:linear-gradient(90deg,#39ff9c,#ffd666)}
-.wahaEquityBar em{display:block;background:linear-gradient(90deg,#5be6ff,#c58bff)}
-.wahaEquityLegend{display:flex;justify-content:space-between;margin-top:8px;color:#c9f7ff;font-size:12px}
+.wahaEquityBar{height:18px;display:flex;overflow:hidden;border:1px solid var(--border);border-radius:999px;background:#f3ead2}
+.wahaEquityBar i{display:block;background:linear-gradient(90deg,var(--up),var(--gold))}
+.wahaEquityBar em{display:block;background:linear-gradient(90deg,#5f9bb0,#8b63c9)}
+.wahaEquityLegend{display:flex;justify-content:space-between;margin-top:8px;color:var(--soft);font-size:12px}
 .wahaNextStep{
-  margin:0;border-left:3px solid #ffd666;padding:9px 10px;
-  background:rgba(255,214,102,.06);color:#d7f7ff;font-size:13px;line-height:1.6;
+  margin:0;border-left:3px solid var(--gold);padding:9px 10px;
+  background:rgba(200,150,44,.06);color:var(--ink);font-size:13px;line-height:1.6;
 }
 .wahaAcquired{
   margin-top:10px;padding:9px 10px;border-radius:8px;
-  border:1px solid rgba(197,139,255,.3);background:rgba(197,139,255,.08);
+  border:1px solid rgba(139,99,201,.32);background:rgba(139,99,201,.07);
 }
-.wahaAcquired small{display:block;color:#c58bff;font-size:11px;margin-bottom:3px}
-.wahaAcquired strong{color:#f0e6ff;font-size:13px;font-weight:700}
+.wahaAcquired small{display:block;color:#7a58b3;font-size:11px;margin-bottom:3px}
+.wahaAcquired strong{color:#4a3570;font-size:13px;font-weight:700}
 
 .dashHoldings h3,.dashNews h3{
-  margin:0 0 8px;font-size:13px;color:#5be6ff;letter-spacing:.1em;
-  text-shadow:0 0 8px rgba(91,230,255,.5);
+  margin:0 0 8px;font-size:13px;color:var(--gold-soft);letter-spacing:.08em;
 }
 .dashHoldingRow{
   display:grid;
@@ -115,8 +113,8 @@
   gap:8px;
   min-height:28px;
   padding:5px 2px;
-  border-bottom:1px dashed rgba(96,244,255,.16);
-  color:#d7f7ff;
+  border-bottom:1px dashed var(--border);
+  color:var(--ink);
   font-size:13px;
   line-height:1.25;
 }
@@ -134,7 +132,7 @@
 .dashHoldingRow--head{
   min-height:22px;
   padding-top:0;
-  color:#7eddeb;
+  color:var(--soft);
   font-size:10px;
   letter-spacing:.08em;
   opacity:.9;
@@ -146,26 +144,25 @@
 .founderEmergencyBox{
   margin:6px 0 14px;
   padding:10px 12px;
-  border:1px dashed rgba(255,214,102,.5);
+  border:1px dashed rgba(200,150,44,.5);
   border-radius:8px;
-  background:rgba(255,214,102,.06);
+  background:rgba(200,150,44,.06);
 }
 .founderEmergencyTitle{
   margin:0 0 8px;
-  color:#ffd666;
+  color:var(--gold-soft);
   font-size:11px;
   font-weight:700;
   line-height:1.5;
 }
 .founderSaleBtn{
   flex:1 1 100px;
-  border-color:#ffd666!important;
-  background:rgba(255,214,102,.1)!important;
-  color:#ffe9ad!important;
-  text-shadow:0 0 8px rgba(255,214,102,.45)!important;
+  border-color:rgba(200,150,44,.5)!important;
+  background:rgba(200,150,44,.1)!important;
+  color:var(--gold-soft)!important;
   font-size:12px!important;
 }
-.founderSaleBtn:hover{background:rgba(255,214,102,.22)!important;box-shadow:0 0 16px rgba(255,214,102,.3)!important}
+.founderSaleBtn:hover{background:rgba(200,150,44,.2)!important;box-shadow:0 2px 8px rgba(200,150,44,.2)!important}
 
 .founderChoiceTable{display:flex;flex-direction:column;gap:6px}
 .founderChoiceRow{
@@ -174,32 +171,32 @@
   align-items:center;
   gap:8px;
   padding:7px 9px;
-  border:1px solid rgba(255,214,102,.22);
+  border:1px solid rgba(200,150,44,.28);
   border-radius:6px;
-  background:rgba(0,0,0,.15);
+  background:#fffefa;
   font-size:10.5px;
-  color:#d8cdb8;
+  color:var(--soft);
 }
-.founderChoiceRow b{color:#ffe9ad;font-size:11px;white-space:nowrap}
-.founderChoiceRow em{font-style:normal;color:#fff}
+.founderChoiceRow b{color:var(--gold-soft);font-size:11px;white-space:nowrap}
+.founderChoiceRow em{font-style:normal;color:var(--ink)}
 .founderChoiceRow .founderSaleBtn{flex:none;padding:4px 8px!important;font-size:10.5px!important}
 
 .retroCard{
   margin:0 0 12px;
   padding:10px 12px;
-  border:1px solid rgba(96,244,255,.4);
+  border:1px solid var(--border);
   border-radius:8px;
-  background:rgba(96,244,255,.07);
+  background:var(--card);
 }
-.retroTitle{margin:0 0 8px;color:#8fe9ff;font-size:12px;font-weight:700}
-.retroRow{display:flex;justify-content:space-between;gap:10px;font-size:11px;color:#d8cdb8;padding:3px 0}
-.retroRow b{font-weight:700;color:#fff;text-align:right}
+.retroTitle{margin:0 0 8px;color:var(--ink);font-size:12px;font-weight:700}
+.retroRow{display:flex;justify-content:space-between;gap:10px;font-size:11px;color:var(--soft);padding:3px 0}
+.retroRow b{font-weight:700;color:var(--ink);text-align:right}
 .retroDismissBtn{margin-top:8px;width:100%;font-size:11px!important;padding:5px!important}
 
 .mentorBuyLayer{
   position:fixed;inset:0;z-index:60;
   display:none;align-items:center;justify-content:center;
-  background:rgba(8,10,16,.62);
+  background:rgba(46,43,36,.4);
   backdrop-filter:blur(2px);
 }
 .mentorBuyLayer:not([hidden]){display:flex}
@@ -207,66 +204,65 @@
   width:min(420px,88vw);
   padding:18px 20px;
   border-radius:12px;
-  border:1px solid rgba(255,214,102,.5);
-  background:#141821;
-  box-shadow:0 18px 48px rgba(0,0,0,.5);
+  border:1px solid rgba(200,150,44,.4);
+  background:linear-gradient(180deg,#fdf8ec,#f3e8d0);
+  box-shadow:0 18px 48px rgba(40,30,18,.28);
 }
-.mentorBuyAsk{margin:0 0 14px;color:#ffe9ad;font-size:13px;line-height:1.6}
+.mentorBuyAsk{margin:0 0 14px;color:var(--ink);font-size:13px;line-height:1.6}
 .mentorReasonList{display:flex;flex-direction:column;gap:8px}
 .mentorReasonBtn{
   padding:10px 12px;
   border-radius:8px;
-  border:1px solid rgba(255,214,102,.35);
-  background:rgba(255,214,102,.08);
-  color:#f0e6d2;
+  border:1px solid rgba(200,150,44,.32);
+  background:rgba(200,150,44,.06);
+  color:var(--ink);
   font-size:12px;
   text-align:left;
   cursor:pointer;
 }
-.mentorReasonBtn:hover{background:rgba(255,214,102,.18);border-color:#ffd666}
+.mentorReasonBtn:hover{background:rgba(200,150,44,.16);border-color:var(--gold)}
 
 .marketGuideLayer{
   position:fixed;inset:0;z-index:62;
   display:none;align-items:flex-end;justify-content:center;
   padding:0 0 64px;
-  background:rgba(8,10,16,.5);
+  background:rgba(46,43,36,.32);
 }
 .marketGuideLayer:not([hidden]){display:flex}
 .marketGuideCard{
   width:min(520px,90vw);
   padding:16px 20px;
   border-radius:12px;
-  border:1px solid rgba(96,244,255,.45);
-  background:#101722;
-  box-shadow:0 18px 48px rgba(0,0,0,.5);
+  border:1px solid var(--border);
+  background:linear-gradient(180deg,#fdf8ec,#f3e8d0);
+  box-shadow:0 18px 48px rgba(40,30,18,.28);
 }
 .marketGuideKicker{
-  margin:0 0 8px;color:#5be6ff;font-size:10px;letter-spacing:.14em;
-  text-shadow:0 0 8px rgba(91,230,255,.5);
+  margin:0 0 8px;color:var(--soft);font-size:10px;letter-spacing:.12em;
 }
-.marketGuideLine{margin:0 0 14px;color:#e8f7ff;font-size:13.5px;line-height:1.6}
+.marketGuideLine{margin:0 0 14px;color:var(--ink);font-size:13.5px;line-height:1.6}
 .marketGuideSpeaker{
   display:inline-block;margin-right:8px;padding:2px 8px;border-radius:999px;
-  background:rgba(255,214,102,.16);color:#ffd666;font-size:11px;font-weight:700;
+  background:rgba(200,150,44,.14);color:var(--gold-soft);font-size:11px;font-weight:700;
 }
 .marketGuideActions{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .marketGuideSkip{
-  border:none;background:none;color:#7c8a94;font-size:11.5px;
+  border:none;background:none;color:#9a8c72;font-size:11.5px;
   cursor:pointer;text-decoration:underline;padding:4px;
 }
-.marketGuideSkip:hover{color:#aebac2}
+.marketGuideSkip:hover{color:var(--soft)}
 .marketGuideNext{
-  border:1px solid #5be6ff;border-radius:999px;background:rgba(96,244,255,.14);
-  color:#eafcff;padding:7px 20px;font-weight:700;font-size:12.5px;cursor:pointer;
+  border:1px solid var(--gold-soft);border-radius:999px;background:rgba(200,150,44,.12);
+  color:var(--ink);padding:7px 20px;font-weight:700;font-size:12.5px;cursor:pointer;
 }
-.marketGuideNext:hover{background:rgba(96,244,255,.24);box-shadow:0 0 14px rgba(96,244,255,.3)}
+.marketGuideNext:hover{background:rgba(200,150,44,.22);box-shadow:0 2px 10px rgba(200,150,44,.2)}
 
 .stockFundamentals{
   margin:0 0 14px;
   padding:9px 10px;
-  border:1px solid rgba(96,244,255,.14);
-  border-radius:7px;
-  background:rgba(6,16,20,.42);
+  border:1px solid var(--border);
+  border-radius:8px;
+  background:var(--card);
 }
 .fundRow{
   display:flex;
@@ -274,13 +270,13 @@
   gap:8px;
   min-height:22px;
   font-size:12px;
-  color:#8fd3e6;
+  color:var(--soft);
 }
 .fundRow + .fundRow{margin-top:6px}
 .fundRow span{flex:0 0 56px}
-.fundRow b{flex:0 0 auto;min-width:32px;text-align:right;color:#eafcff;font-family:"Menlo","Consolas",monospace}
+.fundRow b{flex:0 0 auto;min-width:32px;text-align:right;color:var(--ink);font-family:"Menlo","Consolas",monospace}
 .fundValuation{min-width:auto!important;white-space:nowrap}
-.fundBar{flex:1;height:7px;border-radius:999px;overflow:hidden;background:rgba(96,244,255,.1)}
+.fundBar{flex:1;height:7px;border-radius:999px;overflow:hidden;background:#f0e6c8}
 .fundBar i{display:block;height:100%;border-radius:999px}
 
 .companyFacts{
@@ -289,61 +285,61 @@
   gap:5px 10px;
   margin:0 0 14px;
   padding:9px 10px;
-  border:1px solid rgba(255,214,102,.16);
-  border-radius:7px;
-  background:rgba(6,16,20,.42);
+  border:1px solid var(--border);
+  border-radius:8px;
+  background:var(--card);
 }
 .companyFactRow{
   display:flex;
   justify-content:space-between;
   gap:6px;
   font-size:11px;
-  color:#8fd3e6;
+  color:var(--soft);
 }
-.companyFactRow b{font-family:"Menlo","Consolas",monospace;color:#eafcff}
-.companyFactRow b.up{color:#39ff9c}
-.companyFactRow b.down{color:#ff5d75}
+.companyFactRow b{font-family:"Menlo","Consolas",monospace;color:var(--ink)}
+.companyFactRow b.up{color:var(--up)}
+.companyFactRow b.down{color:var(--down)}
 
 .myValuationBox{
   margin:0 0 14px;
   padding:9px 10px;
-  border:1px solid rgba(96,244,255,.14);
-  border-radius:7px;
-  background:rgba(6,16,20,.42);
+  border:1px solid var(--border);
+  border-radius:8px;
+  background:var(--card);
 }
 .myValuationBox label{
   display:flex;
   align-items:center;
   gap:8px;
   font-size:12px;
-  color:#8fd3e6;
+  color:var(--soft);
   margin-bottom:7px;
 }
 .myValuationBox input{
   flex:1;
   min-width:0;
   padding:5px 8px;
-  border:1px solid rgba(96,244,255,.3);
+  border:1px solid var(--border);
   border-radius:5px;
-  background:rgba(96,244,255,.06);
-  color:#eafcff;
+  background:#fffefa;
+  color:var(--ink);
   font:700 13px/1.2 "Menlo","Consolas",monospace;
 }
 .myValuationBox button{
   width:100%;
   padding:6px;
-  border:1px solid rgba(255,214,102,.5);
+  border:1px solid rgba(200,150,44,.5);
   border-radius:5px;
-  background:rgba(255,214,102,.12);
-  color:#ffd666;
+  background:rgba(200,150,44,.12);
+  color:var(--gold-soft);
   font:700 12px/1.2 inherit;
   cursor:pointer;
 }
-.myValuationBox button:hover{background:rgba(255,214,102,.22)}
+.myValuationBox button:hover{background:rgba(200,150,44,.22)}
 .myValuationNote{
   margin:8px 0 0;
   font-size:11px;
   line-height:1.5;
-  color:#bfeeff;
+  color:var(--soft);
 }
-.myValuationNote b{color:#ffd666}
+.myValuationNote b{color:var(--gold-soft)}

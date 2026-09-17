@@ -1062,10 +1062,7 @@ function drawLineChart(canvas, stock) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, w, h);
 
-  const grad = ctx.createLinearGradient(0, 0, 0, h);
-  grad.addColorStop(0, 'rgba(96,244,255,.04)');
-  grad.addColorStop(1, 'rgba(96,244,255,.01)');
-  ctx.fillStyle = grad;
+  ctx.fillStyle = '#fffefa';
   ctx.fillRect(0, 0, w, h);
 
   const padL = 54;
@@ -1086,12 +1083,12 @@ function drawLineChart(canvas, stock) {
   }
   const span = Math.max(1, max - min);
   const up = history[history.length - 1] >= history[0];
-  const tone = up ? '#39ff9c' : '#ff5d75';
+  const tone = up ? '#2f9e5c' : '#d1503f';
 
-  ctx.strokeStyle = 'rgba(96,244,255,.12)';
+  ctx.strokeStyle = 'rgba(58,47,34,.12)';
   ctx.lineWidth = 1;
-  ctx.font = '11px monospace';
-  ctx.fillStyle = '#c9f7ff';
+  ctx.font = '11px "Songti SC","PingFang SC",serif';
+  ctx.fillStyle = '#8a7a5c';
   for (let i = 0; i <= 4; i++) {
     const y = padT + plotH * (i / 4);
     ctx.beginPath();
@@ -1108,8 +1105,8 @@ function drawLineChart(canvas, stock) {
   ]);
 
   const areaGrad = ctx.createLinearGradient(0, padT, 0, padT + plotH);
-  areaGrad.addColorStop(0, up ? 'rgba(57,255,156,.28)' : 'rgba(255,93,117,.28)');
-  areaGrad.addColorStop(1, 'rgba(96,244,255,0)');
+  areaGrad.addColorStop(0, up ? 'rgba(47,158,92,.16)' : 'rgba(209,80,63,.16)');
+  areaGrad.addColorStop(1, 'rgba(209,80,63,0)');
   ctx.beginPath();
   ctx.moveTo(points[0][0], padT + plotH);
   points.forEach(p => ctx.lineTo(p[0], p[1]));
@@ -1118,23 +1115,17 @@ function drawLineChart(canvas, stock) {
   ctx.fillStyle = areaGrad;
   ctx.fill();
 
-  ctx.shadowColor = tone;
-  ctx.shadowBlur = 12;
   ctx.strokeStyle = tone;
   ctx.lineWidth = 2.5;
   ctx.beginPath();
   points.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])));
   ctx.stroke();
-  ctx.shadowBlur = 0;
 
   const last = points[points.length - 1];
   ctx.beginPath();
   ctx.fillStyle = tone;
-  ctx.shadowColor = tone;
-  ctx.shadowBlur = 14;
   ctx.arc(last[0], last[1], 4, 0, Math.PI * 2);
   ctx.fill();
-  ctx.shadowBlur = 0;
 }
 
 function renderScreenPanel(key) {
@@ -1160,7 +1151,6 @@ function renderScreenPanel(key) {
     const sentiment = marketSentimentLabel();
     dashSentiment.textContent = '市场 ' + sentiment.label;
     dashSentiment.style.color = sentiment.tone;
-    dashSentiment.style.textShadow = '0 0 8px ' + sentiment.tone;
   }
   dashSidebar.innerHTML = sidebarRows();
   dashBody.classList.toggle('wahaMode', isCompanyPage);

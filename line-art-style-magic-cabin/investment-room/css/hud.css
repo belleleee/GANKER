@@ -13,10 +13,10 @@
 .screenPanel:not([hidden]){display:flex}
 .screenMonitor{
   position:relative;overflow:hidden;
-  background:linear-gradient(180deg,#0d1e24,#040a0d);
-  border:1px solid rgba(96,244,255,.35);border-radius:12px;
-  box-shadow:0 0 0 1px rgba(96,244,255,.12),0 0 70px rgba(64,220,255,.16),0 40px 90px rgba(0,0,0,.55);
-  color:#c9f7ff;
-  font-family:"SF Mono","Menlo","Consolas",monospace;
+  background:linear-gradient(180deg,#fdf8ec,#f3e8d0);
+  border:1px solid rgba(58,47,34,.22);border-radius:14px;
+  box-shadow:0 0 0 1px rgba(255,255,255,.5) inset,0 30px 70px rgba(40,30,18,.28);
+  color:var(--ink);
+  font-family:"Songti SC","STSong","PingFang SC",serif;
   animation:screenBoot .38s cubic-bezier(.2,.9,.3,1.15);
 }

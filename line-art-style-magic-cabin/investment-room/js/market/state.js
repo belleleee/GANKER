@@ -834,11 +834,11 @@ function marketSentimentScore() {
 
 function marketSentimentLabel() {
   const s = marketSentimentScore();
-  if (s >= .5) return { id: 'euphoric', label: '狂热', tone: '#ff9f5b' };
-  if (s >= .15) return { id: 'optimistic', label: '乐观', tone: '#39ff9c' };
-  if (s > -.15) return { id: 'calm', label: '平稳', tone: '#8fd3e6' };
-  if (s > -.5) return { id: 'cautious', label: '谨慎', tone: '#ffd666' };
-  return { id: 'panic', label: '恐慌', tone: '#ff5d75' };
+  if (s >= .5) return { id: 'euphoric', label: '狂热', tone: '#c9701f' };
+  if (s >= .15) return { id: 'optimistic', label: '乐观', tone: '#2f9e5c' };
+  if (s > -.15) return { id: 'calm', label: '平稳', tone: '#4c7a82' };
+  if (s > -.5) return { id: 'cautious', label: '谨慎', tone: '#a8763c' };
+  return { id: 'panic', label: '恐慌', tone: '#c0392b' };
 }
 
 function updateMarketSentiment() {

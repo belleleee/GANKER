@@ -4,6 +4,15 @@
   --line:#9b876c;
   --green:#58784f;
   --screen:#1d2b30;
+  /* 股市小屋仪表盘配色——跟achievements/mentor那套暖色纸感统一，
+     不再是单独一套冷色科幻终端。 */
+  --up:#2f9e5c;
+  --down:#d1503f;
+  --gold:#c8962c;
+  --gold-soft:#a8763c;
+  --card:#fffdf6;
+  --soft:#8a7a5c;
+  --border:rgba(58,47,34,.16);
 }
 *{box-sizing:border-box}
 html,body{

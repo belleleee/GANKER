@@ -1,22 +1,23 @@
-#closeScreenPanel:hover{background:rgba(96,244,255,.2);box-shadow:0 0 16px rgba(96,244,255,.4)}
-.up{color:#39ff9c;text-shadow:0 0 8px rgba(57,255,156,.45)}
-.down{color:#ff5d75;text-shadow:0 0 8px rgba(255,93,117,.45)}
+.up{color:var(--up)}
+.down{color:var(--down)}
 
 .dashHeader{
   position:relative;flex:0 0 auto;display:flex;align-items:center;gap:16px;
-  padding-bottom:8px;margin-bottom:8px;border-bottom:1px solid rgba(96,244,255,.22);
+  padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid var(--border);
 }
-.dashBrand{margin-right:auto}
-.dashBrand p{
-  margin:0 0 2px;color:#5be6ff;font:700 10px/1 monospace;letter-spacing:.28em;
-  text-shadow:0 0 8px rgba(91,230,255,.6);
+.dashBrand{margin-right:auto;display:flex;align-items:center;gap:10px}
+.dashBrandIcon{font-size:22px;line-height:1}
+.dashBrand h2{margin:0;color:var(--ink);font-size:17px}
+.dashBrand p{margin:2px 0 0;color:var(--soft);font-size:11px;letter-spacing:.02em}
+.dashHeaderPills{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dashClock,.dashSentiment,.dashRep{
+  font:700 12px/1 "Songti SC","PingFang SC",serif;color:var(--ink);
+  background:var(--card);border:1px solid var(--border);border-radius:999px;
+  padding:6px 12px;
 }
-.dashBrand h2{margin:0;color:#eafcff;font-size:17px;text-shadow:0 0 10px rgba(96,244,255,.35)}
-.dashClock{color:#8ff3ff;font:700 13px monospace;text-shadow:0 0 8px rgba(96,244,255,.4)}
-.dashSentiment{font:700 13px monospace;color:#8fd3e6;text-shadow:0 0 8px rgba(96,244,255,.4)}
-.dashRep{font:700 13px monospace;color:#8ff3ff;text-shadow:0 0 8px rgba(96,244,255,.4)}
-.dashRep.up{color:#39ff9c;text-shadow:0 0 8px rgba(57,255,156,.45)}
-.dashRep.down{color:#ff5d75;text-shadow:0 0 8px rgba(255,93,117,.45)}
+.dashSentiment{color:var(--soft)}
+.dashRep.up{color:var(--up)}
+.dashRep.down{color:var(--down)}
 
 .dashBody{
   flex:1;min-height:0;display:grid;
@@ -32,8 +33,9 @@
   padding-right:2px;
 }
 .dashMain,.dashTrade,.dashHoldings,.dashNews{
-  border:1px solid rgba(96,244,255,.16);border-radius:8px;
-  background:rgba(6,16,20,.5);min-height:0;
+  border:1px solid var(--border);border-radius:10px;
+  background:var(--card);min-height:0;
+  box-shadow:0 1px 0 rgba(255,255,255,.6) inset;
 }
 .dashMain{grid-area:main;display:flex;flex-direction:column;padding:10px}
 .dashTrade{grid-area:trade;overflow:auto;padding:12px}
@@ -45,12 +47,10 @@
   grid-template-areas:"sidebar main trade";
 }
 .dashBody.wahaMode .dashMain{
-  background:rgba(6,16,20,.55);
-  border-color:rgba(255,214,102,.28);
+  border-color:rgba(200,150,44,.35);
 }
 .dashBody.wahaMode .dashTrade{
-  background:rgba(6,16,20,.55);
-  border-color:rgba(57,255,156,.24);
+  border-color:rgba(47,158,92,.3);
 }
 .dashBody.companyMode .dashHoldings,
 .dashBody.companyMode .dashNews{
@@ -59,36 +59,36 @@
 
 .dashIndexCard{
   display:flex;flex-direction:column;gap:3px;
-  border:1px solid rgba(96,244,255,.28);border-radius:8px;padding:9px 12px;
-  background:linear-gradient(180deg,rgba(96,244,255,.12),rgba(96,244,255,.02));
+  border:1px solid var(--border);border-radius:8px;padding:9px 12px;
+  background:linear-gradient(180deg,rgba(200,150,44,.08),rgba(200,150,44,.01));
   margin-bottom:6px;
 }
-.dashIndexCard small{color:#5be6ff;font-size:9px;letter-spacing:.16em;text-shadow:0 0 6px rgba(91,230,255,.5)}
-.dashIndexCard strong{font-size:20px;color:#eafcff;text-shadow:0 0 10px rgba(96,244,255,.4)}
+.dashIndexCard small{color:var(--soft);font-size:9px;letter-spacing:.14em}
+.dashIndexCard strong{font-size:20px;color:var(--ink)}
 .dashStockRow{
   display:flex;justify-content:space-between;align-items:center;gap:8px;
-  border:1px solid rgba(96,244,255,.15);border-radius:6px;padding:8px 10px;
-  background:rgba(96,244,255,.04);color:#bfeeff;font-family:inherit;cursor:pointer;
+  border:1px solid var(--border);border-radius:6px;padding:8px 10px;
+  background:#fffefa;color:var(--ink);font-family:inherit;cursor:pointer;
   text-align:left;transition:.15s;
 }
-.dashStockRow:hover{background:rgba(96,244,255,.1)}
-.dashStockRow.on{border-color:#5be6ff;background:rgba(96,244,255,.14);box-shadow:0 0 12px rgba(96,244,255,.25)}
+.dashStockRow:hover{background:#fff;box-shadow:0 2px 6px rgba(58,47,34,.08)}
+.dashStockRow.on{border-color:var(--gold-soft);background:rgba(200,150,44,.1);box-shadow:0 0 0 1px rgba(200,150,44,.25) inset}
 .dashStockRow.acquired{opacity:.55;border-style:dashed;cursor:default}
-.dashStockRow.acquired:hover{background:rgba(96,244,255,.04)}
+.dashStockRow.acquired:hover{background:#fffefa;box-shadow:none}
 .dashCompanyRow{
   display:flex;justify-content:space-between;align-items:center;gap:8px;
-  border:1px solid rgba(255,214,102,.34);border-radius:6px;padding:9px 10px;
-  background:rgba(255,214,102,.08);color:#eafcff;font-family:inherit;cursor:pointer;
+  border:1px solid rgba(200,150,44,.4);border-radius:6px;padding:9px 10px;
+  background:rgba(200,150,44,.1);color:var(--ink);font-family:inherit;cursor:pointer;
   text-align:left;transition:.15s;margin-bottom:6px;
 }
-.dashCompanyRow:hover{background:rgba(255,214,102,.15);box-shadow:0 0 12px rgba(255,214,102,.18)}
-.dashCompanyRow.on{border-color:#ffd666;background:rgba(255,214,102,.18);box-shadow:0 0 14px rgba(255,214,102,.28)}
+.dashCompanyRow:hover{background:rgba(200,150,44,.18);box-shadow:0 2px 8px rgba(200,150,44,.18)}
+.dashCompanyRow.on{border-color:var(--gold);background:rgba(200,150,44,.24);box-shadow:0 0 0 1px rgba(200,150,44,.32) inset}
 .dashCompanyRow span{display:flex;flex-direction:column;gap:2px;min-width:0}
-.dashCompanyRow b{color:#ffd666;font-size:13px;text-shadow:0 0 8px rgba(255,214,102,.4)}
-.dashCompanyRow small{color:#c9f7ff;font-size:9px;letter-spacing:.04em;text-shadow:0 0 6px rgba(96,244,255,.32)}
-.dashCompanyRow strong{color:#39ff9c;font-size:15px;text-shadow:0 0 8px rgba(57,255,156,.45)}
+.dashCompanyRow b{color:var(--gold-soft);font-size:13px}
+.dashCompanyRow small{color:var(--soft);font-size:9px;letter-spacing:.04em}
+.dashCompanyRow strong{color:var(--up);font-size:15px}
 .dashStockName{display:flex;flex-direction:column;gap:2px;font-size:13px;font-weight:700}
-.dashStockName small{font-weight:700;color:#c9f7ff;font-size:9px;letter-spacing:.04em;text-shadow:0 0 6px rgba(96,244,255,.35)}
+.dashStockName small{font-weight:700;color:var(--soft);font-size:9px;letter-spacing:.04em}
 .dashStockPrice{display:flex;flex-direction:column;align-items:flex-end;gap:2px;font-weight:700;font-size:14px}
 .dashStockPrice small{font-size:10px}
 
