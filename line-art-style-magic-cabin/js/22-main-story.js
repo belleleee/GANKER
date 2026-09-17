@@ -876,12 +876,12 @@ function renderMainStoryCard(stage) {
     const met = mainStoryStageReady(stage);
     const lines = stage.lines || [];
     const linesDone = mainStoryLinesDone(stage);
-    /* 之前只显示当前这一句，翻页就把上一句擦掉，看着信息量很少。
-       现在保留这一幕已经讲过的台词（从头到当前这句），新的一句
-       追加在最下面，翻旧账不用回忆——跟真的聊天记录一样。 */
-    const shownLines = lines.slice(0, Math.min(mainStoryLineIndex, Math.max(0, lines.length - 1)) + 1);
+    /* 只显示当前这一句，翻页就把上一句替换掉——跟炼金开场引导（
+       39-alchemy-intro.js 的 alchemyIntroNarration）同一种呈现方式，
+       不会随着翻页把台词一句句往上堆。 */
+    const currentLine = lines[Math.min(mainStoryLineIndex, Math.max(0, lines.length - 1))];
 
-    let html = shownLines.map(dialogueLineHtml).join('');
+    let html = currentLine ? dialogueLineHtml(currentLine) : '';
     if (linesDone) {
         if (stage.coinRequirement) {
             const coinsMet = stageCoinsMet(stage);
