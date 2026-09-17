@@ -267,7 +267,8 @@
 .fundRow{
   display:flex;
   align-items:center;
-  gap:8px;
+  flex-wrap:wrap;
+  gap:4px 8px;
   min-height:22px;
   font-size:12px;
   color:var(--soft);
@@ -275,7 +276,11 @@
 .fundRow + .fundRow{margin-top:6px}
 .fundRow span{flex:0 0 56px}
 .fundRow b{flex:0 0 auto;min-width:32px;text-align:right;color:var(--ink);font-family:"Menlo","Consolas",monospace}
-.fundValuation{min-width:auto!important;white-space:nowrap}
+.fundValuation{
+  flex:1 1 auto!important;min-width:0!important;max-width:100%;
+  white-space:normal!important;word-break:break-word;line-height:1.4;
+  text-align:left!important;
+}
 .fundBar{flex:1;height:7px;border-radius:999px;overflow:hidden;background:#f0e6c8}
 .fundBar i{display:block;height:100%;border-radius:999px}
 
