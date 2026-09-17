@@ -22,6 +22,7 @@ let wealthEventState = {
     charityMaxSingle: 0,
     financingWins: 0,
     financingLosses: 0,
+    financingSharesWon: 0,
     adHits: 0,
     marketNews: []
 };
@@ -140,14 +141,119 @@ function triggerAdEvent() {
     );
 }
 
+/* 把 WAHA 创始股份加到玩家身上——小屋和股市小屋是两个独立页面，
+   共用同一份存档（cabinSaveKey()），股市小屋只在自己 loadState() 时
+   才会读一次这份存档，所以这里直接改存档里的 economy.investment.company，
+   不用（也没法）碰股市小屋当前内存里的 state。下次玩家推开股市小屋的门，
+   normalizeCompanyState() 会把这个数字读进去、夹到 [0,totalShares] 区间。 */
+function grantWahaFounderShares(delta) {
+    if (!delta) return 0;
+    try {
+        const raw = readJson(cabinSaveKey(), null);
+        if (!raw || typeof raw !== 'object') return 0;
+        raw.economy = raw.economy || {};
+        raw.economy.investment = raw.economy.investment || {};
+        const company = raw.economy.investment.company || {};
+        const totalShares = Number(company.totalShares) || 10000;
+        const base = Number.isFinite(company.founderShares) ? company.founderShares : totalShares;
+        const next = Math.max(0, Math.min(totalShares, Math.round(base + delta)));
+        company.founderShares = next;
+        company.totalShares = totalShares;
+        raw.economy.investment.company = company;
+        writeJson(cabinSaveKey(), raw);
+        return next - base;
+    } catch (err) {
+        return 0;
+    }
+}
+
+/* 融资请求不再是"一个外地口音生意人"这一种脸——有人求稳、有人求快，
+   还有人手里攥着早年跟着一起干的娃哈哈原始股，宁愿换现钱也不留着。
+   每张卡自己定义抽成比例、成功率、赢了给什么（现金倍数 或 股份）。
+   整体思路：比老版本更容易成，但每次能拿到的也更少——不再是靠一次
+   暴击翻身，是靠一次次小赢慢慢攒。 */
+const FINANCING_CARDS = [
+    {
+        id: 'cashSafe',
+        weight: 3,
+        kicker: '融资请求',
+        title: '老街坊搭伙',
+        body: name =>
+            '巷口开杂货铺的老周凑过来，说想跟你搭伙做批小买卖，只要 <b>' + name + '</b> 金币周转，' +
+            '赚了大家平分。<br>数目不大，他这人你也认识，靠谱。',
+        stakeRange: coins => Math.max(20, Math.round(coins * (0.04 + Math.random() * 0.05))),
+        winChance: () => 0.55 + charityGoodwill() * 0.12 + cabinLuckBias(0.08),
+        winChanceRange: [0.35, 0.78],
+        reward: { type: 'cash', mult: 1.5 },
+        winText: reward => '老周真赚了一笔，分你 +' + reward + ' 金币，人情也攒下了。',
+        loseText: stake => '小买卖赔了本，' + stake + ' 金币打水漂——好在数目不大，老周还挺不好意思。'
+    },
+    {
+        id: 'cashRisk',
+        weight: 2,
+        kicker: '融资请求',
+        title: '外地生意人',
+        body: name =>
+            '一个操着外地口音的生意人，说手里有个"稳赚不赔"的项目，想请你入股 <b>' + name + '</b> 金币。' +
+            '<br>这种话，你年轻时也不是没听过。',
+        stakeRange: coins => Math.max(30, Math.round(coins * (0.10 + Math.random() * 0.12))),
+        winChance: () => 0.30 + charityGoodwill() * 0.10 + cabinLuckBias(0.08),
+        winChanceRange: [0.15, 0.50],
+        reward: { type: 'cash', mult: 2.0 },
+        winText: reward => '运气这次站在你这边——项目真赚了，回本 +' + reward + ' 金币。',
+        loseText: stake => '项目黄了，' + stake + ' 金币打了水漂——这种事，十次里有九次是这样。'
+    },
+    {
+        id: 'equitySafe',
+        weight: 2,
+        kicker: '融资请求',
+        title: '想套现的小股东',
+        body: name =>
+            '当年跟着一起跑腿的小张，手里还留着一点娃哈哈的原始股，说家里急用钱，' +
+            '愿意折价转给你，开价 <b>' + name + '</b> 金币。<br>股份不多，但都是自己人，靠谱。',
+        stakeRange: coins => Math.max(40, Math.round(coins * (0.05 + Math.random() * 0.05))),
+        winChance: () => 0.55 + charityGoodwill() * 0.12 + cabinLuckBias(0.08),
+        winChanceRange: [0.35, 0.78],
+        reward: { type: 'equity', perStake: 1 / 45, minShares: 12, maxShares: 60 },
+        winText: shares => '手续办妥，小张把 ' + shares + ' 股原始股过户给了你。',
+        loseText: stake => '钱付了，小张那边却一直没把股份过户过来——' + stake + ' 金币打了水漂。'
+    },
+    {
+        id: 'equityRisk',
+        weight: 1,
+        kicker: '融资请求',
+        title: '公司元老让股',
+        body: name =>
+            '一位当年一起熬过苦日子的老伙计找上门，说自己不干了，手里那份娃哈哈原始股' +
+            '想一次性套现走人，开价 <b>' + name + '</b> 金币，股份比小张那份多不少。<br>' +
+            '这份交情，值不值这个价，你得自己掂量。',
+        stakeRange: coins => Math.max(60, Math.round(coins * (0.10 + Math.random() * 0.10))),
+        winChance: () => 0.30 + charityGoodwill() * 0.10 + cabinLuckBias(0.08),
+        winChanceRange: [0.15, 0.50],
+        reward: { type: 'equity', perStake: 1 / 28, minShares: 35, maxShares: 150 },
+        winText: shares => '老伙计爽快，一次性把 ' + shares + ' 股原始股都过户给了你，转身就走。',
+        loseText: stake => '钱到了对方手里，人却再也找不着了——' + stake + ' 金币和这份交情一起打了水漂。'
+    }
+];
+
+function pickFinancingCard() {
+    const total = FINANCING_CARDS.reduce((sum, c) => sum + c.weight, 0);
+    let roll = Math.random() * total;
+    for (const card of FINANCING_CARDS) {
+        roll -= card.weight;
+        if (roll <= 0) return card;
+    }
+    return FINANCING_CARDS[0];
+}
+
 function triggerFinancingEvent() {
     const coins = currentCoinsSafe();
-    const stake = Math.max(30, Math.round(coins * (0.10 + Math.random() * 0.12)));
+    const card = pickFinancingCard();
+    const stake = card.stakeRange(coins);
     openWealthEventPanel(
-        '融资请求',
-        '有人找上门谈投资',
-        '一个操着外地口音的生意人，说手里有个"稳赚不赔"的项目，想请你入股 <b>' + stake + '</b> 金币。' +
-        '<br>这种话，你年轻时也不是没听过。',
+        card.kicker,
+        card.title,
+        card.body(stake),
         [
             {
                 label: '婉拒',
@@ -156,32 +262,41 @@ function triggerFinancingEvent() {
             {
                 label: '入股 ' + stake + ' 金币',
                 primary: true,
-                onClick: () => resolveFinancing(stake)
+                onClick: () => resolveFinancing(card, stake)
             }
         ]
     );
 }
 
-function resolveFinancing(stake) {
+function resolveFinancing(card, stake) {
     if (typeof window.spendCabinCoins !== 'function' || !window.spendCabinCoins(stake, false)) {
         showHintOverride('金币不够，这笔投资谈不成。');
         return;
     }
-    const winChance = Math.max(0.04, Math.min(0.34, 0.10 + charityGoodwill() * 0.10 + cabinLuckBias(0.08)));
+    const [lo, hi] = card.winChanceRange;
+    const winChance = Math.max(lo, Math.min(hi, card.winChance()));
     const win = Math.random() < winChance;
     if (win) {
-        const reward = stake * 3;
-        if (typeof window.addCabinCoins === 'function') window.addCabinCoins(reward, false);
         if (typeof window.addCabinLuck === 'function') window.addCabinLuck(2, false);
         wealthEventState.financingWins++;
         pushMarketNews(false, 0.05 + Math.random() * 0.04, '民间融资传出好消息，市场情绪回暖');
-        showHintOverride('运气这次站在你这边——项目真赚了，回本 +' + reward + ' 金币。');
+        if (card.reward.type === 'equity') {
+            const raw = Math.round(stake * card.reward.perStake);
+            const shares = Math.max(card.reward.minShares, Math.min(card.reward.maxShares, raw));
+            const granted = grantWahaFounderShares(shares);
+            wealthEventState.financingSharesWon = (wealthEventState.financingSharesWon || 0) + granted;
+            showHintOverride(card.winText(granted));
+        } else {
+            const reward = Math.round(stake * card.reward.mult);
+            if (typeof window.addCabinCoins === 'function') window.addCabinCoins(reward, false);
+            showHintOverride(card.winText(reward));
+        }
     } else {
         if (typeof window.addCabinLuck === 'function') window.addCabinLuck(-2, false);
         addGoodwillPenalty(4, false);
         wealthEventState.financingLosses++;
         pushMarketNews(true, 0.06 + Math.random() * 0.04, '非正规融资项目接连爆雷，投资者信心受挫');
-        showHintOverride('项目黄了，' + stake + ' 金币打了水漂——这种事，十次里有九次是这样。');
+        showHintOverride(card.loseText(stake));
     }
     if (typeof saveGameState === 'function') saveGameState(false);
 }
@@ -248,6 +363,7 @@ function captureWealthEventsState() {
         charityMaxSingle: wealthEventState.charityMaxSingle,
         financingWins: wealthEventState.financingWins,
         financingLosses: wealthEventState.financingLosses,
+        financingSharesWon: wealthEventState.financingSharesWon || 0,
         adHits: wealthEventState.adHits,
         marketNews: wealthEventState.marketNews
     };
@@ -261,6 +377,7 @@ function applyWealthEventsState(raw) {
         charityMaxSingle: Math.max(0, Math.trunc(Number(raw && raw.charityMaxSingle) || 0)),
         financingWins: Math.max(0, Math.trunc(Number(raw && raw.financingWins) || 0)),
         financingLosses: Math.max(0, Math.trunc(Number(raw && raw.financingLosses) || 0)),
+        financingSharesWon: Math.max(0, Math.trunc(Number(raw && raw.financingSharesWon) || 0)),
         adHits: Math.max(0, Math.trunc(Number(raw && raw.adHits) || 0)),
         marketNews: Array.isArray(raw && raw.marketNews) ? raw.marketNews.slice(-5) : []
     };
@@ -279,7 +396,11 @@ window.getCharityTotalDonated = function () { return wealthEventState.charityTot
 window.getCharityGoodwill = charityGoodwill;
 window.addGoodwillPenalty = addGoodwillPenalty;
 window.getFinancingStats = function () {
-    return { wins: wealthEventState.financingWins, losses: wealthEventState.financingLosses };
+    return {
+        wins: wealthEventState.financingWins,
+        losses: wealthEventState.financingLosses,
+        sharesWon: wealthEventState.financingSharesWon || 0
+    };
 };
 window.getWealthEventStats = function () {
     return {
@@ -289,6 +410,7 @@ window.getWealthEventStats = function () {
         charityMaxSingle: wealthEventState.charityMaxSingle,
         financingWins: wealthEventState.financingWins,
         financingLosses: wealthEventState.financingLosses,
+        financingSharesWon: wealthEventState.financingSharesWon || 0,
         adHits: wealthEventState.adHits
     };
 };
