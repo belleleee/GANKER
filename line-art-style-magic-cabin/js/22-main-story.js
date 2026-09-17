@@ -793,6 +793,8 @@ const mainStoryBody = document.getElementById('mainStoryBody');
 const mainStoryChoices = document.getElementById('mainStoryChoices');
 const mainStoryNextBtn = document.getElementById('mainStoryNextBtn');
 const closeMainStoryBtn = document.getElementById('closeMainStoryBtn');
+const mainStoryMentorPortrait = document.getElementById('mainStoryMentorPortrait');
+const mainStoryMentorTag = document.getElementById('mainStoryMentorTag');
 
 /* 目标没达成时点“继续”/按回车不会真的翻页，之前只弹一条被卡片本身挡住看
    不见的提示，玩家会以为卡片卡死了。改成在卡片上直接抖一下 + 高亮锁定
@@ -880,6 +882,14 @@ function renderMainStoryCard(stage) {
        39-alchemy-intro.js 的 alchemyIntroNarration）同一种呈现方式，
        不会随着翻页把台词一句句往上堆。 */
     const currentLine = lines[Math.min(mainStoryLineIndex, Math.max(0, lines.length - 1))];
+    /* 师傅/宗庆后说话时，卡片左侧露出一张探出边框的立绘+竖排名牌，
+       跟内文里那个小圆头像分开管——小头像继续给其它复用同一套
+       speakerPillHtml() 的对话框（租地、功能提示……）用。 */
+    const isMentorLine = !!currentLine && (currentLine.speaker === '师傅' || currentLine.speaker === '宗庆后');
+    if (mainStoryMentorPortrait) {
+        mainStoryMentorPortrait.hidden = !isMentorLine;
+        if (isMentorLine && mainStoryMentorTag) mainStoryMentorTag.textContent = currentLine.speaker;
+    }
 
     let html = currentLine ? dialogueLineHtml(currentLine) : '';
     if (linesDone) {
@@ -905,7 +915,10 @@ function renderMainStoryCard(stage) {
     }
     if (mainStoryPanel) {
         const card = mainStoryPanel.querySelector('.mainStoryCard');
-        if (card) card.scrollTop = card.scrollHeight;
+        if (card) {
+            card.scrollTop = card.scrollHeight;
+            card.classList.toggle('hasMentorPortrait', isMentorLine);
+        }
     }
 
     if (linesDone && Array.isArray(stage.choices) && mainStoryChoices) {

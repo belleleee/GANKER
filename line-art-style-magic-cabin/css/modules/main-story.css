@@ -18,7 +18,7 @@
 .mainStoryCard {
     position: relative;
     width: min(1120px, calc(100vw - 60px));
-    height: min(200px, 42vh);
+    height: min(120px, 42vh);
     display: flex;
     flex-direction: column;
     padding: 20px 30px 22px;
@@ -29,6 +29,60 @@
     border-radius: 16px;
     box-shadow: 0 24px 60px rgba(40, 30, 18, .26), inset 0 0 0 1px rgba(255, 255, 255, .6);
     font: 500 17px/1.7 "Songti SC", "STSong", "PingFang SC", serif;
+}
+
+/* 师傅/宗庆后说话时，一张探出卡片边框的立绘 + 竖排金色名牌贴在卡片左侧——
+   跟内文里给其它对话框（租地、功能提示……）复用的那个小圆头像分开管，
+   互不影响。 */
+.mainStoryCard.hasMentorPortrait {
+    padding-left: 210px;
+}
+
+.mainStoryMentorPortrait {
+    position: absolute;
+    left: -34px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 190px;
+    height: 240px;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.mainStoryMentorPortrait[hidden] {
+    display: none;
+}
+
+.mainStoryMentorPortrait img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 16%;
+    -webkit-mask-image: radial-gradient(ellipse 76% 74% at 58% 48%, #000 58%, transparent 100%);
+    mask-image: radial-gradient(ellipse 76% 74% at 58% 48%, #000 58%, transparent 100%);
+}
+
+.mainStoryMentorTag {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    letter-spacing: .28em;
+    padding: 14px 7px;
+    border-radius: 10px;
+    background: linear-gradient(180deg, rgba(200, 150, 44, .94), rgba(168, 118, 60, .94));
+    color: #2e2317;
+    font: 800 15px/1.5 "Songti SC", "STSong", serif;
+    box-shadow: 0 6px 18px rgba(40, 30, 18, .3);
+}
+
+/* 竖排名牌已经报了名字，正文里 speakerPillHtml() 生成的那个内联小
+   圆头像+文字标签在这张卡片里就不再重复显示了。 */
+.mainStoryCard .mainStoryBody .mainStorySpeakerMentor {
+    display: none;
 }
 
 .mainStoryClose {
