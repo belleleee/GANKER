@@ -1,0 +1,79 @@
+{
+  "name": "line-art-magic-cabin",
+  "version": "1.0.0",
+  "description": "线稿风格魔女小屋 - 桌面版",
+  "private": true,
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist:mac": "electron-builder --mac",
+    "dist:win": "electron-builder --win",
+    "pack:mac": "electron-packager . \"线稿风格魔女小屋\" --platform=darwin --out=dist --overwrite --app-bundle-id=com.linearteam.magiccabin --ignore=\"^/node_modules($|/)\" --ignore=\"^/dist($|/)\" --ignore=\"^/\\.git($|/)\" --ignore=\"\\.DS_Store$\" --ignore=\"\\.zip$\" --ignore=\"^/tea-hut($|/)\" --ignore=\"^/scripts($|/)\" --ignore=\"^/README\\.md$\" --ignore=\"^/package-lock\\.json$\"",
+    "pack:win": "electron-packager . \"线稿风格魔女小屋\" --platform=win32 --arch=x64 --out=dist --overwrite --ignore=\"^/node_modules($|/)\" --ignore=\"^/dist($|/)\" --ignore=\"^/\\.git($|/)\" --ignore=\"\\.DS_Store$\" --ignore=\"\\.zip$\" --ignore=\"^/tea-hut($|/)\" --ignore=\"^/scripts($|/)\" --ignore=\"^/README\\.md$\" --ignore=\"^/package-lock\\.json$\""
+  },
+  "devDependencies": {
+    "electron": "^32.0.0",
+    "electron-builder": "^25.0.0",
+    "electron-packager": "^17.1.2"
+  },
+  "build": {
+    "appId": "com.linearteam.magiccabin",
+    "productName": "线稿风格魔女小屋",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron/**/*",
+      "index.html",
+      "game.html",
+      "jourmal.html",
+      "three.min.js",
+      "css/**/*",
+      "js/**/*",
+      "assets/**/*",
+      "sounds/**/*",
+      "investment-room/**/*",
+      "coin-game/**/*",
+      "line-art-cafe/**/*",
+      "menber/**/*",
+      "memories/**/*",
+      "!**/.DS_Store",
+      "!**/*.zip"
+    ],
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "category": "public.app-category.games"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    }
+  }
+}
