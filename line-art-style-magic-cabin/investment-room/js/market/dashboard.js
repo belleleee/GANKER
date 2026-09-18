@@ -352,23 +352,62 @@ function coverShort(id, count) {
 }
 
 /* ---------------- 期权交易 ----------------
-   简化欧式期权：每份合约对应 10 股，行权价按买入当天的现价取整到
-   5的倍数，5个交易日后到期。到期前只能等，到期后手动点"结算"——
-   跟游戏里其它"就这么办"式的确认动作保持同一个交互习惯，不做自动
-   静默结算。看涨/看跌权利金分别是标的现价的5%/4%，钱是真花出去的，
-   到期要是行权价"猜反了"，这笔钱就彻底打水漂。 */
+   不做"只有一个行权价、只有一个到期日"的阉割版：行权价分价内/平价/
+   价外三档，到期日分短/中/长三档，两两组合权利金各不相同——价内贵但
+   稳、价外便宜但要赌更大的波动，到期越久时间价值越贵。到期前允许
+   "提前平仓"按估算价值收一笔（打九折模拟买卖价差），不用死等到期，
+   也能及时止损或落袋为安；到期后走"结算"按行权价与现价的差价一次性
+   兑现。每份合约对应标的10股，可以一次买多份。 */
 const OPTION_CONTRACT_SHARES = 10;
-const OPTION_EXPIRY_DAYS = 5;
-const OPTION_PREMIUM_RATE = { call: .05, put: .04 };
+const OPTION_EXPIRIES = [
+  { id: 'short', label: '3天到期', days: 3, timeMult: .62 },
+  { id: 'mid', label: '7天到期', days: 7, timeMult: 1 },
+  { id: 'long', label: '14天到期', days: 14, timeMult: 1.55 }
+];
+const OPTION_MONEYNESS = [
+  { id: 'itm', label: '价内', callPct: -.08, putPct: .08, premiumMult: 1.7 },
+  { id: 'atm', label: '平价', callPct: 0, putPct: 0, premiumMult: 1 },
+  { id: 'otm', label: '价外', callPct: .08, putPct: -.08, premiumMult: .5 }
+];
+const OPTION_CONTRACT_TIERS = [1, 5, 20];
+const OPTION_CLOSE_SPREAD = .9;
 
-function optionStrikeFor(stock) {
-  return Math.max(5, Math.round(stock.price / 5) * 5);
+function optionExpiryDef(id) {
+  return OPTION_EXPIRIES.find(e => e.id === id) || OPTION_EXPIRIES[1];
 }
 
-function optionPremiumCost(stock, type) {
-  const rate = OPTION_PREMIUM_RATE[type] || OPTION_PREMIUM_RATE.call;
-  const perShare = Math.max(1, Math.round(stock.price * rate * 10) / 10);
-  return Math.ceil(perShare * OPTION_CONTRACT_SHARES);
+function optionMoneynessDef(id) {
+  return OPTION_MONEYNESS.find(m => m.id === id) || OPTION_MONEYNESS[1];
+}
+
+function optionStrikeFor(stock, type, moneynessId) {
+  const m = optionMoneynessDef(moneynessId);
+  const pct = type === 'put' ? m.putPct : m.callPct;
+  return Math.max(5, Math.round(stock.price * (1 + pct) / 5) * 5);
+}
+
+function optionPremiumPerShare(stock, expiryId, moneynessId) {
+  const expiry = optionExpiryDef(expiryId);
+  const m = optionMoneynessDef(moneynessId);
+  return Math.max(.5, Math.round(stock.price * .012 * expiry.timeMult * m.premiumMult * 10) / 10);
+}
+
+/* 估算一份还没到期的合约现在值多少钱：内在价值（现价相对行权价已经
+   赚了多少）+ 按剩余天数线性衰减的时间价值（买入时权利金里"内在价值
+   之外"的那部分，随时间归零，到期那天等于0，这是期权最基本的时间
+   衰减直觉，不追求跟真实定价模型分毫不差）。 */
+function optionEstimatedValuePerShare(opt, stock) {
+  const intrinsic = opt.type === 'call' ? Math.max(0, stock.price - opt.strike) : Math.max(0, opt.strike - stock.price);
+  const daysLeft = Math.max(0, opt.expiryDay - marketState.day);
+  const timeValueAtPurchase = Math.max(0, opt.premiumPerShare - opt.intrinsicAtPurchase);
+  const timeValueNow = timeValueAtPurchase * (daysLeft / Math.max(1, opt.totalDays));
+  return intrinsic + timeValueNow;
+}
+
+function optionMoneynessNow(opt, stock) {
+  const diff = opt.type === 'call' ? stock.price - opt.strike : opt.strike - stock.price;
+  if (Math.abs(diff) < Math.max(1, stock.price * .01)) return '平价';
+  return diff > 0 ? '价内' : '价外';
 }
 
 function pickOptionUnderlying(id) {
@@ -377,34 +416,50 @@ function pickOptionUnderlying(id) {
   renderScreenPanel(activeScreen);
 }
 
-function buyOption(stockId, type) {
+function pickOptionExpiry(id) {
+  if (!OPTION_EXPIRIES.some(e => e.id === id)) return;
+  marketState.optionExpiry = id;
+  renderScreenPanel(activeScreen);
+}
+
+function buyOption(stockId, type, moneynessId, contracts) {
   const stock = safeStockForTrade(stockId);
   if (stock.id === 'WAHA' || stock.acquired) {
     if (typeof showToast === 'function') showToast('这支股票不能做期权。');
     return;
   }
   const kind = type === 'put' ? 'put' : 'call';
-  const cost = optionPremiumCost(stock, kind);
+  const expiryId = OPTION_EXPIRIES.some(e => e.id === marketState.optionExpiry) ? marketState.optionExpiry : 'mid';
+  const expiry = optionExpiryDef(expiryId);
+  const qty = Math.max(1, Math.trunc(Number(contracts)) || 1);
+  const strike = optionStrikeFor(stock, kind, moneynessId);
+  const premiumPerShare = optionPremiumPerShare(stock, expiryId, moneynessId);
+  const cost = Math.ceil(premiumPerShare * OPTION_CONTRACT_SHARES * qty);
   state.coins = Math.trunc(safeMoney(state.coins, 100));
   if (state.coins < cost) {
-    if (typeof showToast === 'function') showToast('金币不够，买 1 份期权需要 ' + cost + ' 金币');
+    if (typeof showToast === 'function') showToast('金币不够，买 ' + qty + ' 份期权需要 ' + cost + ' 金币');
     return;
   }
   state.coins -= cost;
-  const strike = optionStrikeFor(stock);
-  const expiryDay = marketState.day + OPTION_EXPIRY_DAYS;
+  const intrinsicAtPurchase = kind === 'call' ? Math.max(0, stock.price - strike) : Math.max(0, strike - stock.price);
+  const expiryDay = marketState.day + expiry.days;
   state.investment.options = Array.isArray(state.investment.options) ? state.investment.options : [];
   state.investment.options.push({
     id: Date.now() + '_' + Math.random().toString(36).slice(2, 7),
     stockId,
     type: kind,
     strike,
-    premiumPaid: cost,
-    expiryDay
+    contracts: qty,
+    premiumPerShare,
+    intrinsicAtPurchase,
+    buyDay: marketState.day,
+    totalDays: expiry.days,
+    expiryDay,
+    premiumPaid: cost
   });
   logTrade();
-  showMarketFeedback(-cost, '买入期权', (kind === 'call' ? '看涨' : '看跌') + ' ' + stock.name +
-    ' · 行权价 ' + strike + ' · Day ' + expiryDay + ' 到期 · 权利金 ' + cost, {
+  showMarketFeedback(-cost, '买入期权', (kind === 'call' ? '看涨' : '看跌') + ' ' + stock.name + ' ×' + qty +
+    ' · 行权价 ' + strike + ' · ' + expiry.label + '（Day ' + expiryDay + '）· 权利金 ' + cost, {
       countMilestone: false, toastLabel: '现金 -'
     });
   redrawScreens();
@@ -423,12 +478,35 @@ function settleOption(id) {
   }
   const stock = getStock(opt.stockId);
   const intrinsic = opt.type === 'call' ? Math.max(0, stock.price - opt.strike) : Math.max(0, opt.strike - stock.price);
-  const payout = Math.round(intrinsic * OPTION_CONTRACT_SHARES);
+  const payout = Math.round(intrinsic * OPTION_CONTRACT_SHARES * opt.contracts);
   if (payout > 0) state.coins = Math.min(999999, state.coins + payout);
   list.splice(idx, 1);
-  showMarketFeedback(payout, '期权结算', (opt.type === 'call' ? '看涨' : '看跌') + ' ' + stock.name +
+  showMarketFeedback(payout, '期权结算', (opt.type === 'call' ? '看涨' : '看跌') + ' ' + stock.name + ' ×' + opt.contracts +
     ' · 行权价 ' + opt.strike + ' · 到手 ' + payout + ' 金币' + (payout === 0 ? '（价外作废）' : ''), {
       countMilestone: payout > 0, toastLabel: payout > 0 ? '现金 +' : undefined
+    });
+  redrawScreens();
+  renderScreenPanel(activeScreen);
+  saveState();
+}
+
+function closeOption(id) {
+  const list = Array.isArray(state.investment.options) ? state.investment.options : [];
+  const idx = list.findIndex(o => o.id === id);
+  if (idx < 0) return;
+  const opt = list[idx];
+  if (marketState.day >= opt.expiryDay) {
+    if (typeof showToast === 'function') showToast('已经到期了，直接结算就行');
+    return;
+  }
+  const stock = getStock(opt.stockId);
+  const valuePerShare = optionEstimatedValuePerShare(opt, stock);
+  const proceeds = Math.round(valuePerShare * OPTION_CONTRACT_SHARES * opt.contracts * OPTION_CLOSE_SPREAD);
+  if (proceeds > 0) state.coins = Math.min(999999, state.coins + proceeds);
+  list.splice(idx, 1);
+  showMarketFeedback(proceeds, '提前平仓期权', (opt.type === 'call' ? '看涨' : '看跌') + ' ' + stock.name + ' ×' + opt.contracts +
+    ' · 距到期还有 ' + Math.max(0, opt.expiryDay - marketState.day) + ' 天就提前卖掉 · 到手 ' + proceeds + ' 金币（含平仓价差）', {
+      countMilestone: proceeds > 0, toastLabel: proceeds > 0 ? '现金 +' : undefined
     });
   redrawScreens();
   renderScreenPanel(activeScreen);
@@ -445,9 +523,9 @@ function optionsDashboardHtml() {
   }
   const underlyingId = tradable.some(s => s.id === marketState.optionsUnderlying) ? marketState.optionsUnderlying : tradable[0].id;
   const stock = getStock(underlyingId);
-  const strike = optionStrikeFor(stock);
-  const callCost = optionPremiumCost(stock, 'call');
-  const putCost = optionPremiumCost(stock, 'put');
+  const expiryId = OPTION_EXPIRIES.some(e => e.id === marketState.optionExpiry) ? marketState.optionExpiry : 'mid';
+  const contractsN = OPTION_CONTRACT_TIERS.includes(Number(marketState.optionContracts)) ? Number(marketState.optionContracts) : 1;
+
   const pickerRows = tradable.map(s => {
     const st = getStock(s.id);
     const isCurrent = s.id === underlyingId;
@@ -460,50 +538,75 @@ function optionsDashboardHtml() {
         : '<button class="ghost founderSaleBtn" data-action="pickOptionUnderlying" data-stock="' + s.id + '">选为标的</button>') +
       '</div>';
   }).join('');
+
+  const expiryBtns = OPTION_EXPIRIES.map(e =>
+    '<button class="' + (e.id === expiryId ? '' : 'ghost') + '" data-action="pickOptionExpiry" data-expiry="' + e.id + '">' + e.label + '</button>'
+  ).join('');
+  const contractBtns = OPTION_CONTRACT_TIERS.map(n =>
+    '<button class="' + (n === contractsN ? '' : 'ghost') + '" data-action="pickOptionContracts" data-contracts="' + n + '">' + n + ' 份</button>'
+  ).join('');
+
+  const chainRows = [];
+  OPTION_MONEYNESS.forEach(m => {
+    ['call', 'put'].forEach(type => {
+      const strike = optionStrikeFor(stock, type, m.id);
+      const premiumPerShare = optionPremiumPerShare(stock, expiryId, m.id);
+      const cost = Math.ceil(premiumPerShare * OPTION_CONTRACT_SHARES * contractsN);
+      const affordable = state.coins >= cost;
+      chainRows.push(
+        '<div class="founderChoiceRow">' +
+        '<b>' + (type === 'call' ? '看涨' : '看跌') + ' · ' + m.label + '</b>' +
+        '<span>行权价 <em>' + strike + '</em></span>' +
+        '<span>权利金/份 <em>' + Math.ceil(premiumPerShare * OPTION_CONTRACT_SHARES) + '</em></span>' +
+        '<span>' + contractsN + ' 份共 <em>' + cost + '</em></span>' +
+        '<span></span>' +
+        '<button class="ghost founderSaleBtn" data-action="buyOption" data-stock="' + underlyingId + '" data-option-type="' + type + '" data-moneyness="' + m.id + '" data-contracts="' + contractsN + '"' +
+        (affordable ? '' : ' disabled') + '>买入</button>' +
+        '</div>'
+      );
+    });
+  });
+
   const positions = (state.investment.options || []).map(opt => {
     const s = getStock(opt.stockId);
     const matured = marketState.day >= opt.expiryDay;
-    const intrinsic = opt.type === 'call' ? Math.max(0, s.price - opt.strike) : Math.max(0, opt.strike - s.price);
-    const estPayout = Math.round(intrinsic * OPTION_CONTRACT_SHARES);
+    const label = optionMoneynessNow(opt, s);
+    if (matured) {
+      const intrinsic = opt.type === 'call' ? Math.max(0, s.price - opt.strike) : Math.max(0, opt.strike - s.price);
+      const estPayout = Math.round(intrinsic * OPTION_CONTRACT_SHARES * opt.contracts);
+      return '<div class="founderChoiceRow">' +
+        '<b>' + (opt.type === 'call' ? '看涨' : '看跌') + ' ' + s.name + ' ×' + opt.contracts + '</b>' +
+        '<span>行权价 <em>' + opt.strike + '</em></span>' +
+        '<span>已到期 <em>Day ' + opt.expiryDay + '</em></span>' +
+        '<span>成本 <em>' + opt.premiumPaid + '</em></span>' +
+        '<span>可结算 <em>' + estPayout + '</em></span>' +
+        '<button class="ghost founderSaleBtn" data-action="settleOption" data-option="' + opt.id + '">结算</button>' +
+        '</div>';
+    }
+    const estValue = Math.round(optionEstimatedValuePerShare(opt, s) * OPTION_CONTRACT_SHARES * opt.contracts * OPTION_CLOSE_SPREAD);
     return '<div class="founderChoiceRow">' +
-      '<b>' + (opt.type === 'call' ? '看涨' : '看跌') + ' ' + s.name + '</b>' +
-      '<span>行权价 <em>' + opt.strike + '</em></span>' +
-      '<span>到期 <em>Day ' + opt.expiryDay + '</em></span>' +
+      '<b>' + (opt.type === 'call' ? '看涨' : '看跌') + ' ' + s.name + ' ×' + opt.contracts + '</b>' +
+      '<span>行权价 <em>' + opt.strike + '</em> · 现在' + label + '</span>' +
+      '<span>还剩 <em>' + Math.max(0, opt.expiryDay - marketState.day) + '</em> 天</span>' +
       '<span>成本 <em>' + opt.premiumPaid + '</em></span>' +
-      '<span>' + (matured ? '可结算 <em>' + estPayout + '</em>' : '现价 <em>' + s.price.toFixed(1) + '</em>') + '</span>' +
-      (matured
-        ? '<button class="ghost founderSaleBtn" data-action="settleOption" data-option="' + opt.id + '">结算</button>'
-        : '<button class="ghost founderSaleBtn" disabled>未到期</button>') +
+      '<span>现在平仓约 <em>' + estValue + '</em></span>' +
+      '<button class="ghost founderSaleBtn" data-action="closeOption" data-option="' + opt.id + '">提前平仓</button>' +
       '</div>';
   }).join('');
+
   return '<div class="deskDashboard">' +
     '<section class="wahaHero deskHero"><p>OPTIONS DESK</p><h3>期权交易</h3>' +
-    '<span>简化欧式期权：每份合约对应 ' + OPTION_CONTRACT_SHARES + ' 股，' + OPTION_EXPIRY_DAYS + ' 个交易日后到期结算，到期前不能反悔。</span></section>' +
+    '<span>每份合约对应标的 ' + OPTION_CONTRACT_SHARES + ' 股，价内/平价/价外三档行权价 × 短/中/长三档到期日，权利金各不相同；到期前可以随时提前平仓收现估算价值（打九折价差），到期后走"结算"兑现差价。</span></section>' +
     '<div class="deskList">' +
     '<div class="founderEmergencyBox">' +
     '<p class="founderEmergencyTitle">选择标的</p>' +
     '<div class="founderChoiceTable">' + pickerRows + '</div>' +
     '</div>' +
     '<div class="founderEmergencyBox">' +
-    '<p class="founderEmergencyTitle">' + stock.name + ' · 现价 ' + stock.price.toFixed(1) + ' · 行权价 ' + strike + '</p>' +
-    '<div class="founderChoiceTable">' +
-    '<div class="founderChoiceRow">' +
-    '<b>看涨 CALL</b>' +
-    '<span>到期涨过 <em>' + strike + '</em> 才有赚头</span>' +
-    '<span></span>' +
-    '<span>权利金 <em>' + callCost + '</em></span>' +
-    '<span></span>' +
-    '<button class="ghost founderSaleBtn" data-action="buyOption" data-stock="' + underlyingId + '" data-option-type="call"' + (state.coins >= callCost ? '' : ' disabled') + '>买入 1 份</button>' +
-    '</div>' +
-    '<div class="founderChoiceRow">' +
-    '<b>看跌 PUT</b>' +
-    '<span>到期跌破 <em>' + strike + '</em> 才有赚头</span>' +
-    '<span></span>' +
-    '<span>权利金 <em>' + putCost + '</em></span>' +
-    '<span></span>' +
-    '<button class="ghost founderSaleBtn" data-action="buyOption" data-stock="' + underlyingId + '" data-option-type="put"' + (state.coins >= putCost ? '' : ' disabled') + '>买入 1 份</button>' +
-    '</div>' +
-    '</div>' +
+    '<p class="founderEmergencyTitle">' + stock.name + ' · 现价 ' + stock.price.toFixed(1) + '</p>' +
+    '<div class="dashTradeActions dashTradeActionsWrap">' + expiryBtns + '</div>' +
+    '<div class="dashTradeActions dashTradeActionsWrap">' + contractBtns + '</div>' +
+    '<div class="founderChoiceTable">' + chainRows.join('') + '</div>' +
     '</div>' +
     '<div class="founderEmergencyBox">' +
     '<p class="founderEmergencyTitle">我的合约</p>' +

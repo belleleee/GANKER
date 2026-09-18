@@ -279,11 +279,17 @@ function sanitizeOption(raw) {
   if (!raw || typeof raw !== 'object') return null;
   const stockId = STOCKS.some(s => s.id === raw.stockId && !s.isPlayerCompany) ? raw.stockId : null;
   if (!stockId) return null;
+  const totalDays = intValue(raw.totalDays, 7, 1, 60);
   return {
     id: typeof raw.id === 'string' ? raw.id.slice(0, 40) : (Date.now() + '_' + Math.random().toString(36).slice(2, 7)),
     stockId,
     type: raw.type === 'put' ? 'put' : 'call',
     strike: finiteNumber(raw.strike, 1, 1, 999999),
+    contracts: intValue(raw.contracts, 1, 1, 999),
+    premiumPerShare: finiteNumber(raw.premiumPerShare, 1, 0, 99999),
+    intrinsicAtPurchase: finiteNumber(raw.intrinsicAtPurchase, 0, 0, 999999),
+    buyDay: intValue(raw.buyDay, 1, 1, 999999),
+    totalDays,
     premiumPaid: intValue(raw.premiumPaid, 0, 0, 9999999),
     expiryDay: intValue(raw.expiryDay, 1, 1, 999999)
   };
