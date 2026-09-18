@@ -57,21 +57,17 @@ function dialogueLineHtmlFallback(line) {
     return '<p>' + (typeof speakerPillHtml === 'function' ? speakerPillHtml(line.speaker) : '<span class="mainStorySpeaker">' + line.speaker + '</span>') + line.text + '</p>';
 }
 
-/* 一句一句往下"继续"，不是把整段台词一次性甩出来——跟主线对话框
-   （mainStoryPanel）同一个节奏，读起来才像在跟人说话，不是在看
-   一整块说明文档。 */
+/* 只显示当前这一句，翻页就把上一句替换掉——跟 22-main-story.js 的
+   renderMainStoryCard() 同一种呈现方式，不会随着翻页把台词一句句
+   往上堆、把卡片撑高。 */
 function renderFeatureIntroStep() {
     if (!featureIntroBody) return;
     const lines = featureIntroLines;
     const idx = Math.min(featureIntroLineIndex, Math.max(0, lines.length - 1));
-    const shown = lines.slice(0, idx + 1);
-    featureIntroBody.innerHTML = shown.map(dialogueLineHtmlFallback).join('');
+    const currentLine = lines[idx];
+    featureIntroBody.innerHTML = currentLine ? dialogueLineHtmlFallback(currentLine) : '';
     const linesDone = idx >= lines.length - 1;
     if (featureIntroCloseBtn) featureIntroCloseBtn.textContent = linesDone ? '知道了' : '继续';
-    if (featureIntroPanel) {
-        const card = featureIntroPanel.querySelector('.mainStoryCard');
-        if (card) card.scrollTop = card.scrollHeight;
-    }
 }
 
 /* 返回 true 表示这次真的弹出来了（第一次见到）；返回 false 表示

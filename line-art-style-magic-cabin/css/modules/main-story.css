@@ -33,6 +33,23 @@
     font: 500 17px/1.7 "Songti SC", "STSong", "PingFang SC", serif;
 }
 
+/* "新功能提醒"（代销订单/雇人/祈天……）复用主线卡片的样式，但内容
+   只是一次性的说明，不需要跟主线剧情卡片一样大——单独给它一个更矮
+   的高度和更紧凑的内边距/字号。 */
+.featureIntroCard {
+    height: min(96px, 34vh);
+    padding: 14px 24px 16px;
+}
+
+.featureIntroCard #featureIntroTitle {
+    font-size: 16px;
+    margin: 3px 0 8px;
+}
+
+.featureIntroCard .mainStoryKicker {
+    font-size: 10px;
+}
+
 /* 师傅/宗庆后说话时，一张大立绘贴在卡片正上方——底边跟卡片顶边对齐
    （position:absolute + bottom:100%，天然贴齐，不会探进卡片内容区），
    名牌还是用"你"/"旁白"同一套圆角小标签，只把内文里的小圆头像藏起来
