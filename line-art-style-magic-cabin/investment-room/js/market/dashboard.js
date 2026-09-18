@@ -626,12 +626,120 @@ function sidebarRows() {
   }).join('');
   const waha = getStock('WAHA');
   const company = companyState();
+  const readyCount = MARKET_QUESTS.filter(q => !isQuestClaimed(q.id) && marketQuestDone(q)).length;
   return marketIndexSummary() +
     '<button class="dashCompanyRow' + (activeScreen === 'company' ? ' on' : '') + '" data-company="WAHA">' +
     '<span><b>公司上市</b><small>WAHA · ' + (company.listed ? '已上市' : '未上市') + '</small></span>' +
     '<strong>' + waha.price.toFixed(1) + '</strong>' +
     '</button>' +
+    '<button class="dashCompanyRow' + (activeScreen === 'quests' ? ' on' : '') + '" data-quests="1">' +
+    '<span><b>投资任务</b><small>' + MARKET_QUESTS.filter(q => isQuestClaimed(q.id)).length + '/' + MARKET_QUESTS.length + ' 已完成</small></span>' +
+    '<strong class="' + (readyCount ? 'up' : '') + '">' + (readyCount || '') + '</strong>' +
+    '</button>' +
     rows;
+}
+
+/* ---------------- 投资任务 ----------------
+   借鉴参考项目 stockmarket-simulation 的 quests 系统：一串"持仓/资产
+   凑成什么样子"的目标，完成后手动点"领取"拿奖励（不是达成瞬间自动
+   到账），claimedQuests 记录已经领过的，防止重复。 */
+const MARKET_QUESTS = [
+  { id: 'firstBuy', icon: '🌱', name: '人生第一支股票', desc: '买下你的第一支股票，正式踏进股市。', type: 'stockTotal', amount: 1, reward: { coins: 60 } },
+  { id: 'holder30', icon: '📈', name: '像点样子的股东', desc: '手里的股票加起来凑够 30 股。', type: 'stockTotal', amount: 30, reward: { coins: 200 } },
+  { id: 'networth5000', icon: '💰', name: '资产滚到 5000', desc: '现金 + 持仓市值合计达到 5000 金币。', type: 'netWorth', amount: 5000, reward: { coins: 300 } },
+  { id: 'networth20000', icon: '💎', name: '资产滚到 20000', desc: '现金 + 持仓市值合计达到 20000 金币。', type: 'netWorth', amount: 20000, reward: { coins: 1200 } },
+  { id: 'allIn', icon: '🎲', name: '全仓一把梭', desc: '把 90% 以上的身家都换成股票——赢面更大，也更没有退路。', type: 'investPercent', amount: 90, reward: { coins: 250 } },
+  { id: 'teaBeliever', icon: '🍵', name: '茶业信徒', desc: '让茶业合作社占你持仓股数的一半以上。', type: 'stockPercent', amount: 50, target: 'TEA', reward: { coins: 220, reputation: 3 } },
+  { id: 'diversify4', icon: '🧺', name: '别把鸡蛋放一个篮子里', desc: '同时持有 4 支不同的股票。', type: 'diversify', amount: 4, reward: { coins: 280 } },
+  { id: 'founderMajority', icon: '🏭', name: '拿回属于自己的公司', desc: '娃哈哈创始人持股过半，真正把公司攥在自己手里。', type: 'founderControl', amount: 50, reward: { coins: 600, reputation: 6 } }
+];
+
+function marketQuestValue(quest) {
+  switch (quest.type) {
+    case 'stockTotal': {
+      let total = 0;
+      STOCKS.forEach(item => { if (!item.isPlayerCompany) total += getHolding(item.id).qty; });
+      return total;
+    }
+    case 'netWorth':
+      return typeof portfolioEquity === 'function' ? portfolioEquity() : state.coins;
+    case 'investPercent': {
+      const pnl = investmentPnlSummary();
+      const equity = state.coins + pnl.longValue;
+      return equity > 0 ? (pnl.longValue / equity) * 100 : 0;
+    }
+    case 'stockPercent': {
+      let total = 0;
+      STOCKS.forEach(item => { if (!item.isPlayerCompany) total += getHolding(item.id).qty; });
+      if (!total) return 0;
+      return (getHolding(quest.target).qty / total) * 100;
+    }
+    case 'diversify': {
+      let count = 0;
+      STOCKS.forEach(item => { if (!item.isPlayerCompany && getHolding(item.id).qty > 0) count++; });
+      return count;
+    }
+    case 'founderControl':
+      return wahaFounderPct(companyState());
+    default:
+      return 0;
+  }
+}
+
+function marketQuestDone(quest) {
+  return marketQuestValue(quest) >= quest.amount;
+}
+
+function isQuestClaimed(id) {
+  return Array.isArray(state.investment.claimedQuests) && state.investment.claimedQuests.includes(id);
+}
+
+function claimQuest(id) {
+  const quest = MARKET_QUESTS.find(q => q.id === id);
+  if (!quest || isQuestClaimed(id)) return;
+  if (!marketQuestDone(quest)) {
+    if (typeof showToast === 'function') showToast('还没达成条件，先接着攒。');
+    return;
+  }
+  state.investment.claimedQuests = (Array.isArray(state.investment.claimedQuests) ? state.investment.claimedQuests : []).concat(id);
+  if (quest.reward.coins) state.coins = Math.min(999999, state.coins + quest.reward.coins);
+  if (quest.reward.reputation) state.investment.reputation = Math.max(0, Math.min(100, state.investment.reputation + quest.reward.reputation));
+  if (typeof showMarketFeedback === 'function') {
+    showMarketFeedback(quest.reward.coins || 0, '任务完成 · ' + quest.name,
+      '领取奖励' + (quest.reward.coins ? ' +' + quest.reward.coins + ' 金币' : '') + (quest.reward.reputation ? ' · 声誉 +' + quest.reward.reputation : ''), {
+        toastLabel: '任务奖励 +'
+      });
+  }
+  redrawScreens();
+  renderScreenPanel(activeScreen);
+  saveState();
+}
+
+function questsDashboardHtml() {
+  const cards = MARKET_QUESTS.map(quest => {
+    const claimed = isQuestClaimed(quest.id);
+    const value = marketQuestValue(quest);
+    const pct = Math.max(0, Math.min(100, Math.round((value / quest.amount) * 100)));
+    const done = value >= quest.amount;
+    const stateLabel = claimed ? '已领取' : (done ? '可领取' : pct + '%');
+    return '<div class="founderEmergencyBox">' +
+      '<p class="founderEmergencyTitle">' + quest.icon + ' ' + quest.name + ' · ' + quest.desc + '</p>' +
+      '<div class="founderChoiceTable"><div class="founderChoiceRow">' +
+      '<b>' + stateLabel + '</b>' +
+      '<span>进度 <em>' + pct + '%</em></span>' +
+      (quest.reward.coins ? '<span>奖励 <em>+' + quest.reward.coins + ' 金币</em></span>' : '<span></span>') +
+      (quest.reward.reputation ? '<span>声誉 <em>+' + quest.reward.reputation + '</em></span>' : '<span></span>') +
+      '<span></span>' +
+      (claimed
+        ? '<button class="ghost founderSaleBtn" disabled>已领取</button>'
+        : '<button class="ghost founderSaleBtn" data-action="claimQuest" data-quest="' + quest.id + '"' + (done ? '' : ' disabled') + '>领取</button>') +
+      '</div></div>' +
+      '</div>';
+  }).join('');
+  return '<div class="wahaDashboard">' +
+    '<section class="wahaHero"><p>INVESTOR QUESTS</p><h3>投资任务</h3><span>把持仓、资产凑成任务要求的样子，完成就能领奖励</span></section>' +
+    cards +
+    '</div>';
 }
 
 /* ---------------- 基本面：三句话看懂一支股票 ----------------
@@ -1240,6 +1348,7 @@ function renderScreenPanel(key) {
   if (typeof maybeAutoShowMarketGuide === 'function') maybeAutoShowMarketGuide();
   state.coins = Math.trunc(safeMoney(state.coins, 100));
   const isCompanyPage = activeScreen === 'company';
+  const isQuestsPage = activeScreen === 'quests';
   if (isCompanyPage && !state.investment.wahaCompanyViewed) {
     state.investment.wahaCompanyViewed = true;
     saveState();
@@ -1257,26 +1366,45 @@ function renderScreenPanel(key) {
   dashSidebar.innerHTML = sidebarRows();
   dashBody.classList.toggle('wahaMode', isCompanyPage);
   dashBody.classList.toggle('companyMode', isCompanyPage);
-  const diff = stock.price - stock.prev;
-  dashMainHead.innerHTML = '<h3>' + stock.name + '</h3>' +
-    '<span class="dashPrice ' + (diff >= 0 ? 'up' : 'down') + '">' + stock.price.toFixed(1) + '</span>' +
-    '<small class="' + (diff >= 0 ? 'up' : 'down') + '">' + formatPct(diff / Math.max(1, stock.prev)) + '</small>' +
-    '<span class="dashPnlPulse ' + (pnl.totalPnl >= 0 ? 'up' : 'down') + '">总盈亏 ' + (pnl.totalPnl >= 0 ? '+' : '') + pnl.totalPnl + '</span>';
-  dashTrade.innerHTML = tradePanelHtml(stock);
+  if (isQuestsPage) {
+    const readyCount = MARKET_QUESTS.filter(q => !isQuestClaimed(q.id) && marketQuestDone(q)).length;
+    dashMainHead.innerHTML = '<h3>投资任务</h3>' +
+      '<span class="dashPrice ' + (readyCount ? 'up' : '') + '">' + readyCount + '</span>' +
+      '<small class="' + (readyCount ? 'up' : '') + '">条可领取</small>';
+    dashTrade.innerHTML = '<div class="dashTradeHead"><h3>怎么玩</h3>' +
+      '<p>把持仓、资产凑成任务要求的样子，回主区域点"领取"拿奖励——跟买卖股票同一份存档，不用切页面。</p></div>';
+  } else {
+    const diff = stock.price - stock.prev;
+    dashMainHead.innerHTML = '<h3>' + stock.name + '</h3>' +
+      '<span class="dashPrice ' + (diff >= 0 ? 'up' : 'down') + '">' + stock.price.toFixed(1) + '</span>' +
+      '<small class="' + (diff >= 0 ? 'up' : 'down') + '">' + formatPct(diff / Math.max(1, stock.prev)) + '</small>' +
+      '<span class="dashPnlPulse ' + (pnl.totalPnl >= 0 ? 'up' : 'down') + '">总盈亏 ' + (pnl.totalPnl >= 0 ? '+' : '') + pnl.totalPnl + '</span>';
+    dashTrade.innerHTML = tradePanelHtml(stock);
+  }
   dashHoldings.innerHTML = holdingsPanelHtml();
   dashNews.innerHTML = retroCardHtml() + newsPanelHtml();
   const canvas = document.getElementById('chartCanvas');
+  const existingCompanyPanel = document.getElementById('wahaCompanyDashboard');
+  const existingQuestsPanel = document.getElementById('marketQuestsDashboard');
   if (isCompanyPage) {
     if (canvas) canvas.style.display = 'none';
-    const existing = document.getElementById('wahaCompanyDashboard');
-    if (existing) existing.remove();
+    if (existingQuestsPanel) existingQuestsPanel.remove();
+    if (existingCompanyPanel) existingCompanyPanel.remove();
     const panel = document.createElement('div');
     panel.id = 'wahaCompanyDashboard';
     panel.innerHTML = wahaCompanyDashboardHtml(stock);
     document.querySelector('.dashMain')?.appendChild(panel);
+  } else if (isQuestsPage) {
+    if (canvas) canvas.style.display = 'none';
+    if (existingCompanyPanel) existingCompanyPanel.remove();
+    if (existingQuestsPanel) existingQuestsPanel.remove();
+    const panel = document.createElement('div');
+    panel.id = 'marketQuestsDashboard';
+    panel.innerHTML = questsDashboardHtml();
+    document.querySelector('.dashMain')?.appendChild(panel);
   } else {
-    const existing = document.getElementById('wahaCompanyDashboard');
-    if (existing) existing.remove();
+    if (existingCompanyPanel) existingCompanyPanel.remove();
+    if (existingQuestsPanel) existingQuestsPanel.remove();
     if (canvas) {
       canvas.style.display = '';
       drawLineChart(canvas, stock);

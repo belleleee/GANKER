@@ -289,6 +289,12 @@ function normalizeInvestment(raw) {
     lastRetro: sanitizeRetro(raw && raw.lastRetro),
     market: normalizeMarket(raw && raw.market),
     company: normalizeCompanyState(raw && raw.company),
+    /* 投资任务：借鉴参考项目 stockmarket-simulation 的 quests 系统——
+       一串"持仓凑成什么样子/资产滚到多少"的目标，完成后手动领奖，
+       claimedQuests 记的是已经领过的任务 id，防止重复领取。 */
+    claimedQuests: Array.isArray(raw && raw.claimedQuests)
+      ? raw.claimedQuests.filter(id => typeof id === 'string').slice(0, 64)
+      : [],
     holdings,
     shorts
   };
