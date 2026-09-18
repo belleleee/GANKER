@@ -36,10 +36,6 @@ dashBody.addEventListener('click', event => {
       resolveControlEvent(button.dataset.choice);
       return;
     }
-    if (button.dataset.action === 'claimQuest') {
-      claimQuest(button.dataset.quest);
-      return;
-    }
     if (button.dataset.action === 'repayMargin') {
       repayMargin(button.dataset.amount);
       return;
@@ -78,14 +74,6 @@ dashBody.addEventListener('click', event => {
   const companyRow = event.target.closest('.dashCompanyRow[data-company]');
   if (companyRow) {
     activeScreen = 'company';
-    saveState();
-    redrawScreens();
-    renderScreenPanel(activeScreen);
-    return;
-  }
-  const questsRow = event.target.closest('.dashCompanyRow[data-quests]');
-  if (questsRow) {
-    activeScreen = 'quests';
     saveState();
     redrawScreens();
     renderScreenPanel(activeScreen);
