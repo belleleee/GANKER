@@ -513,15 +513,25 @@ function closeOption(id) {
   saveState();
 }
 
+function optionsTradableStocks() {
+  return STOCKS.filter(s => !s.isPlayerCompany && !getStock(s.id).acquired);
+}
+
+function optionsUnderlyingId() {
+  const tradable = optionsTradableStocks();
+  if (!tradable.length) return null;
+  return tradable.some(s => s.id === marketState.optionsUnderlying) ? marketState.optionsUnderlying : tradable[0].id;
+}
+
 function optionsDashboardHtml() {
-  const tradable = STOCKS.filter(s => !s.isPlayerCompany && !getStock(s.id).acquired);
+  const tradable = optionsTradableStocks();
   if (!tradable.length) {
     return '<div class="deskDashboard">' +
       '<section class="wahaHero deskHero"><p>OPTIONS DESK</p><h3>期权交易</h3>' +
       '<span>市面上能交易的公司都已经被娃哈哈收购了，暂时没有标的可以做期权。</span></section>' +
       '</div>';
   }
-  const underlyingId = tradable.some(s => s.id === marketState.optionsUnderlying) ? marketState.optionsUnderlying : tradable[0].id;
+  const underlyingId = optionsUnderlyingId();
   const stock = getStock(underlyingId);
   const expiryId = OPTION_EXPIRIES.some(e => e.id === marketState.optionExpiry) ? marketState.optionExpiry : 'mid';
   const contractsN = OPTION_CONTRACT_TIERS.includes(Number(marketState.optionContracts)) ? Number(marketState.optionContracts) : 1;
@@ -938,10 +948,10 @@ function fundamentalBar(pct, tone) {
 function stockFundamentalsHtml(stock) {
   const f = stockFundamentals(stock);
   const growthPct100 = Math.round(50 + f.growthPct * 250);
-  const growthTone = f.growthPct >= 0 ? '#39ff9c' : '#ff5d75';
-  const valTone = f.valuationLabel === '偏高' ? '#ff5d75' : f.valuationLabel === '偏低' ? '#39ff9c' : '#ffd666';
+  const growthTone = f.growthPct >= 0 ? 'var(--up)' : 'var(--down)';
+  const valTone = f.valuationLabel === '偏高' ? 'var(--down)' : f.valuationLabel === '偏低' ? 'var(--up)' : 'var(--gold-soft)';
   let html = '<div class="stockFundamentals">' +
-    '<div class="fundRow"><span>稳定度</span>' + fundamentalBar(f.stability, '#5be6ff') + '<b>' + f.stability + '</b></div>' +
+    '<div class="fundRow"><span>稳定度</span>' + fundamentalBar(f.stability, '#4c7a82') + '<b>' + f.stability + '</b></div>' +
     '<div class="fundRow"><span>近期走势</span>' + fundamentalBar(growthPct100, growthTone) +
     '<b style="color:' + growthTone + '">' + (f.growthPct >= 0 ? '+' : '') + Math.round(f.growthPct * 100) + '%</b></div>' +
     '<div class="fundRow"><span>估值</span><b class="fundValuation" style="color:' + valTone + '">' + f.valuationLabel +
@@ -1562,8 +1572,14 @@ function renderScreenPanel(key) {
     dashMainHead.innerHTML = '<h3>期权交易</h3>' +
       '<span class="dashPrice">' + openOptions + '</span>' +
       '<small>份合约持仓中</small>';
+    const underlyingId = optionsUnderlyingId();
+    const underlyingStock = underlyingId ? getStock(underlyingId) : null;
     dashTrade.innerHTML = '<div class="dashTradeHead"><h3>怎么玩</h3>' +
-      '<p>标的→到期日→份数，期权链实时算行权价和权利金；到期前能"提前平仓"收现，到期后走"结算"。</p></div>';
+      '<p>标的→到期日→份数，期权链实时算行权价和权利金；到期前能"提前平仓"收现，到期后走"结算"。</p></div>' +
+      (underlyingStock
+        ? '<div class="dashTradeHead"><h3>' + underlyingStock.name + ' 基本面</h3><p>买期权前，先看看标的自己是不是真的值这个价。</p></div>' +
+          stockFundamentalsHtml(underlyingStock)
+        : '');
   } else {
     const diff = stock.price - stock.prev;
     dashMainHead.innerHTML = '<h3>' + stock.name + '</h3>' +
