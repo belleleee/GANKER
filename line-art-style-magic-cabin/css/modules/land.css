@@ -69,12 +69,7 @@
 }
 
 #landTitle {
-    margin: 5px 0 14px;
-    flex: none;
-    font-size: clamp(18px, 3.6vw, 22px);
-    line-height: 1.2;
-    color: #2e2317;
-    font-family: 'Noto Serif SC', "Songti SC", serif;
+    display: none;
 }
 
 .landBody {
