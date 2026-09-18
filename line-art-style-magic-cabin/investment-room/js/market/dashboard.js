@@ -736,9 +736,9 @@ function questsDashboardHtml() {
       '</div></div>' +
       '</div>';
   }).join('');
-  return '<div class="wahaDashboard">' +
-    '<section class="wahaHero"><p>INVESTOR QUESTS</p><h3>投资任务</h3><span>把持仓、资产凑成任务要求的样子，完成就能领奖励</span></section>' +
-    cards +
+  return '<div class="questsDashboard">' +
+    '<section class="wahaHero questsHero"><p>INVESTOR QUESTS</p><h3>投资任务</h3><span>把持仓、资产凑成任务要求的样子，完成就能领奖励</span></section>' +
+    '<div class="questsList">' + cards + '</div>' +
     '</div>';
 }
 
