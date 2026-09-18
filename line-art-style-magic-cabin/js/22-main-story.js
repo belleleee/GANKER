@@ -793,6 +793,7 @@ const mainStoryBody = document.getElementById('mainStoryBody');
 const mainStoryChoices = document.getElementById('mainStoryChoices');
 const mainStoryNextBtn = document.getElementById('mainStoryNextBtn');
 const closeMainStoryBtn = document.getElementById('closeMainStoryBtn');
+const mainStoryMentorPortrait = document.getElementById('mainStoryMentorPortrait');
 
 /* 目标没达成时点“继续”/按回车不会真的翻页，之前只弹一条被卡片本身挡住看
    不见的提示，玩家会以为卡片卡死了。改成在卡片上直接抖一下 + 高亮锁定
@@ -876,12 +877,16 @@ function renderMainStoryCard(stage) {
     const met = mainStoryStageReady(stage);
     const lines = stage.lines || [];
     const linesDone = mainStoryLinesDone(stage);
-    /* 之前只显示当前这一句，翻页就把上一句擦掉，看着信息量很少。
-       现在保留这一幕已经讲过的台词（从头到当前这句），新的一句
-       追加在最下面，翻旧账不用回忆——跟真的聊天记录一样。 */
-    const shownLines = lines.slice(0, Math.min(mainStoryLineIndex, Math.max(0, lines.length - 1)) + 1);
+    /* 只显示当前这一句，翻页就把上一句替换掉——跟炼金开场引导（
+       39-alchemy-intro.js 的 alchemyIntroNarration）同一种呈现方式，
+       不会随着翻页把台词一句句往上堆。 */
+    const currentLine = lines[Math.min(mainStoryLineIndex, Math.max(0, lines.length - 1))];
+    /* 师傅/宗庆后说话时，卡片右侧露出一张立绘——名牌还是跟"你"/"旁白"
+       用同一套小圆角标签，只是多了张立绘陪衬，不单独做一套样式。 */
+    const isMentorLine = !!currentLine && (currentLine.speaker === '师傅' || currentLine.speaker === '宗庆后');
+    if (mainStoryMentorPortrait) mainStoryMentorPortrait.hidden = !isMentorLine;
 
-    let html = shownLines.map(dialogueLineHtml).join('');
+    let html = currentLine ? dialogueLineHtml(currentLine) : '';
     if (linesDone) {
         if (stage.coinRequirement) {
             const coinsMet = stageCoinsMet(stage);
@@ -905,7 +910,10 @@ function renderMainStoryCard(stage) {
     }
     if (mainStoryPanel) {
         const card = mainStoryPanel.querySelector('.mainStoryCard');
-        if (card) card.scrollTop = card.scrollHeight;
+        if (card) {
+            card.scrollTop = card.scrollHeight;
+            card.classList.toggle('hasMentorPortrait', isMentorLine);
+        }
     }
 
     if (linesDone && Array.isArray(stage.choices) && mainStoryChoices) {

@@ -56,20 +56,30 @@
             <div class="sep"></div>
             <div class="sub">魔 法</div>
             <div id="spellSlots">
-                <div class="slot on" id="slot1" title="空手 · 默认状态"><span class="ico"></span><span class="kb">1
-                        空手</span>
+                <div class="slot on" id="slot1" title="空手 · 默认状态">
+                    <span class="slotBadge">1</span>
+                    <span class="ico">🖐️</span>
+                    <span class="kb">空手</span>
                 </div>
-                <div class="slot hiddenSlot" id="slot2" title="魔杖 · 可释放魔法"><span class="ico">🪄</span><span class="kb">2
-                        魔杖</span>
+                <div class="slot hiddenSlot" id="slot2" title="魔杖 · 可释放魔法">
+                    <span class="slotBadge">2</span>
+                    <span class="ico">🪄</span>
+                    <span class="kb">魔杖</span>
                 </div>
-                <div class="slot hiddenSlot" id="slot3" title="锄头 · 翻地"><span class="ico">⛏️</span><span class="kb">3
-                        锄头</span>
+                <div class="slot hiddenSlot" id="slot3" title="锄头 · 翻地">
+                    <span class="slotBadge">3</span>
+                    <span class="ico">⛏️</span>
+                    <span class="kb">锄头</span>
                 </div>
-                <div class="slot hiddenSlot" id="slot4" title="水壶 · 浇水"><span class="ico">💧</span><span class="kb">4
-                        水壶</span>
+                <div class="slot hiddenSlot" id="slot4" title="水壶 · 浇水">
+                    <span class="slotBadge">4</span>
+                    <span class="ico">💧</span>
+                    <span class="kb">水壶</span>
                 </div>
-                <div class="slot hiddenSlot" id="slot5" title="镰刀 · 收割"><span class="ico">🌾</span><span class="kb">5
-                        镰刀</span>
+                <div class="slot hiddenSlot" id="slot5" title="镰刀 · 收割">
+                    <span class="slotBadge">5</span>
+                    <span class="ico">🌾</span>
+                    <span class="kb">镰刀</span>
                 </div>
             </div>
             <div class="sep"></div>
@@ -252,6 +262,9 @@
 
     <section id="mainStoryPanel" class="mainStoryPanel" hidden>
         <div class="mainStoryCard" role="dialog" aria-modal="true" aria-labelledby="mainStoryTitle">
+            <div id="mainStoryMentorPortrait" class="mainStoryMentorPortrait" hidden>
+                <img src="assets/ui/mentor-portrait.png" alt="">
+            </div>
             <button id="closeMainStoryBtn" class="mainStoryClose" type="button" aria-label="先去忙别的，稍后再回来看">×</button>
             <p class="mainStoryKicker">主线 · 发家之路</p>
             <h2 id="mainStoryTitle">第一章</h2>
@@ -365,6 +378,9 @@
 
     <section id="landPanel" class="landPanel" hidden>
         <div class="landCard" role="dialog" aria-modal="true" aria-labelledby="landTitle">
+            <div id="landMentorPortrait" class="mainStoryMentorPortrait" hidden>
+                <img src="assets/ui/mentor-portrait.png" alt="">
+            </div>
             <p class="landKicker" id="landKicker">这块地</p>
             <h2 id="landTitle">要不要租下这块荒地？</h2>
             <div id="landBody" class="landBody"></div>
@@ -373,7 +389,8 @@
     </section>
 
     <section id="featureIntroPanel" class="mainStoryPanel" hidden>
-        <div class="mainStoryCard" role="dialog" aria-modal="true" aria-labelledby="featureIntroTitle">
+        <div class="mainStoryCard featureIntroCard" role="dialog" aria-modal="true" aria-labelledby="featureIntroTitle">
+            <button id="closeFeatureIntroBtn" class="mainStoryClose" type="button" aria-label="关闭">×</button>
             <p class="mainStoryKicker" id="featureIntroKicker">经营 · 新功能</p>
             <h2 id="featureIntroTitle">新功能</h2>
             <div id="featureIntroBody" class="mainStoryBody"></div>

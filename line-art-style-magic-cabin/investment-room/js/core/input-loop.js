@@ -32,6 +32,10 @@ dashBody.addEventListener('click', event => {
       acquireCompany(button.dataset.stock);
       return;
     }
+    if (button.dataset.action === 'resolveControlEvent') {
+      resolveControlEvent(button.dataset.choice);
+      return;
+    }
     if (button.dataset.action === 'repayMargin') {
       repayMargin(button.dataset.amount);
       return;
@@ -44,6 +48,31 @@ dashBody.addEventListener('click', event => {
       const input = document.getElementById('myValuationInput');
       setPlayerValuation(button.dataset.stock, input ? input.value : 0);
       renderScreenPanel(activeScreen);
+      return;
+    }
+    if (button.dataset.action === 'pickOptionUnderlying') {
+      pickOptionUnderlying(button.dataset.stock);
+      return;
+    }
+    if (button.dataset.action === 'pickOptionExpiry') {
+      pickOptionExpiry(button.dataset.expiry);
+      return;
+    }
+    if (button.dataset.action === 'pickOptionContracts') {
+      marketState.optionContracts = Number(button.dataset.contracts) || 1;
+      renderScreenPanel(activeScreen);
+      return;
+    }
+    if (button.dataset.action === 'buyOption') {
+      buyOption(button.dataset.stock, button.dataset.optionType, button.dataset.moneyness, button.dataset.contracts);
+      return;
+    }
+    if (button.dataset.action === 'settleOption') {
+      settleOption(button.dataset.option);
+      return;
+    }
+    if (button.dataset.action === 'closeOption') {
+      closeOption(button.dataset.option);
       return;
     }
     const stockId = button.dataset.stock;
@@ -70,6 +99,14 @@ dashBody.addEventListener('click', event => {
   const companyRow = event.target.closest('.dashCompanyRow[data-company]');
   if (companyRow) {
     activeScreen = 'company';
+    saveState();
+    redrawScreens();
+    renderScreenPanel(activeScreen);
+    return;
+  }
+  const optionsRow = event.target.closest('.dashCompanyRow[data-options]');
+  if (optionsRow) {
+    activeScreen = 'options';
     saveState();
     redrawScreens();
     renderScreenPanel(activeScreen);

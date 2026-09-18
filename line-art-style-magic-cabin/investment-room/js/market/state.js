@@ -157,6 +157,7 @@ function fairValue(stock) {
 }
 
 function stockTemplate(item) {
+  const idx = Math.max(0, STOCKS.findIndex(s => s.id === item.id));
   return {
     id: item.id,
     name: item.name,
@@ -165,7 +166,13 @@ function stockTemplate(item) {
     prev: item.start,
     history: Array(12).fill(item.start),
     pressure: 0,
-    fund: item.isPlayerCompany ? null : Object.assign({}, FUND_BASE)
+    fund: item.isPlayerCompany ? null : Object.assign({}, FUND_BASE),
+    /* 财报公布日：每支非玩家公司的股票隔一段时间（10~14天）都会
+       "开奖"一次——营收/利润按当天算出的真实基本面重新对一次账，
+       多退少补地给股价一次看得见的冲击，而不是让基本面一直在幕后
+       悄悄漂移、玩家永远等不到"揭晓"的那一刻。上场顺序错开
+       （用股票在 STOCKS 里的序号错开天数），不会全市场同一天开奖。 */
+    nextEarningsDay: item.isPlayerCompany ? null : 8 + idx * 3
   };
 }
 
@@ -198,7 +205,8 @@ function sanitizeStock(stock, id) {
     playerValuation: finiteNumber(source.playerValuation, 0, 0, 999999),
     /* 被娃哈哈并购之后就不再是独立上市公司了——价格定格在被收购那天，
        侧栏还看得到，但不能再买卖，跟"退市"是一回事。 */
-    acquired: !!source.acquired
+    acquired: !!source.acquired,
+    nextEarningsDay: item.isPlayerCompany ? null : intValue(source.nextEarningsDay, base.nextEarningsDay, 1, 999999)
   };
 }
 
@@ -257,7 +265,33 @@ function sanitizeRetro(raw) {
     repDelta: intValue(raw.repDelta, 0, -100, 100),
     confirmed: intValue(raw.confirmed, 0, 0, 999),
     debunked: intValue(raw.debunked, 0, 0, 999),
+    tradeCount: intValue(raw.tradeCount, 0, 0, 999),
+    concentrationPct: intValue(raw.concentrationPct, 0, 0, 100),
     seen: !!raw.seen
+  };
+}
+
+/* 简化欧式期权：一份合约锁定"标的+方向+行权价+到期日"，到期前不能
+   提前结算，到期后按行权价与到期日现价的差价（乘10股/份）一次性
+   兑现——不做美式期权的随时行权，也不做希腊字母定价，只留最核心的
+   "买对方向能翻倍、买错方向权利金打水漂"这一层判断。 */
+function sanitizeOption(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const stockId = STOCKS.some(s => s.id === raw.stockId && !s.isPlayerCompany) ? raw.stockId : null;
+  if (!stockId) return null;
+  const totalDays = intValue(raw.totalDays, 7, 1, 60);
+  return {
+    id: typeof raw.id === 'string' ? raw.id.slice(0, 40) : (Date.now() + '_' + Math.random().toString(36).slice(2, 7)),
+    stockId,
+    type: raw.type === 'put' ? 'put' : 'call',
+    strike: finiteNumber(raw.strike, 1, 1, 999999),
+    contracts: intValue(raw.contracts, 1, 1, 999),
+    premiumPerShare: finiteNumber(raw.premiumPerShare, 1, 0, 99999),
+    intrinsicAtPurchase: finiteNumber(raw.intrinsicAtPurchase, 0, 0, 999999),
+    buyDay: intValue(raw.buyDay, 1, 1, 999999),
+    totalDays,
+    premiumPaid: intValue(raw.premiumPaid, 0, 0, 9999999),
+    expiryDay: intValue(raw.expiryDay, 1, 1, 999999)
   };
 }
 
@@ -286,9 +320,15 @@ function normalizeInvestment(raw) {
     weekStartReputation: intValue(raw && raw.weekStartReputation, 60, 0, 100),
     weekConfirmed: intValue(raw && raw.weekConfirmed, 0, 0, 999),
     weekDebunked: intValue(raw && raw.weekDebunked, 0, 0, 999),
+    /* 这周下了几次单——跟"这周信过的消息真假"放在一起，用来判断
+       是不是在频繁进出、追涨杀跌，而不是只看结果赚没赚钱。 */
+    weekTradeCount: intValue(raw && raw.weekTradeCount, 0, 0, 999),
     lastRetro: sanitizeRetro(raw && raw.lastRetro),
     market: normalizeMarket(raw && raw.market),
     company: normalizeCompanyState(raw && raw.company),
+    options: Array.isArray(raw && raw.options)
+      ? raw.options.map(sanitizeOption).filter(Boolean).slice(0, 40)
+      : [],
     holdings,
     shorts
   };
@@ -297,7 +337,11 @@ function normalizeInvestment(raw) {
 function normalizeCompanyState(raw) {
   const listed = !!(raw && raw.listed);
   const totalShares = intValue(raw && raw.totalShares, 10000, 1000, 1000000);
-  const founderShares = intValue(raw && raw.founderShares, totalShares, 0, totalShares);
+  /* 新存档不再默认给玩家100%创始股——娃哈哈不是白送的，得靠小屋那边
+     "融资请求"里那些愿意让股的card，一点一点买/攒回来，直到过半数
+     才算真正拿到公司的控制权（见 dashboard.js 里 wahaCompanyPanelHtml
+     对上市面板的持股门槛判断）。 */
+  const founderShares = intValue(raw && raw.founderShares, 0, 0, totalShares);
   const publicShares = intValue(raw && raw.publicShares, listed ? Math.max(0, totalShares - founderShares) : 0, 0, totalShares);
   const treasury = intValue(raw && raw.treasury, 0, 0, 999999999);
   return {
@@ -312,7 +356,24 @@ function normalizeCompanyState(raw) {
     lockupUntilDay: intValue(raw && raw.lockupUntilDay, -1, -1, 999999),
     acquisitions: Array.isArray(raw && raw.acquisitions)
       ? raw.acquisitions.filter(id => STOCKS.some(item => item.id === id && !item.isPlayerCompany)).slice(0, 8)
-      : []
+      : [],
+    /* 每完成一次并购，给 WAHA 自己的股价加一点点"吃不掉的"每日常驻
+       涨幅——之前并购只往 waha.pressure 里加数，但 WAHA 的价格公式
+       根本不看 pressure（只看 shock），所以并购买了跟没买一样。现在
+       这笔加成是真实、持续生效的（见 advanceMarketDay 里的 change
+       公式），并且在公司面板里能看到具体数字。 */
+    acquisitionDrift: finiteNumber(raw && raw.acquisitionDrift, 0, 0, .05),
+    /* 创始人持股跌破关键线之后，股市小屋会不定期弹出"董事会否决"或
+       "恶意收购警报"——控制权风险不再只是好看的文字标签。一次只挂一件
+       待处理事件，玩家没处理完之前不会再叠加新的。 */
+    pendingControlEvent: (raw && raw.pendingControlEvent && typeof raw.pendingControlEvent === 'object' &&
+      (raw.pendingControlEvent.type === 'veto' || raw.pendingControlEvent.type === 'hostile'))
+      ? {
+        type: raw.pendingControlEvent.type,
+        day: intValue(raw.pendingControlEvent.day, 0, 0, 999999),
+        shares: intValue(raw.pendingControlEvent.shares, 0, 0, totalShares)
+      }
+      : null
   };
 }
 
@@ -779,6 +840,26 @@ function resolveNewsVerification(day, shocks) {
    "赚到100万=胜利"只看结果，看不出判断本身有没有变好。这里每满
    7个交易日结一次：这周资产从哪到哪、这周信过的消息里有多少最终
    证实/被揭穿、声誉涨跌——跟"这周赚了多少钱"放在一张卡片里对照着看。 */
+function logTrade() {
+  state.investment.weekTradeCount = intValue(state.investment.weekTradeCount, 0, 0, 999) + 1;
+}
+
+/* 仓位集中度：持仓市值里，单支股票占得最多的那一支占了多少百分比——
+   跟"这周信了多少真假消息"一样，是一个跟"赚没赚钱"无关、但能看出
+   习惯好不好的指标。全押一支股票，赌对了翻倍，赌错了直接伤筋动骨。 */
+function positionConcentrationPct() {
+  let total = 0;
+  let maxValue = 0;
+  for (const item of STOCKS) {
+    const stock = getStock(item.id);
+    const holding = getHolding(item.id);
+    const value = holding.qty * stock.price;
+    total += value;
+    if (value > maxValue) maxValue = value;
+  }
+  return total > 0 ? Math.round((maxValue / total) * 100) : 0;
+}
+
 function checkWeeklyRetrospective() {
   const inv = state.investment;
   if (marketState.day - inv.weekAnchorDay < 7) return;
@@ -795,6 +876,8 @@ function checkWeeklyRetrospective() {
     repDelta: reputation() - inv.weekStartReputation,
     confirmed: inv.weekConfirmed,
     debunked: inv.weekDebunked,
+    tradeCount: inv.weekTradeCount || 0,
+    concentrationPct: positionConcentrationPct(),
     seen: false
   };
   inv.weekAnchorDay = marketState.day;
@@ -802,6 +885,7 @@ function checkWeeklyRetrospective() {
   inv.weekStartReputation = reputation();
   inv.weekConfirmed = 0;
   inv.weekDebunked = 0;
+  inv.weekTradeCount = 0;
   if (typeof showToast === 'function') showToast('📋 本周投资复盘生成了，去资讯栏看看这周的判断质量', 3200);
 }
 
@@ -834,11 +918,11 @@ function marketSentimentScore() {
 
 function marketSentimentLabel() {
   const s = marketSentimentScore();
-  if (s >= .5) return { id: 'euphoric', label: '狂热', tone: '#ff9f5b' };
-  if (s >= .15) return { id: 'optimistic', label: '乐观', tone: '#39ff9c' };
-  if (s > -.15) return { id: 'calm', label: '平稳', tone: '#8fd3e6' };
-  if (s > -.5) return { id: 'cautious', label: '谨慎', tone: '#ffd666' };
-  return { id: 'panic', label: '恐慌', tone: '#ff5d75' };
+  if (s >= .5) return { id: 'euphoric', label: '狂热', tone: '#c9701f' };
+  if (s >= .15) return { id: 'optimistic', label: '乐观', tone: '#2f9e5c' };
+  if (s > -.15) return { id: 'calm', label: '平稳', tone: '#4c7a82' };
+  if (s > -.5) return { id: 'cautious', label: '谨慎', tone: '#a8763c' };
+  return { id: 'panic', label: '恐慌', tone: '#c0392b' };
 }
 
 function updateMarketSentiment() {
@@ -941,6 +1025,45 @@ function rollMarketEvent() {
   };
 }
 
+/* ---------------- 财报公布日 ----------------
+   基本面每天都在幕后偷偷漂移（advanceMarketDay 主循环里那段revenue/
+   profit的noise+growth漂移），但玩家永远等不到"揭晓"的那一刻。这里
+   给每支非玩家公司的股票排一个10~14天一轮的财报日：提前一天预告，
+   到点"开奖"——营收利润按当天算出的真实基本面重新对一次账，超预期/
+   不及预期直接给股价一次比日常噪声更明显的冲击。 */
+function processEarnings(shocks) {
+  for (const item of STOCKS) {
+    if (item.isPlayerCompany) continue;
+    const stock = getStock(item.id);
+    if (stock.acquired || !stock.fund || !Number.isFinite(stock.nextEarningsDay)) continue;
+    if (marketState.day === stock.nextEarningsDay - 1) {
+      marketState.news.push({
+        title: item.name + '将于明日公布财报',
+        targetStock: item.id,
+        isEarningsPending: true,
+        delay: 0,
+        day: marketState.day
+      });
+    }
+    if (marketState.day < stock.nextEarningsDay) continue;
+    const surprise = (Math.random() - .5) * .32;
+    stock.fund.revenue = Math.max(10, stock.fund.revenue * (1 + surprise * .5));
+    stock.fund.profit = stock.fund.profit + stock.fund.revenue * surprise * .3;
+    shocks[item.id] = (shocks[item.id] || 0) + surprise;
+    const tag = surprise > .08 ? '超预期' : surprise < -.08 ? '不及预期' : '基本符合预期';
+    marketState.news.push({
+      title: item.name + '公布财报 · ' + tag,
+      targetStock: item.id,
+      isEarnings: true,
+      bad: surprise < 0,
+      delay: 0,
+      day: marketState.day
+    });
+    stock.nextEarningsDay = marketState.day + 10 + Math.floor(Math.random() * 5);
+  }
+  marketState.news = marketState.news.slice(-8);
+}
+
 function advanceMarketDay() {
   const pnlBefore = typeof investmentPnlSummary === 'function' ? investmentPnlSummary().totalPnl : 0;
   marketState.day += 1;
@@ -979,6 +1102,7 @@ function advanceMarketDay() {
     });
     marketState.news = marketState.news.slice(-8);
   }
+  processEarnings(shocks);
   for (const item of STOCKS) {
     const stock = getStock(item.id);
     if (stock.acquired) continue;
@@ -999,7 +1123,7 @@ function advanceMarketDay() {
       const fv = fairValue(stock);
       revert = MEAN_REVERT_ALPHA * (fv - prevPrice) / prevPrice;
     }
-    const change = item.isPlayerCompany ? shock
+    const change = item.isPlayerCompany ? shock + (state.investment.company ? state.investment.company.acquisitionDrift : 0)
       : baseFluctuation() + newsImpact(item.id, marketState.day) + playerImpact(item.id) + shock * .4 + revert;
     stock.prev = prevPrice;
     stock.price = Math.max(1, Math.round(clampPrice(prevPrice * (1 + change), prevPrice, shock ? .32 : .1) * 10) / 10);
@@ -1018,6 +1142,24 @@ function advanceMarketDay() {
     setMarginDebt(marginDebt() * (1 + MARGIN_INTEREST_RATE));
     if (portfolioEquity() < marginDebt() * MARGIN_CALL_RATIO) {
       forceLiquidateMargin();
+    }
+  }
+  /* 创始人持股跌破关键线，就有机会摊上"董事会否决"/"恶意收购"这类
+     控制权事件——一次只挂一件，玩家处理掉之前不会再抽新的，避免
+     事件叠事件。具体阈值/概率跟 founderControlRiskLabel() 用的分界
+     线（67/51/34）对齐，"有被联合否决的风险"对应否决事件，
+     "控制权已经不在你手上"对应恶意收购。 */
+  const company = state.investment.company;
+  if (company && company.listed && !company.pendingControlEvent) {
+    const founderPct = typeof wahaFounderPct === 'function' ? wahaFounderPct(company) : 100;
+    if (founderPct < 34 && Math.random() < .30) {
+      company.pendingControlEvent = {
+        type: 'hostile',
+        day: marketState.day,
+        shares: Math.max(50, Math.round(company.totalShares * .05))
+      };
+    } else if (founderPct < 51 && Math.random() < .22) {
+      company.pendingControlEvent = { type: 'veto', day: marketState.day, shares: 0 };
     }
   }
   checkWeeklyRetrospective();

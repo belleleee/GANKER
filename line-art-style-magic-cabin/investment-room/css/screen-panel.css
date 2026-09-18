@@ -1,12 +1,12 @@
 .screenMonitor--dashboard{
   width:min(980px,88vw);height:min(620px,76vh);
   display:flex;flex-direction:column;padding:14px 18px 14px;
-  overflow-y:auto;
+  overflow:hidden;
 }
 .screenMonitor__scanlines{
-  position:absolute;inset:0;pointer-events:none;border-radius:12px;overflow:hidden;
-  background:repeating-linear-gradient(0deg,rgba(180,250,255,.05) 0px,rgba(180,250,255,.05) 1px,transparent 1px,transparent 3px);
-  mix-blend-mode:screen;opacity:.55;
+  /* 换成暖色纸感主题后，冷色CRT扫描线不再合适——留着这个类名只是
+     不用动HTML结构，视觉上直接隐藏。 */
+  display:none;
 }
 @keyframes screenBoot{
   0%{opacity:0;transform:scale(.9);filter:brightness(2.4) blur(3px)}
@@ -15,17 +15,18 @@
 }
 #closeScreenPanel{
   position:relative;flex:0 0 auto;width:34px;height:34px;
-  border:1px solid rgba(96,244,255,.4);border-radius:7px;
-  background:rgba(96,244,255,.08);color:#9ff1ff;font-size:20px;line-height:1;
-  cursor:pointer;transition:.15s;text-shadow:0 0 8px rgba(96,244,255,.6);
+  border:1px solid rgba(58,47,34,.28);border-radius:9px;
+  background:var(--card);color:var(--ink);font-size:20px;line-height:1;
+  cursor:pointer;transition:.15s;box-shadow:0 2px 6px rgba(58,47,34,.1);
 }
+#closeScreenPanel:hover{background:#fff;box-shadow:0 4px 10px rgba(58,47,34,.16)}
 #dashHelpBtn{
   position:relative;flex:0 0 auto;width:34px;height:34px;
-  border:1px solid rgba(255,214,102,.5);border-radius:7px;
-  background:rgba(255,214,102,.1);color:#ffd666;font-size:16px;font-weight:800;line-height:1;
-  cursor:pointer;transition:.15s;text-shadow:0 0 8px rgba(255,214,102,.5);
+  border:1px solid rgba(200,150,44,.5);border-radius:9px;
+  background:rgba(200,150,44,.1);color:var(--gold-soft);font-size:16px;font-weight:800;line-height:1;
+  cursor:pointer;transition:.15s;
 }
-#dashHelpBtn:hover{background:rgba(255,214,102,.2);box-shadow:0 0 14px rgba(255,214,102,.35)}
+#dashHelpBtn:hover{background:rgba(200,150,44,.2);box-shadow:0 2px 8px rgba(200,150,44,.25)}
 
 .knowledgePanel{
   position:fixed;inset:0;z-index:15;display:none;
