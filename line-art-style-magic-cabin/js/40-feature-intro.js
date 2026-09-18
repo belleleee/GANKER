@@ -12,6 +12,7 @@ const featureIntroKicker = document.getElementById('featureIntroKicker');
 const featureIntroTitle = document.getElementById('featureIntroTitle');
 const featureIntroBody = document.getElementById('featureIntroBody');
 const featureIntroCloseBtn = document.getElementById('featureIntroCloseBtn');
+const closeFeatureIntroBtn = document.getElementById('closeFeatureIntroBtn');
 
 const FEATURE_INTRO_SEEN_PREFIX = 'magicCabin.featureIntroSeen.';
 
@@ -118,6 +119,7 @@ function advanceFeatureIntro() {
 }
 
 if (featureIntroCloseBtn) featureIntroCloseBtn.addEventListener('click', advanceFeatureIntro);
+if (closeFeatureIntroBtn) closeFeatureIntroBtn.addEventListener('click', closeFeatureIntro);
 if (featureIntroPanel) {
     featureIntroPanel.addEventListener('click', event => {
         if (event.target === featureIntroPanel) closeFeatureIntro();
