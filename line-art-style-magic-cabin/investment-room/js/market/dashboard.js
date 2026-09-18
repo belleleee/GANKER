@@ -174,6 +174,7 @@ function buyStock(id, count) {
   holding.cost += cost;
   stock.pressure += .01 * qty;
   setHolding(id, holding);
+  logTrade();
   showMarketFeedback(-cost, '建仓成本', '买入 ' + stock.name + ' ×' + qty + '，现金减少但仓位开始工作。', {
     countMilestone: false,
     toastLabel: '现金 -'
@@ -211,6 +212,7 @@ function buyStockOnMargin(id, count) {
   holding.cost += cost;
   stock.pressure += .012 * qty;
   setHolding(id, holding);
+  logTrade();
   showMarketFeedback(-cost, '融资建仓', '买入 ' + stock.name + ' ×' + qty +
     (borrowPart ? '，其中融资 ' + borrowPart + ' 金币（欠款合计 ' + marginDebt() + '）' : '') + '。', {
       countMilestone: false, toastLabel: '现金 -'
@@ -265,6 +267,7 @@ function sellStock(id, count) {
   stock.pressure -= .012 * qty;
   setHolding(id, holding);
   state.coins = Math.min(999999, state.coins + income);
+  logTrade();
   showMarketFeedback(profit || income, profit >= 0 ? '卖出兑现' : '卖出止损',
     stock.name + ' ×' + qty + ' · 回收 ' + income + ' 金币 · 本次' + (profit >= 0 ? '赚 ' + profit : '亏 ' + Math.abs(profit)), {
       countMilestone: profit !== 0,
@@ -300,6 +303,7 @@ function shortStock(id, count) {
   setShort(id, short);
   state.coins = Math.min(999999, state.coins + proceeds);
   stock.pressure -= .012 * qty;
+  logTrade();
   showMarketFeedback(proceeds, '开空回笼现金', '做空 ' + stock.name + ' ×' + qty + '，先拿到现金，风险也一起放大。', {
     countMilestone: false,
     toastLabel: '现金 +'
@@ -336,6 +340,7 @@ function coverShort(id, count) {
   setShort(id, short);
   state.coins -= cost;
   stock.pressure += .01 * qty;
+  logTrade();
   showMarketFeedback(profit || -cost, profit >= 0 ? '空单盈利' : '空单亏损',
     stock.name + ' ×' + qty + ' · 平仓花费 ' + cost + ' 金币 · 本次' + (profit >= 0 ? '赚 ' + profit : '亏 ' + Math.abs(profit)), {
       countMilestone: profit !== 0,
@@ -1103,12 +1108,26 @@ function retroCardHtml() {
   const hitNote = hitRate === null
     ? '这周没有消息进入验证'
     : '这周信过的消息里，' + hitRate + '% 最终证实是真的（' + retro.confirmed + ' 真 / ' + retro.debunked + ' 假）';
+  const tradeCount = retro.tradeCount || 0;
+  const tradeNote = tradeCount >= 15
+    ? '这周下单 ' + tradeCount + ' 次，手有点痒——频繁进出，手续费和踏空的风险都在悄悄吃你的收益。'
+    : tradeCount === 0
+      ? '这周一次都没动——是稳得住，还是错过了机会，自己心里有数。'
+      : '这周下单 ' + tradeCount + ' 次，节奏还算正常。';
+  const concentrationPct = retro.concentrationPct || 0;
+  const concentrationNote = concentrationPct >= 70
+    ? '有 ' + concentrationPct + '% 的仓位压在一支股票上——赌对了翻倍，赌错了直接伤筋动骨。'
+    : concentrationPct >= 40
+      ? '最大的一支股票占了 ' + concentrationPct + '% 的仓位，集中度偏高，多留意它的风吹草动。'
+      : '仓位分得比较散（最大一支占 ' + concentrationPct + '%），稳，但也很难靠一支股票翻身。';
   return '<div class="retroCard">' +
     '<p class="retroTitle">📋 第 ' + (retro.day - 7) + '～' + retro.day + ' 天投资复盘</p>' +
     '<div class="retroRow"><span>总资产</span><b style="color:' + pnlTone + '">' + retro.startEquity + ' → ' + retro.endEquity +
     '（' + (retro.pnl >= 0 ? '+' : '') + retro.pnl + ' · ' + formatPct(retro.pnlPct) + '）</b></div>' +
     '<div class="retroRow"><span>声誉变化</span><b style="color:' + repTone + '">' + (retro.repDelta >= 0 ? '+' : '') + retro.repDelta + '</b></div>' +
     '<div class="retroRow"><span>判断质量</span><b>' + hitNote + '</b></div>' +
+    '<div class="retroRow"><span>交易习惯</span><b>' + tradeNote + '</b></div>' +
+    '<div class="retroRow"><span>仓位集中度</span><b>' + concentrationNote + '</b></div>' +
     '<button class="ghost retroDismissBtn" data-action="dismissRetro">知道了</button>' +
     '</div>';
 }
@@ -1126,6 +1145,14 @@ function newsPanelHtml() {
     if (news.isEvent) {
       return '<div class="dashNewsRow dashNewsRow--event"><b>⚡ ' + news.title + '</b>' +
         '<span class="' + (news.bad ? 'down' : 'up') + '">突发事件 · 立即生效</span></div>';
+    }
+    if (news.isEarningsPending) {
+      return '<div class="dashNewsRow dashNewsRow--event"><b>📅 ' + news.title + '</b>' +
+        '<span>财报预告 · 明日揭晓</span></div>';
+    }
+    if (news.isEarnings) {
+      return '<div class="dashNewsRow dashNewsRow--event"><b>📊 ' + news.title + '</b>' +
+        '<span class="' + (news.bad ? 'down' : 'up') + '">财报公布 · 已反映在股价</span></div>';
     }
     if (news.isExposeNotice) {
       return '<div class="dashNewsRow dashNewsRow--event"><b>📢 ' + news.title + '</b>' +

@@ -157,6 +157,7 @@ function fairValue(stock) {
 }
 
 function stockTemplate(item) {
+  const idx = Math.max(0, STOCKS.findIndex(s => s.id === item.id));
   return {
     id: item.id,
     name: item.name,
@@ -165,7 +166,13 @@ function stockTemplate(item) {
     prev: item.start,
     history: Array(12).fill(item.start),
     pressure: 0,
-    fund: item.isPlayerCompany ? null : Object.assign({}, FUND_BASE)
+    fund: item.isPlayerCompany ? null : Object.assign({}, FUND_BASE),
+    /* 财报公布日：每支非玩家公司的股票隔一段时间（10~14天）都会
+       "开奖"一次——营收/利润按当天算出的真实基本面重新对一次账，
+       多退少补地给股价一次看得见的冲击，而不是让基本面一直在幕后
+       悄悄漂移、玩家永远等不到"揭晓"的那一刻。上场顺序错开
+       （用股票在 STOCKS 里的序号错开天数），不会全市场同一天开奖。 */
+    nextEarningsDay: item.isPlayerCompany ? null : 8 + idx * 3
   };
 }
 
@@ -198,7 +205,8 @@ function sanitizeStock(stock, id) {
     playerValuation: finiteNumber(source.playerValuation, 0, 0, 999999),
     /* 被娃哈哈并购之后就不再是独立上市公司了——价格定格在被收购那天，
        侧栏还看得到，但不能再买卖，跟"退市"是一回事。 */
-    acquired: !!source.acquired
+    acquired: !!source.acquired,
+    nextEarningsDay: item.isPlayerCompany ? null : intValue(source.nextEarningsDay, base.nextEarningsDay, 1, 999999)
   };
 }
 
@@ -257,6 +265,8 @@ function sanitizeRetro(raw) {
     repDelta: intValue(raw.repDelta, 0, -100, 100),
     confirmed: intValue(raw.confirmed, 0, 0, 999),
     debunked: intValue(raw.debunked, 0, 0, 999),
+    tradeCount: intValue(raw.tradeCount, 0, 0, 999),
+    concentrationPct: intValue(raw.concentrationPct, 0, 0, 100),
     seen: !!raw.seen
   };
 }
@@ -286,6 +296,9 @@ function normalizeInvestment(raw) {
     weekStartReputation: intValue(raw && raw.weekStartReputation, 60, 0, 100),
     weekConfirmed: intValue(raw && raw.weekConfirmed, 0, 0, 999),
     weekDebunked: intValue(raw && raw.weekDebunked, 0, 0, 999),
+    /* 这周下了几次单——跟"这周信过的消息真假"放在一起，用来判断
+       是不是在频繁进出、追涨杀跌，而不是只看结果赚没赚钱。 */
+    weekTradeCount: intValue(raw && raw.weekTradeCount, 0, 0, 999),
     lastRetro: sanitizeRetro(raw && raw.lastRetro),
     market: normalizeMarket(raw && raw.market),
     company: normalizeCompanyState(raw && raw.company),
@@ -800,6 +813,26 @@ function resolveNewsVerification(day, shocks) {
    "赚到100万=胜利"只看结果，看不出判断本身有没有变好。这里每满
    7个交易日结一次：这周资产从哪到哪、这周信过的消息里有多少最终
    证实/被揭穿、声誉涨跌——跟"这周赚了多少钱"放在一张卡片里对照着看。 */
+function logTrade() {
+  state.investment.weekTradeCount = intValue(state.investment.weekTradeCount, 0, 0, 999) + 1;
+}
+
+/* 仓位集中度：持仓市值里，单支股票占得最多的那一支占了多少百分比——
+   跟"这周信了多少真假消息"一样，是一个跟"赚没赚钱"无关、但能看出
+   习惯好不好的指标。全押一支股票，赌对了翻倍，赌错了直接伤筋动骨。 */
+function positionConcentrationPct() {
+  let total = 0;
+  let maxValue = 0;
+  for (const item of STOCKS) {
+    const stock = getStock(item.id);
+    const holding = getHolding(item.id);
+    const value = holding.qty * stock.price;
+    total += value;
+    if (value > maxValue) maxValue = value;
+  }
+  return total > 0 ? Math.round((maxValue / total) * 100) : 0;
+}
+
 function checkWeeklyRetrospective() {
   const inv = state.investment;
   if (marketState.day - inv.weekAnchorDay < 7) return;
@@ -816,6 +849,8 @@ function checkWeeklyRetrospective() {
     repDelta: reputation() - inv.weekStartReputation,
     confirmed: inv.weekConfirmed,
     debunked: inv.weekDebunked,
+    tradeCount: inv.weekTradeCount || 0,
+    concentrationPct: positionConcentrationPct(),
     seen: false
   };
   inv.weekAnchorDay = marketState.day;
@@ -823,6 +858,7 @@ function checkWeeklyRetrospective() {
   inv.weekStartReputation = reputation();
   inv.weekConfirmed = 0;
   inv.weekDebunked = 0;
+  inv.weekTradeCount = 0;
   if (typeof showToast === 'function') showToast('📋 本周投资复盘生成了，去资讯栏看看这周的判断质量', 3200);
 }
 
@@ -962,6 +998,45 @@ function rollMarketEvent() {
   };
 }
 
+/* ---------------- 财报公布日 ----------------
+   基本面每天都在幕后偷偷漂移（advanceMarketDay 主循环里那段revenue/
+   profit的noise+growth漂移），但玩家永远等不到"揭晓"的那一刻。这里
+   给每支非玩家公司的股票排一个10~14天一轮的财报日：提前一天预告，
+   到点"开奖"——营收利润按当天算出的真实基本面重新对一次账，超预期/
+   不及预期直接给股价一次比日常噪声更明显的冲击。 */
+function processEarnings(shocks) {
+  for (const item of STOCKS) {
+    if (item.isPlayerCompany) continue;
+    const stock = getStock(item.id);
+    if (stock.acquired || !stock.fund || !Number.isFinite(stock.nextEarningsDay)) continue;
+    if (marketState.day === stock.nextEarningsDay - 1) {
+      marketState.news.push({
+        title: item.name + '将于明日公布财报',
+        targetStock: item.id,
+        isEarningsPending: true,
+        delay: 0,
+        day: marketState.day
+      });
+    }
+    if (marketState.day < stock.nextEarningsDay) continue;
+    const surprise = (Math.random() - .5) * .32;
+    stock.fund.revenue = Math.max(10, stock.fund.revenue * (1 + surprise * .5));
+    stock.fund.profit = stock.fund.profit + stock.fund.revenue * surprise * .3;
+    shocks[item.id] = (shocks[item.id] || 0) + surprise;
+    const tag = surprise > .08 ? '超预期' : surprise < -.08 ? '不及预期' : '基本符合预期';
+    marketState.news.push({
+      title: item.name + '公布财报 · ' + tag,
+      targetStock: item.id,
+      isEarnings: true,
+      bad: surprise < 0,
+      delay: 0,
+      day: marketState.day
+    });
+    stock.nextEarningsDay = marketState.day + 10 + Math.floor(Math.random() * 5);
+  }
+  marketState.news = marketState.news.slice(-8);
+}
+
 function advanceMarketDay() {
   const pnlBefore = typeof investmentPnlSummary === 'function' ? investmentPnlSummary().totalPnl : 0;
   marketState.day += 1;
@@ -1000,6 +1075,7 @@ function advanceMarketDay() {
     });
     marketState.news = marketState.news.slice(-8);
   }
+  processEarnings(shocks);
   for (const item of STOCKS) {
     const stock = getStock(item.id);
     if (stock.acquired) continue;
