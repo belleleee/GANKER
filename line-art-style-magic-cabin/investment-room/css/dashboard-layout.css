@@ -38,6 +38,15 @@
   box-shadow:0 1px 0 rgba(255,255,255,.6) inset;
 }
 .dashMain{grid-area:main;display:flex;flex-direction:column;padding:10px}
+/* 公司页/期权页是往 .dashMain 里 appendChild 一个普通 div（#wahaCompanyDashboard /
+   #optionsDashboard），这个 div 本身没有 flex 尺寸——默认 flex:0 1 auto 只会
+   撑到内容需要的高度，撑爆 .dashMain 也不会被谁兜住。给它一份 flex:1+
+   min-height:0，才能把"网格行的实际高度"真正传下去给里面的
+   .wahaDashboard/.deskDashboard，让它们自己的 overflow:auto 生效。 */
+.dashMain>#wahaCompanyDashboard,
+.dashMain>#optionsDashboard{
+  flex:1;min-height:0;display:flex;flex-direction:column;
+}
 .dashTrade{grid-area:trade;overflow:auto;padding:12px}
 .dashHoldings{grid-area:holdings;overflow:auto;padding:8px 12px}
 .dashNews{grid-area:news;overflow:auto;padding:8px 12px}
