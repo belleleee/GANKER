@@ -169,22 +169,38 @@
 }
 .founderSaleBtn:hover{background:rgba(200,150,44,.2)!important;box-shadow:0 2px 8px rgba(200,150,44,.2)!important}
 
-.founderChoiceTable{display:flex;flex-direction:column;gap:6px}
+.founderChoiceTable{display:flex;flex-direction:column;gap:8px}
+/* 之前是固定4列的grid（auto 1fr 1fr 1fr 1fr auto），塞进较窄的
+   dashTrade侧栏（280px上下）时每列只剩四五十像素，中文标签会被
+   挤到一个字一行竖排。改成会换行的flex：宽的地方（公司页/期权页的
+   主区域）能撑得下就还是一行；窄的地方（侧栏）撑不下就自然换行，
+   每个信息项自己保持水平书写，不会拆成竖排单字。 */
 .founderChoiceRow{
-  display:grid;
-  grid-template-columns:auto 1fr 1fr 1fr 1fr auto;
-  align-items:center;
-  gap:8px;
-  padding:7px 9px;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:baseline;
+  gap:5px 14px;
+  padding:9px 11px;
   border:1px solid rgba(200,150,44,.28);
-  border-radius:6px;
+  border-radius:8px;
   background:#fffefa;
-  font-size:10.5px;
+  font-size:11px;
+  line-height:1.5;
   color:var(--soft);
 }
-.founderChoiceRow b{color:var(--gold-soft);font-size:11px;white-space:nowrap}
+.founderChoiceRow b{
+  flex:1 0 100%;
+  color:var(--gold-soft);
+  font-size:12.5px;
+  white-space:normal;
+}
+.founderChoiceRow span{white-space:nowrap}
+.founderChoiceRow span:empty{display:none}
 .founderChoiceRow em{font-style:normal;color:var(--ink)}
-.founderChoiceRow .founderSaleBtn{flex:none;padding:4px 8px!important;font-size:10.5px!important}
+.founderChoiceRow .founderSaleBtn{
+  flex:none;margin-left:auto;
+  padding:5px 10px!important;font-size:11px!important;
+}
 
 .retroCard{
   margin:0 0 12px;
