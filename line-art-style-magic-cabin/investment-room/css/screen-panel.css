@@ -1,7 +1,7 @@
 .screenMonitor--dashboard{
   width:min(980px,88vw);height:min(620px,76vh);
   display:flex;flex-direction:column;padding:14px 18px 14px;
-  overflow-y:auto;
+  overflow:hidden;
 }
 .screenMonitor__scanlines{
   /* 换成暖色纸感主题后，冷色CRT扫描线不再合适——留着这个类名只是

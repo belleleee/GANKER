@@ -52,6 +52,12 @@
 .dashBody.wahaMode .dashTrade{
   border-color:rgba(47,158,92,.3);
 }
+/* 期权页右侧只有一句说明，没必要把卡片撑满整列高度留一大片空白——
+   让它贴着自己的内容高度，不参与网格行的拉伸。 */
+.dashTrade--compact{
+  align-self:start;
+  height:auto;
+}
 .dashBody.companyMode .dashHoldings,
 .dashBody.companyMode .dashNews{
   display:none;

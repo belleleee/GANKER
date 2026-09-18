@@ -1556,14 +1556,14 @@ function renderScreenPanel(key) {
      高度溢出去盖住下面的区域。 */
   dashBody.classList.toggle('wahaMode', isCompanyPage || isOptionsPage);
   dashBody.classList.toggle('companyMode', isCompanyPage || isOptionsPage);
+  dashTrade.classList.toggle('dashTrade--compact', isOptionsPage);
   if (isOptionsPage) {
     const openOptions = (state.investment.options || []).length;
     dashMainHead.innerHTML = '<h3>期权交易</h3>' +
       '<span class="dashPrice">' + openOptions + '</span>' +
       '<small>份合约持仓中</small>';
     dashTrade.innerHTML = '<div class="dashTradeHead"><h3>怎么玩</h3>' +
-      '<p>先选标的，再选到期日和份数，主区域的期权链会实时算出价内/平价/价外三档的行权价和权利金。' +
-      '权利金是真花出去的钱；到期前可以随时"提前平仓"按估算价值收现，到期后就只能走"结算"兑现差价了。</p></div>';
+      '<p>标的→到期日→份数，期权链实时算行权价和权利金；到期前能"提前平仓"收现，到期后走"结算"。</p></div>';
   } else {
     const diff = stock.price - stock.prev;
     dashMainHead.innerHTML = '<h3>' + stock.name + '</h3>' +

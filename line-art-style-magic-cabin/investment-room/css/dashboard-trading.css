@@ -7,7 +7,7 @@
 .dashTradeHead p{margin:0 0 12px;color:var(--soft);font-size:12px}
 .dashTradeActions{display:flex;gap:8px;margin-bottom:14px}
 .dashTradeActionsWrap{flex-wrap:wrap}
-.dashTradeActionsWrap button{flex:1 1 64px}
+.dashTradeActionsWrap button{flex:1 1 64px;white-space:nowrap}
 .dashTradeActions button{
   flex:1;border:1px solid rgba(47,158,92,.5);border-radius:8px;padding:10px;
   background:rgba(47,158,92,.1);color:#1f6e40;font:700 13px "Songti SC","PingFang SC",serif;cursor:pointer;
