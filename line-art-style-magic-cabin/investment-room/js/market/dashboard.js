@@ -526,17 +526,15 @@ function optionsDashboardHtml() {
   const expiryId = OPTION_EXPIRIES.some(e => e.id === marketState.optionExpiry) ? marketState.optionExpiry : 'mid';
   const contractsN = OPTION_CONTRACT_TIERS.includes(Number(marketState.optionContracts)) ? Number(marketState.optionContracts) : 1;
 
-  const pickerRows = tradable.map(s => {
+  /* 之前每支股票用一整张 founderChoiceRow 卡片列选标的，8支股票就要
+     占掉小半屏，把真正要交易的期权链挤到折叠线以下。改成一排紧凑的
+     小按钮，跟下面选到期日/份数的按钮同一种视觉语言。 */
+  const pickerBtns = tradable.map(s => {
     const st = getStock(s.id);
     const isCurrent = s.id === underlyingId;
-    return '<div class="founderChoiceRow">' +
-      '<b>' + s.name + '</b>' +
-      '<span>现价 <em>' + st.price.toFixed(1) + '</em></span>' +
-      '<span></span><span></span><span></span>' +
-      (isCurrent
-        ? '<button class="ghost founderSaleBtn" disabled>当前标的</button>'
-        : '<button class="ghost founderSaleBtn" data-action="pickOptionUnderlying" data-stock="' + s.id + '">选为标的</button>') +
-      '</div>';
+    return '<button class="' + (isCurrent ? '' : 'ghost') + '"' +
+      (isCurrent ? ' disabled' : ' data-action="pickOptionUnderlying" data-stock="' + s.id + '"') + '>' +
+      s.name + ' ' + st.price.toFixed(1) + '</button>';
   }).join('');
 
   const expiryBtns = OPTION_EXPIRIES.map(e =>
@@ -600,7 +598,7 @@ function optionsDashboardHtml() {
     '<div class="deskList">' +
     '<div class="founderEmergencyBox">' +
     '<p class="founderEmergencyTitle">选择标的</p>' +
-    '<div class="founderChoiceTable">' + pickerRows + '</div>' +
+    '<div class="dashTradeActions dashTradeActionsWrap">' + pickerBtns + '</div>' +
     '</div>' +
     '<div class="founderEmergencyBox">' +
     '<p class="founderEmergencyTitle">' + stock.name + ' · 现价 ' + stock.price.toFixed(1) + '</p>' +
@@ -1564,7 +1562,8 @@ function renderScreenPanel(key) {
       '<span class="dashPrice">' + openOptions + '</span>' +
       '<small>份合约持仓中</small>';
     dashTrade.innerHTML = '<div class="dashTradeHead"><h3>怎么玩</h3>' +
-      '<p>看涨买CALL、看跌买PUT，权利金是真花出去的钱；到期前不能反悔，到期后回主区域点"结算"。</p></div>';
+      '<p>先选标的，再选到期日和份数，主区域的期权链会实时算出价内/平价/价外三档的行权价和权利金。' +
+      '权利金是真花出去的钱；到期前可以随时"提前平仓"按估算价值收现，到期后就只能走"结算"兑现差价了。</p></div>';
   } else {
     const diff = stock.price - stock.prev;
     dashMainHead.innerHTML = '<h3>' + stock.name + '</h3>' +
