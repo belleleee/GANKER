@@ -1364,8 +1364,11 @@ function renderScreenPanel(key) {
     dashSentiment.style.color = sentiment.tone;
   }
   dashSidebar.innerHTML = sidebarRows();
-  dashBody.classList.toggle('wahaMode', isCompanyPage);
-  dashBody.classList.toggle('companyMode', isCompanyPage);
+  /* 投资任务卡片列表也又高又要滚动，跟公司页一样得用单行大高度的
+     wahaMode 网格（内部自带 overflow:auto），不然 .dashMain 撑不住
+     内容高度，会溢出去盖住下面的持仓/资讯区。 */
+  dashBody.classList.toggle('wahaMode', isCompanyPage || isQuestsPage);
+  dashBody.classList.toggle('companyMode', isCompanyPage || isQuestsPage);
   if (isQuestsPage) {
     const readyCount = MARKET_QUESTS.filter(q => !isQuestClaimed(q.id) && marketQuestDone(q)).length;
     dashMainHead.innerHTML = '<h3>投资任务</h3>' +
