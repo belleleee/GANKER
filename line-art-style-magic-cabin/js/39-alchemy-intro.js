@@ -174,12 +174,13 @@ function ensureAlchemyIntroOverlay() {
         'width:min(1120px,calc(100vw - 170px))',
         'min-height:128px',
         'padding:28px 42px 26px 96px',
-        'border:1px solid rgba(255,255,255,.38)',
-        'border-radius:12px',
-        'background:linear-gradient(180deg,rgba(18,22,28,.88),rgba(8,11,16,.92))',
-        'color:#f7f0dc',
-        'font:500 24px/1.7 system-ui,-apple-system,BlinkMacSystemFont,\"Microsoft YaHei\",sans-serif',
-        'box-shadow:0 18px 40px rgba(0,0,0,.38)',
+        'border:1px solid rgba(58,47,34,.26)',
+        'border-radius:16px',
+        'background:linear-gradient(180deg,rgba(253,248,236,.9),rgba(243,232,208,.92))',
+        'backdrop-filter:blur(6px)',
+        'color:#3a2f22',
+        'font:500 24px/1.7 "Songti SC","STSong","PingFang SC",serif',
+        'box-shadow:0 24px 60px rgba(40,30,18,.26), inset 0 0 0 1px rgba(255,255,255,.6)',
         'opacity:0',
         'transition:opacity .3s ease'
     ].join(';');
@@ -195,19 +196,19 @@ function ensureAlchemyIntroOverlay() {
         'align-items:center',
         'justify-content:center',
         'border-radius:13px 13px 4px 4px',
-        'background:rgba(222,199,154,.92)',
-        'color:#211a14',
+        'background:#c8962c',
+        'color:#2e2317',
         'font-weight:800'
     ].join(';');
     const sparkle = document.createElement('div');
     sparkle.textContent = '✦';
-    sparkle.style.cssText = 'position:absolute;left:34px;top:36px;color:#ffd778;font-size:38px;text-shadow:0 0 18px rgba(255,215,120,.9)';
+    sparkle.style.cssText = 'position:absolute;left:34px;top:36px;color:#c8962c;font-size:38px';
     const text = document.createElement('div');
     text.className = 'alchemy-intro-dialog-text';
     const arrow = document.createElement('div');
     arrow.className = 'alchemy-intro-dialog-arrow';
     arrow.textContent = '▼';
-    arrow.style.cssText = 'position:absolute;right:28px;bottom:18px;color:#ffffff;font-size:25px;animation:alchemyIntroArrow 1s ease-in-out infinite';
+    arrow.style.cssText = 'position:absolute;right:28px;bottom:18px;color:#a8763c;font-size:25px;animation:alchemyIntroArrow 1s ease-in-out infinite';
     if (!document.getElementById('alchemyIntroStyle')) {
         const style = document.createElement('style');
         style.id = 'alchemyIntroStyle';
@@ -403,7 +404,7 @@ function updateAlchemyIntro(dt, time) {
         const line = alchemyIntroNarration();
         if (nameTag && line) nameTag.textContent = line.speaker || '???';
         if (dialogText && line) {
-            dialogText.innerHTML = line.text.replace(/(右侧的书架|微光的书|旧硬币、茶叶、星尘|墙上的瓶架|炼金锅|魔法阵|炼金失控|一枚金币变成两枚|赚钱|成功|归魂炼金术|月银 ×1|星尘 ×3|灵魂石 ×1|3000 金币|100|先挣钱|不是有地吗)/g, '<span style="color:#ffd56b;font-weight:800">$1</span>');
+            dialogText.innerHTML = line.text.replace(/(右侧的书架|微光的书|旧硬币、茶叶、星尘|墙上的瓶架|炼金锅|魔法阵|炼金失控|一枚金币变成两枚|赚钱|成功|归魂炼金术|月银 ×1|星尘 ×3|灵魂石 ×1|3000 金币|100|先挣钱|不是有地吗)/g, '<span style="color:#a8763c;font-weight:800">$1</span>');
         }
         if (arrow) arrow.style.opacity = alchemyIntroDialogueDone() ? '0.35' : '1';
     } else if (alchemyIntroDialog) {

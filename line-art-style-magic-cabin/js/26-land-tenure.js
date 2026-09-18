@@ -23,6 +23,7 @@ const landTitle = document.getElementById('landTitle');
 const landBody = document.getElementById('landBody');
 const landActions = document.getElementById('landActions');
 const landHud = document.getElementById('landHud');
+const landMentorPortrait = document.getElementById('landMentorPortrait');
 
 function landCoins() {
     return typeof cabinCoins === 'number' ? cabinCoins : 0;
@@ -76,16 +77,20 @@ function landLinesDone() {
 function renderLandPanel() {
     if (!landBody) return;
     const linesDone = landLinesDone();
-    /* 保留这一幕讲过的台词，不是只看当前一句——参考 22-main-story.js
-       同样的改动。 */
-    const shownLines = landLines.slice(0, Math.min(landLineIndex, Math.max(0, landLines.length - 1)) + 1);
-    landBody.innerHTML = shownLines.map(line =>
-        '<p>' + (typeof speakerPillHtml === 'function' ? speakerPillHtml(line.speaker) : '<span class="mainStorySpeaker">' + line.speaker + '</span>') + line.text + '</p>'
-    ).join('');
+    /* 只显示当前这一句，翻页就把上一句替换掉——跟 22-main-story.js
+       的 renderMainStoryCard() 同一种呈现方式，不会随着翻页把台词
+       一句句往上堆、把卡片撑高。 */
+    const currentLine = landLines[Math.min(landLineIndex, Math.max(0, landLines.length - 1))];
+    landBody.innerHTML = currentLine
+        ? '<p>' + (typeof speakerPillHtml === 'function' ? speakerPillHtml(currentLine.speaker) : '<span class="mainStorySpeaker">' + currentLine.speaker + '</span>') + currentLine.text + '</p>'
+        : '';
     landBody.classList.toggle('dialogStep', !linesDone);
     if (landActions) landActions.hidden = !linesDone;
+    /* 师傅说话时，卡片左边探出一张立绘——跟主线对话卡片同一套处理。 */
+    const isMentorLine = !!currentLine && (currentLine.speaker === '师傅' || currentLine.speaker === '宗庆后');
+    if (landMentorPortrait) landMentorPortrait.hidden = !isMentorLine;
     const card = landPanel && landPanel.querySelector('.landCard');
-    if (card) card.scrollTop = card.scrollHeight;
+    if (card) card.classList.toggle('hasMentorPortrait', isMentorLine);
 }
 
 function advanceLandDialogue() {
