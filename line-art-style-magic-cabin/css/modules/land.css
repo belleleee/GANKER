@@ -46,7 +46,7 @@
 .landCard {
     position: relative;
     width: min(1120px, calc(100vw - 60px));
-    height: min(260px, 42vh);
+    height: min(120px, 42vh);
     display: flex;
     flex-direction: column;
     padding: 20px 30px 22px;
