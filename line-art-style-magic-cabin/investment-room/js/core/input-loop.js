@@ -50,6 +50,18 @@ dashBody.addEventListener('click', event => {
       renderScreenPanel(activeScreen);
       return;
     }
+    if (button.dataset.action === 'pickOptionUnderlying') {
+      pickOptionUnderlying(button.dataset.stock);
+      return;
+    }
+    if (button.dataset.action === 'buyOption') {
+      buyOption(button.dataset.stock, button.dataset.optionType);
+      return;
+    }
+    if (button.dataset.action === 'settleOption') {
+      settleOption(button.dataset.option);
+      return;
+    }
     const stockId = button.dataset.stock;
     if (!stockId) return;
     const qty = Math.max(1, Math.trunc(Number(button.dataset.qty)) || 1);
@@ -74,6 +86,14 @@ dashBody.addEventListener('click', event => {
   const companyRow = event.target.closest('.dashCompanyRow[data-company]');
   if (companyRow) {
     activeScreen = 'company';
+    saveState();
+    redrawScreens();
+    renderScreenPanel(activeScreen);
+    return;
+  }
+  const optionsRow = event.target.closest('.dashCompanyRow[data-options]');
+  if (optionsRow) {
+    activeScreen = 'options';
     saveState();
     redrawScreens();
     renderScreenPanel(activeScreen);

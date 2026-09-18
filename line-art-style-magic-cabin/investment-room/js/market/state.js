@@ -271,6 +271,24 @@ function sanitizeRetro(raw) {
   };
 }
 
+/* 简化欧式期权：一份合约锁定"标的+方向+行权价+到期日"，到期前不能
+   提前结算，到期后按行权价与到期日现价的差价（乘10股/份）一次性
+   兑现——不做美式期权的随时行权，也不做希腊字母定价，只留最核心的
+   "买对方向能翻倍、买错方向权利金打水漂"这一层判断。 */
+function sanitizeOption(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const stockId = STOCKS.some(s => s.id === raw.stockId && !s.isPlayerCompany) ? raw.stockId : null;
+  if (!stockId) return null;
+  return {
+    id: typeof raw.id === 'string' ? raw.id.slice(0, 40) : (Date.now() + '_' + Math.random().toString(36).slice(2, 7)),
+    stockId,
+    type: raw.type === 'put' ? 'put' : 'call',
+    strike: finiteNumber(raw.strike, 1, 1, 999999),
+    premiumPaid: intValue(raw.premiumPaid, 0, 0, 9999999),
+    expiryDay: intValue(raw.expiryDay, 1, 1, 999999)
+  };
+}
+
 function normalizeInvestment(raw) {
   const holdings = sanitizePortfolioMap(raw && raw.holdings, 'cost');
   const shorts = sanitizePortfolioMap(raw && raw.shorts, 'entryValue');
@@ -302,6 +320,9 @@ function normalizeInvestment(raw) {
     lastRetro: sanitizeRetro(raw && raw.lastRetro),
     market: normalizeMarket(raw && raw.market),
     company: normalizeCompanyState(raw && raw.company),
+    options: Array.isArray(raw && raw.options)
+      ? raw.options.map(sanitizeOption).filter(Boolean).slice(0, 40)
+      : [],
     holdings,
     shorts
   };

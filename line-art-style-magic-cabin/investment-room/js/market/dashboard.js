@@ -351,6 +351,168 @@ function coverShort(id, count) {
   saveState();
 }
 
+/* ---------------- 期权交易 ----------------
+   简化欧式期权：每份合约对应 10 股，行权价按买入当天的现价取整到
+   5的倍数，5个交易日后到期。到期前只能等，到期后手动点"结算"——
+   跟游戏里其它"就这么办"式的确认动作保持同一个交互习惯，不做自动
+   静默结算。看涨/看跌权利金分别是标的现价的5%/4%，钱是真花出去的，
+   到期要是行权价"猜反了"，这笔钱就彻底打水漂。 */
+const OPTION_CONTRACT_SHARES = 10;
+const OPTION_EXPIRY_DAYS = 5;
+const OPTION_PREMIUM_RATE = { call: .05, put: .04 };
+
+function optionStrikeFor(stock) {
+  return Math.max(5, Math.round(stock.price / 5) * 5);
+}
+
+function optionPremiumCost(stock, type) {
+  const rate = OPTION_PREMIUM_RATE[type] || OPTION_PREMIUM_RATE.call;
+  const perShare = Math.max(1, Math.round(stock.price * rate * 10) / 10);
+  return Math.ceil(perShare * OPTION_CONTRACT_SHARES);
+}
+
+function pickOptionUnderlying(id) {
+  if (!STOCKS.some(s => s.id === id && !s.isPlayerCompany)) return;
+  marketState.optionsUnderlying = id;
+  renderScreenPanel(activeScreen);
+}
+
+function buyOption(stockId, type) {
+  const stock = safeStockForTrade(stockId);
+  if (stock.id === 'WAHA' || stock.acquired) {
+    if (typeof showToast === 'function') showToast('这支股票不能做期权。');
+    return;
+  }
+  const kind = type === 'put' ? 'put' : 'call';
+  const cost = optionPremiumCost(stock, kind);
+  state.coins = Math.trunc(safeMoney(state.coins, 100));
+  if (state.coins < cost) {
+    if (typeof showToast === 'function') showToast('金币不够，买 1 份期权需要 ' + cost + ' 金币');
+    return;
+  }
+  state.coins -= cost;
+  const strike = optionStrikeFor(stock);
+  const expiryDay = marketState.day + OPTION_EXPIRY_DAYS;
+  state.investment.options = Array.isArray(state.investment.options) ? state.investment.options : [];
+  state.investment.options.push({
+    id: Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    stockId,
+    type: kind,
+    strike,
+    premiumPaid: cost,
+    expiryDay
+  });
+  logTrade();
+  showMarketFeedback(-cost, '买入期权', (kind === 'call' ? '看涨' : '看跌') + ' ' + stock.name +
+    ' · 行权价 ' + strike + ' · Day ' + expiryDay + ' 到期 · 权利金 ' + cost, {
+      countMilestone: false, toastLabel: '现金 -'
+    });
+  redrawScreens();
+  renderScreenPanel(activeScreen);
+  saveState();
+}
+
+function settleOption(id) {
+  const list = Array.isArray(state.investment.options) ? state.investment.options : [];
+  const idx = list.findIndex(o => o.id === id);
+  if (idx < 0) return;
+  const opt = list[idx];
+  if (marketState.day < opt.expiryDay) {
+    if (typeof showToast === 'function') showToast('还没到期，到期日是 Day ' + opt.expiryDay);
+    return;
+  }
+  const stock = getStock(opt.stockId);
+  const intrinsic = opt.type === 'call' ? Math.max(0, stock.price - opt.strike) : Math.max(0, opt.strike - stock.price);
+  const payout = Math.round(intrinsic * OPTION_CONTRACT_SHARES);
+  if (payout > 0) state.coins = Math.min(999999, state.coins + payout);
+  list.splice(idx, 1);
+  showMarketFeedback(payout, '期权结算', (opt.type === 'call' ? '看涨' : '看跌') + ' ' + stock.name +
+    ' · 行权价 ' + opt.strike + ' · 到手 ' + payout + ' 金币' + (payout === 0 ? '（价外作废）' : ''), {
+      countMilestone: payout > 0, toastLabel: payout > 0 ? '现金 +' : undefined
+    });
+  redrawScreens();
+  renderScreenPanel(activeScreen);
+  saveState();
+}
+
+function optionsDashboardHtml() {
+  const tradable = STOCKS.filter(s => !s.isPlayerCompany && !getStock(s.id).acquired);
+  if (!tradable.length) {
+    return '<div class="deskDashboard">' +
+      '<section class="wahaHero deskHero"><p>OPTIONS DESK</p><h3>期权交易</h3>' +
+      '<span>市面上能交易的公司都已经被娃哈哈收购了，暂时没有标的可以做期权。</span></section>' +
+      '</div>';
+  }
+  const underlyingId = tradable.some(s => s.id === marketState.optionsUnderlying) ? marketState.optionsUnderlying : tradable[0].id;
+  const stock = getStock(underlyingId);
+  const strike = optionStrikeFor(stock);
+  const callCost = optionPremiumCost(stock, 'call');
+  const putCost = optionPremiumCost(stock, 'put');
+  const pickerRows = tradable.map(s => {
+    const st = getStock(s.id);
+    const isCurrent = s.id === underlyingId;
+    return '<div class="founderChoiceRow">' +
+      '<b>' + s.name + '</b>' +
+      '<span>现价 <em>' + st.price.toFixed(1) + '</em></span>' +
+      '<span></span><span></span><span></span>' +
+      (isCurrent
+        ? '<button class="ghost founderSaleBtn" disabled>当前标的</button>'
+        : '<button class="ghost founderSaleBtn" data-action="pickOptionUnderlying" data-stock="' + s.id + '">选为标的</button>') +
+      '</div>';
+  }).join('');
+  const positions = (state.investment.options || []).map(opt => {
+    const s = getStock(opt.stockId);
+    const matured = marketState.day >= opt.expiryDay;
+    const intrinsic = opt.type === 'call' ? Math.max(0, s.price - opt.strike) : Math.max(0, opt.strike - s.price);
+    const estPayout = Math.round(intrinsic * OPTION_CONTRACT_SHARES);
+    return '<div class="founderChoiceRow">' +
+      '<b>' + (opt.type === 'call' ? '看涨' : '看跌') + ' ' + s.name + '</b>' +
+      '<span>行权价 <em>' + opt.strike + '</em></span>' +
+      '<span>到期 <em>Day ' + opt.expiryDay + '</em></span>' +
+      '<span>成本 <em>' + opt.premiumPaid + '</em></span>' +
+      '<span>' + (matured ? '可结算 <em>' + estPayout + '</em>' : '现价 <em>' + s.price.toFixed(1) + '</em>') + '</span>' +
+      (matured
+        ? '<button class="ghost founderSaleBtn" data-action="settleOption" data-option="' + opt.id + '">结算</button>'
+        : '<button class="ghost founderSaleBtn" disabled>未到期</button>') +
+      '</div>';
+  }).join('');
+  return '<div class="deskDashboard">' +
+    '<section class="wahaHero deskHero"><p>OPTIONS DESK</p><h3>期权交易</h3>' +
+    '<span>简化欧式期权：每份合约对应 ' + OPTION_CONTRACT_SHARES + ' 股，' + OPTION_EXPIRY_DAYS + ' 个交易日后到期结算，到期前不能反悔。</span></section>' +
+    '<div class="deskList">' +
+    '<div class="founderEmergencyBox">' +
+    '<p class="founderEmergencyTitle">选择标的</p>' +
+    '<div class="founderChoiceTable">' + pickerRows + '</div>' +
+    '</div>' +
+    '<div class="founderEmergencyBox">' +
+    '<p class="founderEmergencyTitle">' + stock.name + ' · 现价 ' + stock.price.toFixed(1) + ' · 行权价 ' + strike + '</p>' +
+    '<div class="founderChoiceTable">' +
+    '<div class="founderChoiceRow">' +
+    '<b>看涨 CALL</b>' +
+    '<span>到期涨过 <em>' + strike + '</em> 才有赚头</span>' +
+    '<span></span>' +
+    '<span>权利金 <em>' + callCost + '</em></span>' +
+    '<span></span>' +
+    '<button class="ghost founderSaleBtn" data-action="buyOption" data-stock="' + underlyingId + '" data-option-type="call"' + (state.coins >= callCost ? '' : ' disabled') + '>买入 1 份</button>' +
+    '</div>' +
+    '<div class="founderChoiceRow">' +
+    '<b>看跌 PUT</b>' +
+    '<span>到期跌破 <em>' + strike + '</em> 才有赚头</span>' +
+    '<span></span>' +
+    '<span>权利金 <em>' + putCost + '</em></span>' +
+    '<span></span>' +
+    '<button class="ghost founderSaleBtn" data-action="buyOption" data-stock="' + underlyingId + '" data-option-type="put"' + (state.coins >= putCost ? '' : ' disabled') + '>买入 1 份</button>' +
+    '</div>' +
+    '</div>' +
+    '</div>' +
+    '<div class="founderEmergencyBox">' +
+    '<p class="founderEmergencyTitle">我的合约</p>' +
+    (positions ? '<div class="founderChoiceTable">' + positions + '</div>' : '<p class="dashRumorHint">暂无期权持仓</p>') +
+    '</div>' +
+    '</div>' +
+    '</div>';
+}
+
 const WAHA_IPO_PLANS = {
   employee: {
     label: '员工与老经销商',
@@ -631,10 +793,15 @@ function sidebarRows() {
   }).join('');
   const waha = getStock('WAHA');
   const company = companyState();
+  const openOptions = (state.investment.options || []).length;
   return marketIndexSummary() +
     '<button class="dashCompanyRow' + (activeScreen === 'company' ? ' on' : '') + '" data-company="WAHA">' +
     '<span><b>公司上市</b><small>WAHA · ' + (company.listed ? '已上市' : '未上市') + '</small></span>' +
     '<strong>' + waha.price.toFixed(1) + '</strong>' +
+    '</button>' +
+    '<button class="dashCompanyRow' + (activeScreen === 'options' ? ' on' : '') + '" data-options="1">' +
+    '<span><b>期权交易</b><small>看涨/看跌 · 简化欧式合约</small></span>' +
+    '<strong>' + (openOptions || '') + '</strong>' +
     '</button>' +
     rows;
 }
@@ -1267,6 +1434,7 @@ function renderScreenPanel(key) {
   if (typeof maybeAutoShowMarketGuide === 'function') maybeAutoShowMarketGuide();
   state.coins = Math.trunc(safeMoney(state.coins, 100));
   const isCompanyPage = activeScreen === 'company';
+  const isOptionsPage = activeScreen === 'options';
   if (isCompanyPage && !state.investment.wahaCompanyViewed) {
     state.investment.wahaCompanyViewed = true;
     saveState();
@@ -1282,28 +1450,50 @@ function renderScreenPanel(key) {
     dashSentiment.style.color = sentiment.tone;
   }
   dashSidebar.innerHTML = sidebarRows();
-  dashBody.classList.toggle('wahaMode', isCompanyPage);
-  dashBody.classList.toggle('companyMode', isCompanyPage);
-  const diff = stock.price - stock.prev;
-  dashMainHead.innerHTML = '<h3>' + stock.name + '</h3>' +
-    '<span class="dashPrice ' + (diff >= 0 ? 'up' : 'down') + '">' + stock.price.toFixed(1) + '</span>' +
-    '<small class="' + (diff >= 0 ? 'up' : 'down') + '">' + formatPct(diff / Math.max(1, stock.prev)) + '</small>' +
-    '<span class="dashPnlPulse ' + (pnl.totalPnl >= 0 ? 'up' : 'down') + '">总盈亏 ' + (pnl.totalPnl >= 0 ? '+' : '') + pnl.totalPnl + '</span>';
-  dashTrade.innerHTML = tradePanelHtml(stock);
+  /* 期权面板跟公司面板一样又高又要滚动，用同一套 wahaMode/companyMode
+     （单行大高度网格 + 隐藏持仓/资讯），避免 .dashMain 撑不住内容
+     高度溢出去盖住下面的区域。 */
+  dashBody.classList.toggle('wahaMode', isCompanyPage || isOptionsPage);
+  dashBody.classList.toggle('companyMode', isCompanyPage || isOptionsPage);
+  if (isOptionsPage) {
+    const openOptions = (state.investment.options || []).length;
+    dashMainHead.innerHTML = '<h3>期权交易</h3>' +
+      '<span class="dashPrice">' + openOptions + '</span>' +
+      '<small>份合约持仓中</small>';
+    dashTrade.innerHTML = '<div class="dashTradeHead"><h3>怎么玩</h3>' +
+      '<p>看涨买CALL、看跌买PUT，权利金是真花出去的钱；到期前不能反悔，到期后回主区域点"结算"。</p></div>';
+  } else {
+    const diff = stock.price - stock.prev;
+    dashMainHead.innerHTML = '<h3>' + stock.name + '</h3>' +
+      '<span class="dashPrice ' + (diff >= 0 ? 'up' : 'down') + '">' + stock.price.toFixed(1) + '</span>' +
+      '<small class="' + (diff >= 0 ? 'up' : 'down') + '">' + formatPct(diff / Math.max(1, stock.prev)) + '</small>' +
+      '<span class="dashPnlPulse ' + (pnl.totalPnl >= 0 ? 'up' : 'down') + '">总盈亏 ' + (pnl.totalPnl >= 0 ? '+' : '') + pnl.totalPnl + '</span>';
+    dashTrade.innerHTML = tradePanelHtml(stock);
+  }
   dashHoldings.innerHTML = holdingsPanelHtml();
   dashNews.innerHTML = retroCardHtml() + newsPanelHtml();
   const canvas = document.getElementById('chartCanvas');
+  const existingCompanyPanel = document.getElementById('wahaCompanyDashboard');
+  const existingOptionsPanel = document.getElementById('optionsDashboard');
   if (isCompanyPage) {
     if (canvas) canvas.style.display = 'none';
-    const existing = document.getElementById('wahaCompanyDashboard');
-    if (existing) existing.remove();
+    if (existingOptionsPanel) existingOptionsPanel.remove();
+    if (existingCompanyPanel) existingCompanyPanel.remove();
     const panel = document.createElement('div');
     panel.id = 'wahaCompanyDashboard';
     panel.innerHTML = wahaCompanyDashboardHtml(stock);
     document.querySelector('.dashMain')?.appendChild(panel);
+  } else if (isOptionsPage) {
+    if (canvas) canvas.style.display = 'none';
+    if (existingCompanyPanel) existingCompanyPanel.remove();
+    if (existingOptionsPanel) existingOptionsPanel.remove();
+    const panel = document.createElement('div');
+    panel.id = 'optionsDashboard';
+    panel.innerHTML = optionsDashboardHtml();
+    document.querySelector('.dashMain')?.appendChild(panel);
   } else {
-    const existing = document.getElementById('wahaCompanyDashboard');
-    if (existing) existing.remove();
+    if (existingCompanyPanel) existingCompanyPanel.remove();
+    if (existingOptionsPanel) existingOptionsPanel.remove();
     if (canvas) {
       canvas.style.display = '';
       drawLineChart(canvas, stock);
