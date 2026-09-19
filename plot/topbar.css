@@ -1,0 +1,100 @@
+.pro-topbar{
+  position:fixed; top:0; left:0; width:100%; height:46px;
+  z-index:22;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 18px;
+  background:linear-gradient(to bottom, rgba(0,0,0,.72), rgba(0,0,0,.55));
+  border-bottom:1px solid rgba(255,255,255,.35);
+  pointer-events:none;
+}
+.pro-topbar-left,
+.pro-topbar-right{
+  display:flex; align-items:center;
+  pointer-events:auto;
+}
+.pro-topbar-left{ gap:12px; }
+.pro-topbar-right{ gap:18px; }
+
+.pro-topbar-chapter{
+  color:#ffffff;
+  font-family:"GamePixelFont","Courier New","Songti SC",monospace;
+  font-size:.92rem;
+  letter-spacing:.28em; text-indent:.28em;
+  white-space:nowrap;
+}
+
+.pro-topbar-scene{
+  color:rgba(255,255,255,.7);
+  font-family:"GamePixelFont","Courier New","Songti SC",monospace;
+  font-size:.82rem;
+  letter-spacing:.26em; text-indent:.26em;
+  white-space:nowrap;
+}
+.pro-topbar-gear{
+  width:34px; height:34px;
+  display:grid; place-items:center;
+  padding:0;
+  background:rgba(0,0,0,.45);
+  border:2px solid #ffffff;
+  border-radius:0;
+  color:#ffffff;
+  cursor:pointer;
+  box-shadow:3px 3px 0 rgba(255,255,255,.25);
+}
+.pro-topbar-gear:hover{ background:rgba(255,255,255,.15); }
+.pro-topbar-gear svg{ display:block; }
+
+/* 原悬浮右上角角标并入顶栏，隐藏避免重复 */
+.pro-scene-tag{ display:none !important; }
+
+/* 音乐开关放进顶栏：与齿轮同款黑白方形按钮 */
+.zqh-prologue .pro-music{
+  position:static;
+  width:34px; height:34px;
+  padding:0;
+  display:grid; place-items:center;
+  background:rgba(0,0,0,.45);
+  border:2px solid #ffffff;
+  border-radius:0;
+  box-shadow:3px 3px 0 rgba(255,255,255,.25);
+  color:#ffffff;
+  cursor:pointer;
+}
+.zqh-prologue .pro-music:hover{ background:rgba(255,255,255,.15); }
+.zqh-prologue .pro-music.is-on{ background:rgba(255,255,255,.15); color:#ffffff; }
+.zqh-prologue .pro-music svg{ width:18px; height:18px; }
+
+/* ===== 设置面板（黑白像素风） ===== */
+.pro-settings{
+  position:fixed; top:54px; right:18px; z-index:23;
+  min-width:230px;
+  padding:14px 16px 12px;
+  background:#000;
+  border:3px solid #ffffff;
+  box-shadow:6px 6px 0 rgba(0,0,0,.6);
+}
+.pro-settings[hidden]{ display:none; }
+.pro-settings-row{
+  display:flex; align-items:center; gap:10px;
+  margin:8px 0;
+}
+.pro-settings-row label{
+  width:3.2em;
+  color:#ffffff;
+  font-family:"GamePixelFont","Courier New","Songti SC",monospace;
+  font-size:.82rem; letter-spacing:.2em;
+}
+.pro-settings-row input[type=range]{
+  flex:1;
+  accent-color:#ffffff;
+  cursor:pointer;
+}
+
+/* ===== 亮度调节暗层：只压暗背景，不挡 UI ===== */
+.pro-dim{
+  position:fixed; inset:0; z-index:2;
+  background:#000;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .2s ease;
+}

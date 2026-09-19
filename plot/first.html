@@ -6,9 +6,50 @@
 <title>宗庆后 · 序章 · 1945—1978</title>
 <link rel="stylesheet" href="./style.css">
 <link rel="stylesheet" href="./level_one_pixel.css">
+<link rel="stylesheet" href="./dialog_pixel.css">
+<link rel="stylesheet" href="./topbar.css">
 <link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@400;700&display=swap">
 </head>
 <body class="zqh-prologue" data-scene="1">
+
+  <!-- ===== 顶部栏 ===== -->
+  <div class="pro-topbar">
+    <div class="pro-topbar-left">
+      <button class="pro-music" id="musicBtn" type="button" aria-label="背景音乐开关" title="背景音乐开关">
+        <svg class="ico-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 18V5l11-2v13"/><circle cx="9" cy="18" r="3"/><circle cx="20" cy="16" r="3"/>
+        </svg>
+        <svg class="ico-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 18V5l11-2v13"/><circle cx="9" cy="18" r="3"/><circle cx="20" cy="16" r="3"/><line x1="3" y1="4" x2="21" y2="20"/>
+        </svg>
+      </button>
+      <span class="pro-topbar-chapter" id="topbarChapter">序章</span>
+    </div>
+    <div class="pro-topbar-right">
+      <span class="pro-topbar-scene" id="topbarScene">宿迁 · 一九四五年秋</span>
+      <button class="pro-topbar-gear" id="gearBtn" type="button" aria-label="设置" title="设置">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== 设置面板（音量 / 亮度） ===== -->
+  <div class="pro-settings" id="settingsPanel" hidden>
+    <div class="pro-settings-row">
+      <label>音量</label>
+      <input type="range" id="volSlider" min="0" max="100" value="60">
+    </div>
+    <div class="pro-settings-row">
+      <label>亮度</label>
+      <input type="range" id="brightSlider" min="20" max="100" value="100">
+    </div>
+  </div>
+
+  <!-- ===== 亮度调节暗层 ===== -->
+  <div class="pro-dim" id="dimLayer"></div>
 
   <!-- ===== 背景层 ===== -->
   <div class="pro-bg" id="bgStack">
@@ -24,47 +65,38 @@
   <!-- ===== 场景角标 ===== -->
   <div class="pro-scene-tag anim" id="sceneTag">宿迁 · 一九四五年秋</div>
 
-  <!-- ===== 音乐开关 ===== -->
-  <button class="pro-music" id="musicBtn" type="button" aria-label="背景音乐开关" title="背景音乐（占位）">
-    <svg class="ico-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M9 18V5l11-2v13"/><circle cx="9" cy="18" r="3"/><circle cx="20" cy="16" r="3"/>
-    </svg>
-    <svg class="ico-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M9 18V5l11-2v13"/><circle cx="9" cy="18" r="3"/><circle cx="20" cy="16" r="3"/><line x1="3" y1="4" x2="21" y2="20"/>
-    </svg>
-  </button>
-
   <!-- ===== 数值面板 ===== -->
   <div class="pro-hud" id="hud">
     <div class="pro-hud-title">心　性</div>
     <div id="hudStats"></div>
   </div>
 
-  <!-- ===== 章节标题卡===== -->
-
   <!-- ===== 对话框 ===== -->
-  <div class="pro-dialog">
-    <div class="pro-dialog-bar"></div>
-    <div class="pro-dialog-main">
-      <div class="pro-speaker" id="speaker">旁　白</div>
-      <p class="pro-line" id="line"></p>
+  <div class="vd-dialog" id="vdDialog">
+    <div class="vd-avatar-area">
+      <img class="vd-avatar-img" id="vdAvatar" src="#" alt="avatar" />
     </div>
-    <div class="pro-hint" id="hint">▼ 点击继续</div>
+    <div class="vd-main">
+      <div class="vd-name" id="nameTag" hidden></div>
+      <div class="vd-text-area">
+        <span class="vd-star">*</span>
+        <span class="vd-line" id="line"></span>
+      </div>
+    </div>
+    <div class="vd-hint" id="hint"></div>
+    <!-- 保留 speaker 元素供逻辑使用，CSS 中隐藏 -->
+    <div id="speaker" style="display:none"></div>
   </div>
 
-  <!-- ===== 分支选择 ===== -->
-  <div class="pro-choices" id="choicesBox" hidden>
-    <div class="pro-choices-title" id="choicesTitle"></div>
-    <div class="pro-choices-list" id="choicesList"></div>
+  <!-- ===== 分支选择（参考 对话选项.webm：十字布局 + 红爱心光标 + 黄选中） ===== -->
+  <div class="vd-choices" id="choicesBox" hidden>
+    <!-- 位置由 JS 动态填充：pos1=左, pos2=右, pos3=上, pos4=下 -->
   </div>
 
   <div class="pro-toast" id="toast"></div>
 
-  <!-- ===== 进入下一篇（第一幕结算后显示） ===== -->
-  <a class="pro-next-link" id="nextLink" hidden href="#">下一篇 · 返城创业 · 承包谈判 →</a>
-
   <!-- 背景音乐-->
-  <audio id="bgm" src="./assets/bgm/test2.flac" loop preload="none"></audio>
+  <audio id="bgm" src="./assets/bgm/test1.flac" loop preload="none"></audio>
 
 <script>
 /* =====================================================================
@@ -79,6 +111,21 @@ const DEBUG_BG = './assets/debug-bg.png';
 const NEXT_PAGE = 'part1.html';
 /* 存档键：数值写入 localStorage，供下一篇读取。 */
 const SAVE_KEY = 'zqh_level1_save';
+
+/* 音效占位路径：
+   - SELECT_MOVE_SFX：移动选项光标时播放（选择音效）
+   - SELECT_CONFIRM_SFX：按 Z 确认选项时播放（选选项音效）
+   用 # 占位，替换为真实音效路径即可。 */
+const SELECT_MOVE_SFX = './assets/snd/select.wav';
+const SELECT_CONFIRM_SFX = './assets/snd/decide.wav';
+
+/* 头像路径：按角色 who 映射头像图片，# 表示占位 */
+const AVATAR_MAP = {
+  narration: '#', mother: '#', father: '#', grandfather: '#',
+  you: './assets/sprites/zong.webp', ahai: '#', captain: '#', guide: '#',
+  tallboy: '#', zhaobo: '#', xiulan: '#', messenger: '#', laozong: './assets/sprites/zong.webp'
+};
+
 /* =====================================================================
  * 行类型：{who,text} 对白/旁白；{choice:{...}} 分支选择；{if:'标志',who,text} 条件行
  * ===================================================================== */
@@ -141,7 +188,7 @@ const SCENES = [
   {
     chapter: '第三幕 · 阁楼夜',
     tag: '杭州阁楼 · 油灯夜',
-    img: './assets/bg/s5.png',
+    img: './assets/bg/s6.png',
     alt: '阁楼油灯夜',
     lines: [
       { who: 'mother', text: '今天房东又来催租了。我说月底一定凑齐——拿什么凑，我心里也没底。' },
@@ -152,7 +199,7 @@ const SCENES = [
   {
     chapter: '第三幕 · 撑',
     tag: '杭州阁楼 · 油灯夜',
-    img: './assets/bg/s6.png',
+    img: './assets/bg/s5.png',
     alt: '母亲操持',
     lines: [
       { who: 'narration', text: '我没完全听懂他们在说什么。但我记住了母亲那时的表情——她没叹气，也没掉眼泪，只是把作业本翻了一页，继续批改。' },
@@ -162,12 +209,12 @@ const SCENES = [
   {
     chapter: '第三幕 · 旧时代的尾巴',
     tag: '杭州阁楼 · 一九五〇年代',
-    img: './assets/bg/s9.png',
+    img: './assets/bg/s10.png',
     alt: '阁楼米缸',
     lines: [
       { who: 'narration', text: '旧时代的尾巴，扫到了这个家。祖辈做过官，到父亲这一代，只剩下一份体面却挣不到钱的差事——很快，连这份差事也没了。' },
       { who: 'narration', text: '母亲在小学教书，一份微薄的工资，要喂饱五张嘴。' },
-      { who: 'narration', text: '很多年后我才明白，有些人的起点，是另一些人拼尽全力也够不到的天花板。' }
+      { who: 'narration', text: '原来，有些人的起点，是另一些人拼尽全力也够不到的天花板。' }
     ]
   },
   {
@@ -195,8 +242,8 @@ const SCENES = [
   },
   {
     chapter: '第五幕 · 成分核查',
-    tag: '居委会 · 一九六〇年代',
-    img: './assets/bg/scenes6-1.png',
+    tag: '居委会 · 一九六〇年代', 
+    img: './assets/bg/s9.png',
     alt: '成分核查',
     lines: [
       { who: 'narration', text: '居委会来人核查家庭成分。我第一次见到那些表格——上面写着祖父的旧职、父亲的履历、家庭的社会关系。我看着办事员的笔在"出身"一栏里写下那几个字，像盖章一样，没有一丝犹豫。' },
@@ -208,7 +255,7 @@ const SCENES = [
   {
     chapter: '第五幕 · 阁楼',
     tag: '杭州阁楼 · 一九六〇年代',
-    img: './assets/bg/scenes6-2.png',
+    img: './assets/bg/s11.png',
     alt: '烧掉通知书',
     lines: [
       { who: 'narration', text: '回到家，我把自己关在阁楼里，把那封通知书摊在桌上看了很久。母亲在门外站了一会儿，没有敲门，后来我听见她轻手轻脚地走开了。' },
@@ -218,7 +265,7 @@ const SCENES = [
   {
     chapter: '第六幕 · 巷口',
     tag: '巷口 · 一九六〇年代',
-    img: './assets/bg/s7.png',
+    img: './assets/bg/s4.png',
     alt: '巷口 · 王婶通告',
     lines: [
       { who: 'narration', text: '又过了两年。我不再做小买卖了，长成了大人，开始找临时的零工——码头卸货、建筑工地运砖、印刷厂搬纸。每一份工都干不长，不是因为我吃不了苦，是因为"成分"两个字总是追着我不放。招工的人一看表格，就摆摆手："再等等吧。"' },
@@ -231,17 +278,17 @@ const SCENES = [
   {
     chapter: '第六幕 · 去',
     tag: '巷口 · 一九六〇年代',
-    img: './assets/bg/scenes7-2.png',
+    img: './assets/bg/s12.png',
     alt: '母亲看通告',
     lines: [
       { who: 'narration', text: '母亲正坐在窗边批改作业，我把通告递给她。她低头看完，把通告折好，什么也没说。我看着她，只说了一个字：' },
-      { who: 'you', text: '去。' }
+      { who: 'mother', text: '去。' }
     ]
   },
   {
     chapter: '第七幕 · 马目农场',
     tag: '舟山 · 马目农场 · 大门',
-    img: './assets/bg/s10.png',
+    img: './assets/bg/s13.png',
     alt: '马目农场大门',
     lines: [
       { who: 'guide', text: '到了啊。这就是马目农场——从前关犯人的地方。你们这批人，往后就住这儿了。' },
@@ -258,7 +305,7 @@ const SCENES = [
   {
     chapter: '第七幕 · 宿舍之夜',
     tag: '舟山 · 马目农场 · 宿舍',
-    img: './assets/bg/s12.png',
+    img: './assets/bg/s15.png',
     alt: '农场宿舍',
     lines: [
       { who: 'guide', text: '跟我进来吧。先带你们去宿舍——棚子，不是房子。砖不够用，顶上铺的是油毡。漏雨是常事，自己拿桶接着就行。' },
@@ -269,16 +316,16 @@ const SCENES = [
       { who: 'ahai', text: '……四点？天都没亮吧？' },
       { who: 'you', text: '走吧，先找铺位。' },
       { who: 'narration', text: '我们沿着土路走向宿舍区。所谓的"宿舍"是一排低矮的土坯房，屋顶铺着油毡，用石头压住边缘。门是几块木板拼成的，关不严实，缝隙里灌着风。我推开其中一间的门，里面空荡荡的，地上铺着一层干稻草，墙角的泥地上有老鼠啃过的痕迹。' },
-      { who: 'narration', text: '阿海抬起头，盯着对面的土墙，忽然开口，语气里的那层轻松已经彻底剥掉了。' },
+      { who: 'ahai', text: '阿海抬起头，盯着对面的土墙，忽然开口，语气里的那层轻松已经彻底剥掉了。' },
       { who: 'ahai', text: '我本来……我本来想去当兵的。体检都过了，说我个子矮了半公分，刷下来了。我哥说，那你下乡吧，好歹是个去处。我就来了。' },
       { who: 'ahai', text: '你呢？你又是为啥来的？' },
       {
         choice: {
           prompt: '（你怎么回答？）',
           options: [
-          { key: 'A', label: '义无反顾', text: '别的路都堵死了，这条路，我认了。', effects: { resilience: 10, ahai_bond: 5 } , sound: './assets/bgm/test5(short).wav' },
-          { key: 'B', label: '犹豫但是报名', text: '至少……这是一条能走通的路。', effects: { resilience: 5 } , sound: '#' },
-          { key: 'C', label: '抱怨着报名', text: '凭什么我们这种出身，只能捡剩下的路走？', effects: { resilience: 5, father_bond: 5 } , sound: './assets/bgm/test4(short).wav' }
+          { key: 'A', label: '义无反顾', text: '别的路都堵死了，这条路，我认了。', effects: { resilience: 10, ahai_bond: 5 } , sound: './assets/snd/decide.wav' },
+          { key: 'B', label: '犹豫但是报名', text: '至少……这是一条能走通的路。', effects: { resilience: 5 } , sound: './assets/snd/decide.wav' },
+          { key: 'C', label: '抱怨着报名', text: '凭什么我们这种出身，只能捡剩下的路走？', effects: { resilience: 5, father_bond: 5 } , sound: './assets/snd/decide.wav' }
           ]
         }
       },
@@ -290,7 +337,7 @@ const SCENES = [
   {
     chapter: '第八幕 · 围垦滩涂',
     tag: '马目农场 · 围垦滩涂',
-    img: './assets/bg/s11.png',
+    img: './assets/bg/s14.png',
     alt: '围垦滩涂',
     lines: [
       { who: 'narration', text: '阿海挑着一担土从我身边经过，步子晃晃悠悠。筐里的土洒了一半出来，他停下来喘气，额头上全是汗。' },
@@ -307,7 +354,7 @@ const SCENES = [
   {
     chapter: '第九幕 · 深夜的宿舍',
     tag: '马目农场 · 深夜',
-    img: './assets/bg/s12.png',
+    img: './assets/bg/s15.png',
     alt: '深夜宿舍',
     lines: [
       { who: 'ahai', text: '……你睡了没？' },
@@ -318,9 +365,9 @@ const SCENES = [
         choice: {
           prompt: '（你如何回应，请选择）',
           options: [
-          { key: 'A', label: '鼓励他坚持', text: '再撑一撑。这地方要熬出个人样，得先熬过这一关。', effects: { ahai_bond: 15 }, flags: { ahai_stay: true } , sound: './assets/bgm/test5(short).wav' },
-          { key: 'B', label: '理解并支持他离开', text: '想清楚了就走吧，没人能替你扛这些。', effects: { ahai_bond: 5 }, flags: { ahai_leave: true } , sound: './assets/bgm/test4(short).wav' },
-          { key: 'C', label: '沉默，只递给他一支烟', text: '（什么也没说，只是摸出一支烟，递到阿海面前）', effects: { resilience: 5, ahai_bond: 10 } , sound: './assets/bgm/test4(short).wav' }
+          { key: 'A', label: '鼓励他坚持', text: '再撑一撑。这地方要熬出个人样，得先熬过这一关。', effects: { ahai_bond: 15 }, flags: { ahai_stay: true } , sound: './assets/snd/decide.wav' },
+          { key: 'B', label: '理解并支持他离开', text: '想清楚了就走吧，没人能替你扛这些。', effects: { ahai_bond: 5 }, flags: { ahai_leave: true } , sound: './assets/snd/decide.wav' },
+          { key: 'C', label: '沉默，只递给他一支烟', text: '（什么也没说，只是摸出一支烟，递到阿海面前）', effects: { resilience: 5, ahai_bond: 10 } , sound: './assets/snd/decide.wav' }
           ],
           after: {
             A: [
@@ -345,7 +392,7 @@ const SCENES = [
   {
     chapter: '第十幕 · 马目农场的第二年',
     tag: '马目农场 · 第二年',
-    img: './assets/bg/s13.png',
+    img: './assets/bg/s16.png',
     alt: '修坝挖沟',
     lines: [
       { who: 'narration', text: '那一年，我几乎是拼了命地干活。修坝、挖沟、挑土——别人干一分，我干三分。不是赌气，是我渐渐想明白了一个道理：在这片看不见头的地方，力气是唯一不会骗我的东西。' },
@@ -360,7 +407,7 @@ const SCENES = [
   {
     chapter: '第十一幕 · 绍兴茶场',
     tag: '绍兴 · 茶场 · 初到',
-    img: './assets/bg/s14.png',
+    img: './assets/bg/s17.png',
     alt: '绍兴茶场',
     lines: [
       { who: 'narration', text: '绍兴的茶场，比马目多了一样东西——绿色。满山满坡的茶园，春天的时候，绿得晃眼。' },
@@ -373,7 +420,7 @@ const SCENES = [
   {
     chapter: '第十二幕 · 田头',
     tag: '绍兴茶场 · 田头',
-    img: './assets/bg/s15.png',
+    img: './assets/bg/s18.png',
     alt: '稻田收割',
     lines: [
       { who: 'captain', text: '这批稻子，今天必须割完。割不完，晚饭别想吃。' },
@@ -381,9 +428,9 @@ const SCENES = [
         choice: {
           prompt: '（你如何应对，请选择）',
           options: [
-          { key: 'A', label: '硬扛，不抱怨', text: '割就割。饭晚点吃，没什么大不了。', effects: { resilience: 15 } , sound: './assets/bgm/test5(short).wav' },
-          { key: 'B', label: '据理力争', text: '队长，这个量，一个人从天亮干到天黑也割不完。活儿不是不能干——可总得让人分得清，是真有急事，还是存心磨人。加两个人手，我保证明天前交差。', effects: { resilience: 5, negotiation_skill: 10 } , sound: './assets/bgm/test4(short).wav' },
-          { key: 'C', label: '心里应付了事', text: '……行吧。（嘴上应着，心里却打定了主意，割个差不多就算）', effects: { resilience: -5 } , sound: './assets/bgm/test4(short).wav' }
+          { key: 'A', label: '硬扛，不抱怨', text: '割就割。饭晚点吃，没什么大不了。', effects: { resilience: 15 } , sound: './assets/snd/decide.wav' },
+          { key: 'B', label: '据理力争', text: '队长，这个量，一个人从天亮干到天黑也割不完。活儿不是不能干——可总得让人分得清，是真有急事，还是存心磨人。加两个人手，我保证明天前交差。', effects: { resilience: 5, negotiation_skill: 10 } , sound: './assets/snd/decide.wav' },
+          { key: 'C', label: '心里应付了事', text: '……行吧。（嘴上应着，心里却打定了主意，割个差不多就算）', effects: { resilience: -5 } , sound: './assets/snd/decide.wav' }
           ],
           after: {
             A: [
@@ -404,7 +451,7 @@ const SCENES = [
   {
     chapter: '第十三幕 · 傍晚的田埂',
     tag: '绍兴茶场 · 傍晚',
-    img: './assets/bg/s16.png',
+    img: './assets/bg/s19.png',
     alt: '赵伯抽烟',
     lines: [
       { who: 'narration', text: '有一阵子，我整个人像被抽空了一样。不是累——是说不清道不明的一种空。话懒得说，活提不起劲，连天亮了天黑了我都觉得没差。' },
@@ -418,7 +465,7 @@ const SCENES = [
   {
     chapter: '第十四幕 · 晌午 · 一碗热水',
     tag: '绍兴茶场 · 晌午',
-    img: './assets/bg/s17.png',
+    img: './assets/bg/s20.png',
     alt: '秀兰送水',
     lines: [
       { who: 'narration', text: '秀兰是这茶场里另一个话不多的人。可她的不多话，跟我的不多话不一样——我不说话，是习惯；她不多话，是把话都做进了活里。' },
@@ -432,7 +479,7 @@ const SCENES = [
   {
     chapter: '第十四幕 · 晌午 · 秧苗',
     tag: '绍兴茶场 · 晌午',
-    img: './assets/bg/s18.png',
+    img: './assets/bg/s21.png',
     alt: '梯田插秧',
     lines: [
       { who: 'xiulan', text: '（一边插秧，一边像随口那么一提）我家里，本来给我说了一门亲事。下乡这一耽搁……也不知道那家人，还等不等。' },
@@ -444,7 +491,7 @@ const SCENES = [
   {
     chapter: '第十五幕 · 一九七七年',
     tag: '绍兴茶场 · 一九七七年',
-    img: './assets/bg/s19.png',
+    img: './assets/bg/s22.png',
     alt: '新打家具',
     lines: [
       { who: 'narration', text: '一晃，我在这茶场已经待了十几年。1977年，我32岁。三个弟弟先后回了杭州，安了家，成了业。只有我，还留在这片茶山上，看不到头。' },
@@ -458,18 +505,18 @@ const SCENES = [
   {
     chapter: '第十六幕 · 回城通告',
     tag: '绍兴茶场 · 一九七八年',
-    img: './assets/bg/s20.png',
+    img: './assets/bg/s23.png',
     alt: '场部通告',
     lines: [
       { who: 'narration', text: '我没想到，转机会在第二年，突然降临。' },
-      { who: 'narration', text: '1978年初春，一张比当年更薄、字却更大的通告，贴在了场部墙上——城镇知识青年，可办理回城。' },
+      { who: 'narration', text: '1978年初春，一张比当年更薄、字却更大的通告，贴在场部墙上——城镇知识青年，可办理回城。' },
       { who: 'narration', text: '这一次，我没有把它看三遍。我只盯着那行字，忽然想起十几年前，自己揣着另一张薄纸、站在巷口时的那个下午。当年我走，是因为这世道终于给我留了一道缝；如今我回，是因为那道缝的另一头，有人在等我。' }
     ]
   },
   {
     chapter: '第十六幕 · 道别',
     tag: '绍兴茶场 · 一九七八年',
-    img: './assets/bg/s16.png',
+    img: './assets/bg/s19.png',
     alt: '离开茶场',
     lines: [
       { who: 'narration', text: '办手续那天，我去向赵伯道别。赵伯还是蹲在老地方卷旱烟，听完，只点了点头。' },
@@ -486,7 +533,7 @@ const SCENES = [
   {
     chapter: '第十七幕 · 杭州老街',
     tag: '杭州 · 一九七八年',
-    img: './assets/bg/s21.png',
+    img: './assets/bg/s24.png',
     alt: '杭州雨巷',
     lines: [
       { who: 'narration', text: '1978年，我33岁，回到了杭州。母亲在校门口等我——她老了，可走路还是那么快，风风火火的，像是还在跟时间赛跑。' },
@@ -523,29 +570,38 @@ const bgEl = document.getElementById('bg');
 const sceneTagEl = document.getElementById('sceneTag');
 const stackEl = document.getElementById('bgStack');
 const bodyEl = document.body;
-const chapterBox = null;
-const chapterText = null;
 const choicesBox = document.getElementById('choicesBox');
-const choicesTitle = document.getElementById('choicesTitle');
-const choicesList = document.getElementById('choicesList');
 const hudStats = document.getElementById('hudStats');
 const toastEl = document.getElementById('toast');
 const bgm = document.getElementById('bgm');
 const musicBtn = document.getElementById('musicBtn');
 const fogEl = document.getElementById('fog');
+const avatarEl = document.getElementById('vdAvatar');
+const nameTagEl = document.getElementById('nameTag');
+const dialogEl = document.getElementById('vdDialog');
+const hudEl = document.getElementById('hud');
 
-let scene = 0;             /* 当前幕索引 */
-let idx = -1;              /* 当前行索引（-1 表示尚未开始） */
+let scene = 0;
+let idx = -1;
 let typing = false;
-let finished = false;      /* 当前幕是否已到末行 */
-let switching = false;     /* 幕切换空档期锁：期间忽略所有输入，防止连点跳幕 */
+let finished = false;
+let switching = false;
 let timer = null;
-let stream = null;         /* 当前播放序列（含分支序列） */
-let pendingChoice = null;  /* 正在展示的选择 */
-let choiceIdx = -1;        /* 选择对象在原始序列中的位置 */
+let stream = null;
+let pendingChoice = null;
+let choiceIdx = -1;
 let musicOn = false;
 let toastTimer = null;
-let fogOpen = true;        /* 白雾转场：true=白屏覆盖，按 Z 键散开 */
+let fogOpen = true;
+let postChoiceLine = false;
+let skipLocked = false; /* 选项前3句不可Z/X跳过 */
+
+/* 选项十字布局状态：
+   choicePosMap = { 1: optionObj, 2: optionObj, 3: optionObj, 4: optionObj }
+   位置定义：1=左, 2=右, 3=上, 4=下
+   currentChoicePos 当前选中的位置（-1 表示中心/未选中） */
+let choicePosMap = {};
+let currentChoicePos = -1;
 
 function bgFor(S){ return USE_DEBUG_BG ? DEBUG_BG : S.img; }
 function getLines(){ return stream; }
@@ -571,7 +627,6 @@ function typeLine(l){
   let pos = 0;
   typing = true;
   setSpeaker(l.who);
-  lineEl.classList.toggle('action', full.charAt(0) === '（');
   hintEl.style.visibility = 'hidden';
   lineEl.textContent = '';
   clearInterval(timer);
@@ -580,7 +635,7 @@ function typeLine(l){
     lineEl.textContent = full.slice(0, pos);
     if(pos < full.length){
       const caret = document.createElement('span');
-      caret.className = 'caret';
+      caret.className = 'vd-caret';
       lineEl.appendChild(caret);
     }
     if(pos >= full.length){
@@ -604,19 +659,34 @@ function finishLine(){
 
 function setSpeaker(who){
   speakerEl.textContent = WHO_NAME[who] || WHO_NAME.narration;
-  speakerEl.className = 'pro-speaker' + (who === 'narration' ? '' : ' ' + who);
+  speakerEl.className = who || '';
+  /* 姓名框：旁白不显示，其余说话人显示 */
+  if(who === 'narration'){
+    nameTagEl.hidden = true;
+  } else {
+    nameTagEl.hidden = false;
+    nameTagEl.textContent = WHO_NAME[who] || '';
+  }
+  /* 设置头像占位路径 */
+  var avatarPath = AVATAR_MAP[who] || '#';
+  avatarEl.src = avatarPath;
+  /* 无头像时隐藏头像区，文字占满宽度 */
+  if(avatarPath === '#'){
+    dialogEl.classList.add('no-avatar');
+  } else {
+    dialogEl.classList.remove('no-avatar');
+  }
 }
 
 function setEndHint(){
   if(scene === SCENES.length - 1){
-    hintEl.textContent = '序章 · 完 —— 下一篇：返城创业 · 承包谈判';
+    hintEl.textContent = '序章 · 完';
     hintEl.classList.add('done');
     saveStats();
-    showNextLink();
+    showHud(); /* 章末显示心性面板 */
   } else {
-    hintEl.textContent = '▼ 进入下一幕';
+    hintEl.textContent = '▼ 继续';
     hintEl.classList.remove('done');
-    hideNextLink();
   }
 }
 
@@ -629,7 +699,7 @@ function renderHud(){
   hudStats.innerHTML = html;
 }
 
-/* ---- 数值存档（供下一篇继承：localStorage + 跳转 URL 参数双通道） ---- */
+/* ---- 数值存档 ---- */
 function saveStats(){
   try{
     localStorage.setItem(SAVE_KEY, JSON.stringify({
@@ -637,17 +707,8 @@ function saveStats(){
       flags: state.flags,
       savedAt: new Date().toISOString()
     }));
-  }catch(e){ /* 存储不可用时静默失败，不影响游玩 */ }
+  }catch(e){}
 }
-
-function showNextLink(){
-  const a = document.getElementById('nextLink');
-  const qs = STAT_ORDER.map(function(k){ return k + '=' + state.stats[k]; }).join('&');
-  a.href = NEXT_PAGE + '?' + qs;
-  a.hidden = false;
-}
-
-function hideNextLink(){ document.getElementById('nextLink').hidden = true; }
 
 function applyEffects(effects){
   if(!effects) return;
@@ -676,50 +737,101 @@ function toast(msg){
   toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, 2200);
 }
 
-/* ---- 分支选择音效 ---- */
+/* ---- 心性面板显隐 ---- */
+function showHud(){ hudEl.style.display = ''; }
+function hideHud(){ hudEl.style.display = 'none'; }
+
+/* ---- 音效播放 ---- */
 function playSfx(path){
-  if(!path) return;
+  if(!path || path === '#') return;
   try{
     const a = new Audio(path);
     a.volume = 0.6;
     const p = a.play();
     if(p && p.catch){
-      p.catch(function(){ if(path !== '#') toast('音效文件缺失：' + path); });
+      p.catch(function(){ toast('音效文件缺失：' + path); });
     }
   }catch(e){
-    if(path !== '#') toast('音效文件缺失：' + path);
+    toast('音效文件缺失：' + path);
   }
 }
 
-/* ---- 分支选择 ---- */
+/* ---- 选项选择 ----
+   位置映射：1=左(选项一), 2=右(选项二), 3=上(选项三), 4=下(选项四)
+   第 N 个 option 放到位置 N（最多4个） */
 function showChoices(c){
   pendingChoice = c;
   choiceIdx = idx;
-  choicesTitle.textContent = c.prompt;
-  choicesList.innerHTML = '';
-  c.options.forEach(function(opt){
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'pro-choice';
-    btn.textContent = opt.label;
-    btn.addEventListener('click', function(ev){
+  choicePosMap = {};
+  choicesBox.innerHTML = '';
+  /* 根据选项数量添加尺寸类 */
+  choicesBox.classList.remove('choice-count-2','choice-count-3','choice-count-4');
+  choicesBox.classList.add('choice-count-' + c.options.length);
+
+  c.options.forEach(function(opt, i){
+    var pos = i + 1; /* 第1个→位置1(左), 第2个→位置2(右), 第3个→位置3(上), 第4个→位置4(下) */
+    choicePosMap[pos] = opt;
+
+    var el = document.createElement('div');
+    el.className = 'vd-choice vd-choice--' + pos;
+    el.dataset.pos = pos;
+    el.innerHTML = '<span class="vd-heart"></span><span class="vd-choice-label">' + opt.label + '</span>';
+    el.addEventListener('click', function(ev){
       ev.stopPropagation();
-      playSfx(opt.sound);
-      pickChoice(opt.key);
+      selectChoicePos(pos);
     });
-    choicesList.appendChild(btn);
+    choicesBox.appendChild(el);
   });
+
   choicesBox.hidden = false;
-  bodyEl.classList.add('has-stats');
+  dialogEl.style.display = 'none'; /* 隐藏文本对话框，显示选项面板 */
+  /* 默认选中选项1（位置1） */
+  currentChoicePos = -1;
+  selectChoicePos(1);
+  hideHud(); /* 选项显示时隐藏心性面板 */
   renderHud();
 }
 
-function pickChoice(key){
-  const c = pendingChoice;
+/* 移动光标到指定位置 */
+function selectChoicePos(pos){
+  if(!choicePosMap[pos]) return; /* 该位置没有选项 */
+  if(currentChoicePos === pos) return; /* 已经在这个位置 */
+
+  /* 播放移动选择音效 */
+  playSfx(SELECT_MOVE_SFX);
+
+  currentChoicePos = pos;
+  /* 更新 UI：清除所有选中态，设置当前选中 */
+  var allEls = choicesBox.querySelectorAll('.vd-choice');
+  allEls.forEach(function(el){
+    if(parseInt(el.dataset.pos) === pos){
+      el.classList.add('is-selected');
+    } else {
+      el.classList.remove('is-selected');
+    }
+  });
+}
+
+/* 确认当前选中的选项（按 Z） */
+function confirmChoice(){
+  if(currentChoicePos < 0 || !choicePosMap[currentChoicePos]) return;
+
+  /* 播放确认选择音效 */
+  playSfx(SELECT_CONFIRM_SFX);
+
+  var opt = choicePosMap[currentChoicePos];
+  var c = pendingChoice;
   if(!c) return;
-  const opt = c.options.find(function(o){ return o.key === key; });
+
+  /* 如果该选项自带音效，也播放 */
+  if(opt.sound && opt.sound !== '#') playSfx(opt.sound);
+
   pendingChoice = null;
   choicesBox.hidden = true;
+  dialogEl.style.display = ''; /* 恢复文本对话框 */
+  currentChoicePos = -1;
+  choicePosMap = {};
+  choicesBox.classList.remove('choice-count-2','choice-count-3','choice-count-4');
 
   applyEffects(opt.effects);
   toastEffects(opt.effects);
@@ -727,17 +839,30 @@ function pickChoice(key){
 
   const follow = [];
   if(opt.text) follow.push({ who: 'you', text: opt.text });
-  if(c.after && c.after[key]){
-    follow.push.apply(follow, c.after[key]);
+  if(c.after && c.after[opt.key]){
+    follow.push.apply(follow, c.after[opt.key]);
   } else {
     follow.push.apply(follow, getLines().slice(choiceIdx + 1));
   }
 
   stream = follow;
   idx = -1; typing = false; finished = false;
+  postChoiceLine = true; /* 选项后的第一行对话，显示心性面板 */
+  showHud();
   hintEl.classList.remove('done');
   hintEl.style.visibility = 'visible';
   advance();
+}
+
+/* ---- 判断当前行是否在选项前3句内（禁止快进） ---- */
+function isSkipLocked(){
+  var ls = getLines();
+  for(var i = idx + 1; i < ls.length; i++){
+    if(ls[i].choice){
+      return (i - idx) <= 3;
+    }
+  }
+  return false;
 }
 
 /* ---- 推进 ---- */
@@ -752,8 +877,14 @@ function advance(){
   if(typing){ finishLine(); return; }
   if(idx < getLines().length - 1){
     idx++;
+    /* 隐藏心性面板 */
+    if(postChoiceLine && idx > 0){
+      postChoiceLine = false;
+      hideHud();
+    }
     const l = getLines()[idx];
     if(l.choice){ showChoices(l.choice); return; }
+    skipLocked = isSkipLocked();
     typeLine(l);
   }
 }
@@ -781,8 +912,10 @@ function switchScene(){
     bodyEl.dataset.scene = String(scene + 1);
     setStream();
     idx = -1; typing = false; finished = false;
+    postChoiceLine = false;
+    hideHud(); /* 新场景开始时隐藏心性面板 */
     hintEl.classList.remove('done');
-    hintEl.textContent = '▼ 点击继续';
+    hintEl.textContent = '▼ 继续';
     hintEl.style.visibility = 'visible';
     stackEl.style.opacity = '1';
     sceneTagEl.classList.remove('anim');
@@ -825,26 +958,110 @@ musicBtn.addEventListener('click', function(ev){
 setStream();
 bgEl.src = bgFor(SCENES[0]);
 renderHud();
+hideHud(); /* 默认隐藏心性面板 */
 setTimeout(advance, 1600);
 
 document.addEventListener('click', function(){
   if(fogOpen){ disperseFog(); return; }
+  if(pendingChoice) return; /* 选项显示时不响应点击推进 */
   advance();
 });
+
 document.addEventListener('keydown', function(e){
   var k = e.key.toLowerCase();
-  /* 继续：空格 / 回车 / 下 / 右 / Z */
+
+  /* 选项显示时：方向键选择，Z 确认 */
+  if(pendingChoice){
+    if(k === 'arrowleft'){
+      e.preventDefault();
+      selectChoicePos(1);
+      return;
+    }
+    if(k === 'arrowright'){
+      e.preventDefault();
+      selectChoicePos(2);
+      return;
+    }
+    if(k === 'arrowup'){
+      e.preventDefault();
+      selectChoicePos(3);
+      return;
+    }
+    if(k === 'arrowdown'){
+      e.preventDefault();
+      selectChoicePos(4);
+      return;
+    }
+    if(k === 'z'){
+      e.preventDefault();
+      confirmChoice();
+      return;
+    }
+    return; /* 选项显示时忽略其他键 */
+  }
+
+  /* 正常文本推进：Z / 空格 / 回车 / 下 / 右 */
   if(k === ' ' || k === 'enter' || k === 'arrowdown' || k === 'arrowright' || k === 'z'){
     e.preventDefault();
     if(fogOpen){ disperseFog(); return; }
+    /* 选项前3句打字中，Z不允许快进跳过 */
+    if(typing && skipLocked) return;
     advance();
   }
-  /* 打字时按 X：立即显示完整一行 */
+  /* 打字时按 X：立即显示完整一行（选项前3句除外） */
   if(k === 'x'){
     e.preventDefault();
-    if(typing) finishLine();
+    if(typing && !skipLocked) finishLine();
   }
 });
+</script>
+<script>
+/* 顶部栏：齿轮开合 + 音量/亮度 + 自动同步幕名场景名 */
+(function(){
+  var gear   = document.getElementById('gearBtn');
+  var panel  = document.getElementById('settingsPanel');
+  var vol    = document.getElementById('volSlider');
+  var bri    = document.getElementById('brightSlider');
+  var dim    = document.getElementById('dimLayer');
+  var bgm    = document.getElementById('bgm');
+
+  if(gear && panel){
+    gear.addEventListener('click', function(e){
+      e.stopPropagation();
+      panel.hidden = !panel.hidden;
+    });
+  }
+  document.addEventListener('click', function(e){
+    if(panel && !panel.hidden && !panel.contains(e.target) &&
+       e.target !== gear && !gear.contains(e.target)){
+      panel.hidden = true;
+    }
+  });
+
+  if(vol && bgm){
+    vol.value = Math.round((bgm.volume || 0.6) * 100);
+    vol.addEventListener('input', function(){ bgm.volume = vol.value / 100; });
+  }
+  if(bri && dim){
+    bri.addEventListener('input', function(){
+      dim.style.opacity = (1 - bri.value / 100) * 0.7;
+    });
+  }
+
+  var tag = document.getElementById('sceneTag');
+  var topScene = document.getElementById('topbarScene');
+  var topChap  = document.getElementById('topbarChapter');
+  if(tag && topScene){
+    topScene.textContent = tag.textContent;
+    new MutationObserver(function(){ topScene.textContent = tag.textContent; })
+      .observe(tag, { childList:true, characterData:true, subtree:true });
+  }
+  if(topChap){
+    topChap.textContent = document.title;
+    new MutationObserver(function(){ topChap.textContent = document.title; })
+      .observe(document.querySelector('title'), { childList:true });
+  }
+})();
 </script>
 </body>
 </html>

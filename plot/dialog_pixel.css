@@ -1,0 +1,345 @@
+@font-face {
+  font-family: "GamePixelFont";
+  src: url("./assets/fonts/plot.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ===== 全局变量：指针颜色可在此处自定义 RGB ===== */
+:root {
+  --heart-color: rgb(255, 34, 34);
+}
+
+/* ========== 文本对话框（参考 文本.webm） ========== */
+.vd-dialog {
+  position: fixed;
+  left: 3%;
+  right: 3%;
+  bottom: 3%;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 1.6rem;
+  padding: 1.4rem 2rem 1.6rem;
+  background: #000;
+  border: 4px solid #ffffff;
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, .6);
+  min-height: 18vh;
+  font-family: "GamePixelFont", "Courier New", "Songti SC", monospace;
+  image-rendering: pixelated;
+}
+
+/* 左侧头像占位区（无边框） */
+.vd-avatar-area {
+  flex: 0 0 auto;
+  width: 88px;
+  height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.vd-avatar-img {
+  max-width: 100%;
+  max-height: 100%;
+  image-rendering: pixelated;
+  display: block;
+}
+
+/* 无头像时：隐藏头像区，文字占满全宽 */
+.vd-dialog.no-avatar .vd-avatar-area {
+  display: none;
+}
+.vd-dialog.no-avatar {
+  gap: 0;
+}
+
+/* 姓名框字体（按原项目字体目录放置） */
+@font-face {
+  font-family: "CharaNameFont";
+  src: url("./assets/fonts/chara.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 姓名 + 正文 竖排容器 */
+.vd-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* 说话人姓名框：黑底白框，与像素对话框统一 */
+.vd-name {
+  align-self: flex-start;
+  margin-bottom: .35em;
+  padding: .12em .6em;
+  border: 2px solid #ffffff;
+  background: #000;
+  color: #ffffff;
+  font-family: "CharaNameFont", "GamePixelFont", "Courier New", "Songti SC", monospace;
+  font-size: .86em;
+  letter-spacing: .18em;
+  line-height: 1.4;
+  box-shadow: 3px 3px 0 rgba(255, 255, 255, .18);
+}
+.vd-name[hidden] { display: none; }
+
+/* 竖排后正文区占满宽度 */
+.vd-main > .vd-text-area {
+  width: 100%;
+}
+
+/* 右侧文字区 */
+.vd-text-area {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: .55em;
+  color: #ffffff;
+  font-size: clamp(1rem, 1.6vw, 1.35rem);
+  line-height: 1.85;
+  letter-spacing: .04em;
+  min-height: 3.2em;
+}
+
+.vd-star {
+  flex-shrink: 0;
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.vd-line {
+  word-break: break-all;
+}
+
+/* 打字光标 */
+.vd-caret {
+  display: inline-block;
+  width: .5em;
+  height: 1.05em;
+  margin-left: .1em;
+  vertical-align: -.15em;
+  background: #ffffff;
+  animation: vd-blink .75s steps(1) infinite;
+}
+
+@keyframes vd-blink {
+  50% { opacity: 0; }
+}
+
+/* 继续提示 */
+.vd-hint {
+  position: absolute;
+  right: 1.4rem;
+  bottom: .55rem;
+  font-size: .72rem;
+  color: rgba(255, 255, 255, .45);
+  letter-spacing: .12em;
+  font-family: "GamePixelFont", "Courier New", "Songti SC", monospace;
+}
+
+.vd-hint.done {
+  color: rgba(255, 220, 100, .8);
+  font-size: clamp(.8rem, 1.1vw, 1rem);
+}
+
+/* 隐藏旧 speaker 元素（保留 DOM 供逻辑使用，但不显示 */
+.vd-dialog #speaker {
+  display: none;
+}
+
+
+/* ========== 心性面板 ========== */
+.zqh-prologue .pro-hud {
+  border: 4px solid #ffffff;
+  border-radius: 0;
+  background: #000;
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, .6);
+  font-family: "GamePixelFont", "Courier New", "Songti SC", monospace;
+  image-rendering: pixelated;
+}
+
+.zqh-prologue .pro-hud-title {
+  border: 3px solid #ffffff;
+  border-radius: 0;
+  background: #111;
+  color: #ffffff;
+  padding: 3px 10px;
+  box-shadow: none;
+  letter-spacing: .3em;
+  font-size: .85rem;
+}
+
+.zqh-prologue .pro-hud-row {
+  border: 2px solid rgba(255, 255, 255, .3);
+  border-radius: 0;
+  background: #0a0a0a;
+  color: #ffffff;
+  box-shadow: none;
+  font-size: .78rem;
+  padding: 4px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.zqh-prologue .pro-hud-row b {
+  color: #ffff00;
+}
+
+
+/* ========== 选项选择（底部对话框位置，保留场景背景） ========== */
+.vd-choices {
+  position: fixed;
+  left: 3%;
+  right: 3%;
+  bottom: 3%;
+  z-index: 50;
+  background: #000;
+  border: 4px solid #ffffff;
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, .6);
+  min-height: 20vh;
+  font-family: "GamePixelFont", "Courier New", "Songti SC", monospace;
+  image-rendering: pixelated;
+}
+
+/* 2个选项：只有左右，最矮 */
+.vd-choices.choice-count-2 {
+  min-height: 16vh;
+}
+
+/* 3个选项：左+右+上 */
+.vd-choices.choice-count-3 {
+  min-height: 24vh;
+}
+
+/* 4个选项：完整十字 */
+.vd-choices.choice-count-4 {
+  min-height: 30vh;
+}
+
+/* 单个选项 */
+.vd-choice {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: .6em;
+  color: #ffffff;
+  font-size: clamp(1.1rem, 2.2vw, 1.7rem);
+  letter-spacing: .06em;
+  cursor: pointer;
+  user-select: none;
+  transition: color .08s;
+  white-space: nowrap;
+}
+
+/* 选中态：黄色文字 */
+.vd-choice.is-selected {
+  color: #ffff00;
+  text-decoration: none;
+}
+
+/* ===== 指针使用 PNG 图片 ===== */
+.vd-choice .vd-heart {
+  visibility: hidden;
+  flex-shrink: 0;
+  width: 1.0em;
+  height: 1.0em;
+  background: url("./assets/sprites/ptr.png") no-repeat center/contain;
+  image-rendering: pixelated;
+  vertical-align: middle;
+}
+
+.vd-choice.is-selected .vd-heart {
+  visibility: visible;
+}
+
+.vd-choice-label {
+  line-height: 1.4;
+}
+
+/* 位置 1 = 左侧（左箭头选中） */
+.vd-choice--1 {
+  left: 8%;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* 位置 2 = 右侧（右箭头选中） */
+.vd-choice--2 {
+  right: 8%;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* 位置 3 = 上方（上箭头选中） */
+.vd-choice--3 {
+  left: 50%;
+  top: 18%;
+  transform: translateX(-50%);
+}
+
+/* 位置 4 = 下方（下箭头选中） */
+.vd-choice--4 {
+  left: 50%;
+  bottom: 18%;
+  transform: translateX(-50%);
+}
+
+/* 2选项时：位置1和2垂直居中 */
+.choice-count-2 .vd-choice--1,
+.choice-count-2 .vd-choice--2 {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+
+/* ========== 音乐开关 ========== */
+.zqh-prologue .pro-music {
+  border: 4px solid #ffffff;
+  border-radius: 0;
+  background: #000;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, .6);
+  color: #ffffff;
+}
+
+.zqh-prologue .pro-music:hover {
+  background: #1a1a1a;
+}
+
+.zqh-prologue .pro-music.is-on {
+  background: #1a1a1a;
+  color: #ffffff;
+}
+
+.zqh-prologue .pro-music .ico-on,
+.zqh-prologue .pro-music .ico-off {
+  stroke: #ffffff;
+}
+
+
+/* 移动端适配 */
+@media (max-width: 700px) {
+  .vd-dialog {
+    left: 2%;
+    right: 2%;
+    gap: 1rem;
+    padding: 1rem 1.2rem 1.2rem;
+    min-height: 16vh;
+  }
+  .vd-avatar-area {
+    width: 56px;
+    height: 56px;
+  }
+  .vd-choices {
+    left: 2%;
+    right: 2%;
+  }
+  .vd-choice--1 { left: 5%; }
+  .vd-choice--2 { right: 5%; }
+}
